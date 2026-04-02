@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:eduplay2_app/services/neon_db_service.dart'; // <-- Aquí está la importación corregida
+
 // Más adelante descomentarás esto para navegar a los consejos
 // import '../onboarding/tips_screen.dart';
 
@@ -143,9 +145,18 @@ class _LoginScreenState extends State<LoginScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
           elevation: 0,
         ),
-        onPressed: () {
-          // Aquí llamaremos a Laravel más adelante
-          print("Botón presionado");
+        onPressed: () async {
+          // Aquí llamas a tu archivo de conexión directo
+          // Nota: Deberías sacar el email y password de unos TextControllers
+          bool exito = await NeonDbService.loginDirecto("correo@prueba.com", "mipassword");
+          
+          if (exito) {
+            // Ir a la siguiente pantalla
+            print("¡Navegando a la pantalla principal!");
+          } else {
+            // Mostrar error
+            print("Intenta de nuevo :(");
+          }
         },
         child: Text(
           isLogin ? '¡A JUGAR!' : '¡LISTO, VAMOS!',

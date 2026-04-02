@@ -31,9 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  http: ^1.2.0               # Para hacer las peticiones a Laravel
-  shared_preferences: ^2.2.2 # Para guardar la sesión del niño y no pedir contraseña siempre
-
+  postgres: ^3.4.3
+  shared_preferences: ^2.2.2  # <-- Agrega esta línea
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
