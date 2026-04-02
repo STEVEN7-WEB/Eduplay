@@ -2,40 +2,54 @@ import 'package:postgres/postgres.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NeonDbService {
-  
-  // --- ATAJO DE CONEXIÓN ---
-  // Hacemos esto para no tener que pegar tu contraseña en cada función
   static Future<Connection> _conectar() async {
     final endpoint = Endpoint(
-      host: 'ep-bold-sea-ammozaye-pooler.c-5.us-east-1.aws.neon.tech', 
-      database: 'neondb',                                        
-      username: 'neondb_owner',                                    
-      password: 'npg_XkHAZ3tCTf8U',                                   
+      host: 'ep-bold-sea-ammozaye-pooler.c-5.us-east-1.aws.neon.tech',
+      database: 'neondb',
+      username: 'neondb_owner',
+      password: 'npg_XkHAZ3tCTf8U',
       port: 5432,
     );
     return await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.require));
   }
 
-  // 1. FUNCIÓN DE LOGIN (Ya la teníamos, pero ahora guarda el ID del usuario)
+  // AHORA PIDE EL GRADO PARA REGISTRAR
+  static Future<bool> registrarUsuario(String nombre, String email, String password, int grado) async {
+    try {
+      final connection = await _conectar();
+      await connection.execute(
+        Sql.named('INSERT INTO users (name, email, password, grade) VALUES (@nombre, @email, @password, @grado)'),
+        parameters: {'nombre': nombre, 'email': email, 'password': password, 'grado': grado},
+      );
+      await connection.close();
+      return await loginDirecto(email, password);
+    } catch (e) {
+      print('Error al registrar: $e');
+      return false;
+    }
+  }
+
+  // AHORA LEE EL GRADO AL INICIAR SESIÓN
   static Future<bool> loginDirecto(String email, String password) async {
     try {
       final connection = await _conectar();
       final result = await connection.execute(
-        Sql.named('SELECT id FROM users WHERE email = @email AND password = @password'),
+        // Extraemos ID y Grade
+        Sql.named('SELECT id, grade FROM users WHERE email = @email AND password = @password'),
         parameters: {'email': email, 'password': password},
       );
       await connection.close();
 
       if (result.isNotEmpty) {
-        // Obtenemos el ID del niño (es la primera columna de la primera fila)
-        final int childId = result[0][0] as int; 
+        final int userId = result[0][0] as int;
+        // Si la columna grade es nula por alguna razón, ponemos grado 1 por defecto
+        final int grado = result[0][1] != null ? result[0][1] as int : 1; 
 
-        // Guardamos que ya inició sesión y también su ID para saber de quién son los puntos
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('sesion_iniciada', true);
-        await prefs.setInt('id_usuario', childId); 
-        
-        return true; 
+        await prefs.setInt('id_usuario', userId);
+        await prefs.setInt('grado_usuario', grado); // Guardamos el grado en el celular
+        return true;
       }
       return false;
     } catch (e) {
@@ -44,68 +58,27 @@ class NeonDbService {
     }
   }
 
-  // 2. FUNCIÓN PARA SUBIR COSAS (Guardar progreso)
   static Future<bool> guardarPuntaje(String materia, int puntosObtenidos) async {
     try {
-      // Sacamos el ID del niño de la memoria del celular
       final prefs = await SharedPreferences.getInstance();
       final int? userId = prefs.getInt('id_usuario');
-
-      if (userId == null) return false; // Si no hay usuario, no guardamos nada
+      if (userId == null) return false;
 
       final connection = await _conectar();
-      
-      // INSERTAMOS los datos en la base de datos
       await connection.execute(
         Sql.named('INSERT INTO scores (user_id, subject, points) VALUES (@userId, @materia, @puntos)'),
-        parameters: {
-          'userId': userId,
-          'materia': materia,
-          'puntos': puntosObtenidos,
-        },
+        parameters: {'userId': userId, 'materia': materia, 'puntos': puntosObtenidos},
       );
-      
       await connection.close();
-      print("¡Puntaje guardado en la nube!");
       return true;
     } catch (e) {
-      print('Error al guardar puntaje: $e');
+      print('Error al guardar: $e');
       return false;
     }
   }
 
-  // 3. FUNCIÓN PARA EXTRAER COSAS (Obtener el historial de juegos)
-  static Future<List<Map<String, dynamic>>> obtenerPuntajes() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final int? userId = prefs.getInt('id_usuario');
-
-      if (userId == null) return [];
-
-      final connection = await _conectar();
-      
-      // EXTRAEMOS los últimos 10 juegos de este niño
-      final result = await connection.execute(
-        Sql.named('SELECT subject, points FROM scores WHERE user_id = @userId ORDER BY last_played DESC LIMIT 10'),
-        parameters: {'userId': userId},
-      );
-      
-      await connection.close();
-
-      // Convertimos el resultado a una lista que Flutter pueda mostrar fácil en pantalla
-      List<Map<String, dynamic>> historial = [];
-      for (final fila in result) {
-        final mapa = fila.toColumnMap();
-        historial.add({
-          'materia': mapa['subject'],
-          'puntos': mapa['points'],
-        });
-      }
-      
-      return historial; // Devolvemos la lista de juegos
-    } catch (e) {
-      print('Error al obtener puntajes: $e');
-      return [];
-    }
+  static Future<void> cerrarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }
