@@ -1,4 +1,4 @@
-# eduplay2_app
+# eduplay2_app (Anteriormente GeoSmart)
 
 A new Flutter project.
 
