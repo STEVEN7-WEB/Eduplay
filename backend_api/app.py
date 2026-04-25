@@ -12,10 +12,11 @@ FRONT    = os.path.join(BASE_DIR, 'static')
 app = Flask(__name__, static_folder=FRONT, static_url_path='')
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# 1. Agregar la carpeta raíz a las rutas del sistema
+# Subimos un nivel para salir de backend_api y ver todo el proyecto
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
+
+# Le decimos a Flask que los archivos web ahora están en frontend_web/static
+FRONT = os.path.join(BASE_DIR, 'frontend_web', 'static')
 
 app = Flask(__name__, static_folder=FRONT, static_url_path='')
 CORS(app, resources={r"/api/*": {"origins": "*"}})
