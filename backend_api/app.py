@@ -1,6 +1,8 @@
 """EduPlay Backend v5 - Flask + SQLite + KNN + Auth completo"""
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+import sys
+import os
 import sqlite3, os, hashlib, secrets, functools
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -10,12 +12,26 @@ FRONT    = os.path.join(BASE_DIR, 'static')
 app = Flask(__name__, static_folder=FRONT, static_url_path='')
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+# 1. Agregar la carpeta raíz a las rutas del sistema
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.append(BASE_DIR)
+
+app = Flask(__name__, static_folder=FRONT, static_url_path='')
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
 KNN_OK = False; knn = None
 try:
-    from knn_model import EduPlayKNN
+    # 2. Cambiar la importación para que apunte a la nueva carpeta
+    from ai_model.knn_model import EduPlayKNN
+    
     knn = EduPlayKNN(); knn.train(); KNN_OK = True; print("✅ KNN listo")
-except Exception as e: print(f"⚠️  KNN: {e}")
+except Exception as e: 
+    print(f"⚠️  KNN: {e}")
 
+def db():
+    c = sqlite3.connect(DB_PATH); c.row_factory = sqlite3.Row
+    c.execute("PRAGMA foreign_keys=ON"); return c
 def db():
     c = sqlite3.connect(DB_PATH); c.row_factory = sqlite3.Row
     c.execute("PRAGMA foreign_keys=ON"); return c
