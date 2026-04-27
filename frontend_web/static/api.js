@@ -224,3 +224,300 @@ window.EduPlayAPI = {
     estadisticasKNN    : apiEstadisticasKNN,
     mostrarKNN         : mostrarClasificacionKNN
 };
+
+function mostrarLogin(rol) {
+    document.getElementById('roleSelector').style.display = 'none';
+    const authContainer = document.getElementById('authContainer');
+    const backBtn = document.getElementById('backToRoles');
+    
+    authContainer.style.display = 'block';
+    if(backBtn) backBtn.style.display = 'inline-block';
+
+if (rol === 'admin') {
+    authContainer.innerHTML = `
+        <div class="ep-box" style="text-align: center; max-width: 320px; margin: 0 auto; border-top: 5px solid #2C3E50;">
+            <h3 style="color: #2C3E50; margin-bottom: 20px; font-size: 22px;">👨‍🏫 Acceso Profesores</h3>
+            
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="font-size: 14px; font-weight: bold; color: #7F8C8D;">Correo Electrónico</label>
+                <input type="email" id="admEmail" placeholder="profe@escuela.com" 
+                    style="width: 100%; padding: 12px; margin-top: 5px; border-radius: 10px; border: 2px solid #BDC3C7; font-size: 15px; box-sizing: border-box; transition: border-color 0.3s;">
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 25px;">
+                <label style="font-size: 14px; font-weight: bold; color: #7F8C8D;">Contraseña</label>
+                <input type="password" id="admPass" placeholder="••••••••" 
+                    style="width: 100%; padding: 12px; margin-top: 5px; border-radius: 10px; border: 2px solid #BDC3C7; font-size: 15px; box-sizing: border-box; transition: border-color 0.3s;">
+            </div>
+            
+            <button onclick="loginAdmin()" class="ep-btn juicy-btn" style="background: #2980B9; color: white; width: 100%;">
+                Entrar al Panel
+            </button>
+            
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            
+            <p style="font-size: 13px; color: #7F8C8D; margin-bottom: 10px;">¿Eres nuevo maestro?</p>
+            <button onclick="mostrarRegistroAdmin()" class="ep-btn" style="background: white; color: #27AE60; border: 2px solid #27AE60; border-radius: 50px; padding: 8px 20px; font-weight: bold; cursor: pointer; transition: all 0.2s ease;">
+                Crear Cuenta de Profesor
+            </button>
+        </div>
+    `;
+} else {
+        // === NUEVO TECLADO PARA ESTUDIANTES ===
+        authContainer.innerHTML = `
+            <div class="ep-box" style="text-align: center; max-width: 300px; margin: 0 auto;">
+                <h3 style="color: #2F80ED; margin-bottom: 15px;">¡Hola! ¿Quién eres?</h3>
+                
+                <input type="text" id="nombreEstudiante" placeholder="Escribe tu nombre" 
+                    style="width: 90%; padding: 12px; font-size: 16px; border: 2px solid #2F80ED; border-radius: 10px; margin-bottom: 15px; text-align: center; font-weight: bold;">
+                
+                <div id="pinDisplay" style="font-size: 28px; letter-spacing: 8px; margin-bottom: 15px; height: 35px; color: #F2994A;"></div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px;">
+                    <button onclick="tecladoPin('1')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">1</button>
+                    <button onclick="tecladoPin('2')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">2</button>
+                    <button onclick="tecladoPin('3')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">3</button>
+                    <button onclick="tecladoPin('4')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">4</button>
+                    <button onclick="tecladoPin('5')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">5</button>
+                    <button onclick="tecladoPin('6')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">6</button>
+                    <button onclick="tecladoPin('7')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">7</button>
+                    <button onclick="tecladoPin('8')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">8</button>
+                    <button onclick="tecladoPin('9')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">9</button>
+                    <button onclick="borrarPin()" class="ep-btn" style="background: #FF6B6B; font-size: 20px; padding: 15px;">❌</button>
+                    <button onclick="tecladoPin('0')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 20px; padding: 15px;">0</button>
+                    <button onclick="entrarEstudiante()" class="ep-btn" style="background: #27AE60; font-size: 20px; padding: 15px;">✔️</button>
+                </div>
+            </div>`;
+            
+        // Reiniciamos el PIN visual al abrir
+        pinActual = ""; 
+    }
+}
+
+let pinActual = "";
+
+// Función para cuando el niño presiona un número
+function tecladoPin(numero) {
+    if (pinActual.length < 4) { // Suponiendo que el PIN es de 4 dígitos
+        pinActual += numero;
+        // Mostramos estrellas en lugar de los números para que sea secreto
+        document.getElementById('pinDisplay').textContent = "⭐".repeat(pinActual.length);
+    }
+}
+
+// Función para el botón rojo (borrar)
+function borrarPin() {
+    pinActual = "";
+    document.getElementById('pinDisplay').textContent = "";
+}
+
+// Función para el botón verde (Entrar)
+function entrarEstudiante() {
+    const nombre = document.getElementById('nombreEstudiante').value.trim();
+    
+    // Validaciones básicas
+    if (!nombre) {
+        alert("¡No olvides escribir tu nombre!");
+        return;
+    }
+    if (pinActual.length === 0) {
+        alert("¡Usa el teclado para escribir tu PIN secreto!");
+        return;
+    }
+
+    // 1. Buscamos al estudiante por su nombre en la base de datos
+    fetch('/api/usuarios')
+        .then(res => res.json())
+        .then(estudiantes => {
+            // Buscamos ignorando mayúsculas y minúsculas
+            const estudianteEncontrado = estudiantes.find(est => est.nombre.toLowerCase() === nombre.toLowerCase());
+
+            if (!estudianteEncontrado) {
+                alert("Mmm... no encontré a ningún estudiante con ese nombre. ¡Revisa que esté bien escrito!");
+                borrarPin();
+                return;
+            }
+
+            // 2. Si lo encontramos, enviamos su PIN al servidor usando su ID
+ // 2. Si lo encontramos, enviamos su PIN al servidor usando su ID
+        fetch(`/api/usuarios/${estudianteEncontrado.id}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pin: pinActual })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                // ¡Éxito! 
+                
+                // === GUARDADO DE SESIÓN EN MEMORIA PERSISTENTE ===
+                // Guardamos los datos para que el juego sepa quién eres
+                localStorage.setItem('userId', estudianteEncontrado.id);
+                localStorage.setItem('userName', estudianteEncontrado.nombre);
+                
+                // Guardamos el grado (usando grade o grado_escolar según tu tabla)
+                const grado = estudianteEncontrado.grade || estudianteEncontrado.grado_escolar || 1;
+                localStorage.setItem('userGrade', grado);
+                
+                // Variable global de respaldo
+                window.usuarioActualId = estudianteEncontrado.id;
+                console.log("✅ Sesión activa para:", estudianteEncontrado.nombre, "(ID:", estudianteEncontrado.id, ")");
+                // ================================================
+
+                selectUser(estudianteEncontrado.id);
+                closeWelcomeScreen();
+            } else {
+                alert("Ese PIN no es correcto. ¡Inténtalo de nuevo!");
+                borrarPin(); // Limpiamos el teclado para que intente otra vez
+            }
+        })
+        .catch(error => {
+            console.error("Error validando el PIN:", error);
+            alert("Hubo un error al validar el PIN.");
+        });
+    })
+    .catch(error => {
+        console.error("Error conectando con el servidor:", error);
+        alert("Error de conexión. ¿El servidor está encendido?");
+    });
+}
+function mostrarRegistroAdmin() {
+    const authContainer = document.getElementById('authContainer');
+    authContainer.innerHTML = `
+        <div class="ep-box" style="text-align: center; max-width: 320px; margin: 0 auto; border-top: 5px solid #27AE60;">
+            <h3 style="color: #27AE60; margin-bottom: 20px; font-size: 22px;">✨ Nuevo Profesor</h3>
+            
+            <input type="text" id="regAdmNombre" placeholder="Tu Nombre Completo" 
+                style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #27AE60; font-size: 15px; box-sizing: border-box; text-align: center;">
+            
+            <input type="email" id="regAdmEmail" placeholder="Tu Correo" 
+                style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #27AE60; font-size: 15px; box-sizing: border-box; text-align: center;">
+            
+            <input type="password" id="regAdmPass" placeholder="Crea una Contraseña" 
+                style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 10px; border: 2px solid #27AE60; font-size: 15px; box-sizing: border-box; text-align: center;">
+            
+            <button onclick="registrarAdminBackend()" class="ep-btn juicy-btn" style="background: #27AE60; color: white; width: 100%; margin-bottom: 15px;">
+                Registrar y Entrar
+            </button>
+            
+            <button onclick="mostrarLogin('admin')" style="background: transparent; color: #7F8C8D; border: none; text-decoration: underline; cursor: pointer; font-size: 14px;">
+                ← Volver al Login
+            </button>
+        </div>
+    `;
+}
+
+function loginAdmin() {
+    const email = document.getElementById('admEmail').value.trim();
+    const password = document.getElementById('admPass').value.trim();
+
+    if(!email || !password) {
+        mostrarAlertaMagica("Por favor ingresa tu correo y contraseña.", "⚠️", "#F39C12");
+        return;
+    }
+
+    // Tu backend espera esto en la ruta /api/usuarios/login
+    fetch('/api/usuarios/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.ok) {
+            mostrarAlertaMagica("¡Bienvenido Maestro!", "👨‍🏫", "#2980B9");
+            
+            // Redirigimos al panel después de 1 segundo para que vea el mensaje
+            setTimeout(() => {
+                window.location.href = '/admin';
+            }, 1000);
+            
+        } else {
+            mostrarAlertaMagica(data.error || "Datos incorrectos.", "❌", "#E74C3C");
+        }
+    })
+    .catch(e => mostrarAlertaMagica("Error de conexión con el servidor.", "🔌", "#FF6B6B"));
+}
+
+function registrarAdminBackend() {
+    const nombre = document.getElementById('regAdmNombre').value.trim();
+    const email = document.getElementById('regAdmEmail').value.trim();
+    const password = document.getElementById('regAdmPass').value.trim();
+
+    if(!nombre || !email || !password) {
+        mostrarAlertaMagica("Llena todos los campos para registrarte.", "⚠️", "#F39C12");
+        return;
+    }
+
+    // Tu backend espera esto en la ruta /api/admin/registro
+    fetch('/api/admin/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre, email: email, password: password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.ok) {
+            mostrarAlertaMagica("¡Cuenta creada! Inicia sesión para continuar.", "✨", "#27AE60");
+            mostrarLogin('admin');
+        } else {
+            mostrarAlertaMagica(data.error || "Hubo un error al crear la cuenta.", "❌", "#E74C3C");
+        }
+    })
+    .catch(e => mostrarAlertaMagica("Error de conexión con el servidor.", "🔌", "#FF6B6B"));
+}
+
+async function ejecutarRegistroAdmin() {
+    const nombre = document.getElementById('regAdmNombre').value;
+    const email = document.getElementById('regAdmEmail').value;
+    const password = document.getElementById('regAdmPass').value;
+
+    try {
+        const res = await fetch('/api/admin/registro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, email, password })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            alert("¡Cuenta de administrador creada exitosamente!");
+            localStorage.setItem('admin_token', data.session_token);
+            window.location.href = "/admin_dashboard.html";
+        } else {
+            alert("Error: " + data.error);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+function toggleDarkMode() {
+    const body = document.documentElement;
+    const btn = document.getElementById('theme-toggle');
+    
+    // Cambiamos el atributo data-theme
+    if (body.getAttribute('data-theme') === 'dark') {
+        body.removeAttribute('data-theme');
+        btn.innerText = '🌙';
+        localStorage.setItem('theme', 'light');
+    } else {
+        body.setAttribute('data-theme', 'dark');
+        btn.innerText = '☀️';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+// Al cargar la página, verificamos si ya tenía el modo oscuro activado
+window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').innerText = '☀️';
+    }
+});
+function volverARoles() {
+    document.getElementById('roleSelector').style.display = 'flex';
+    document.getElementById('authContainer').style.display = 'none';
+    document.getElementById('backToRoles').style.display = 'none';
+}

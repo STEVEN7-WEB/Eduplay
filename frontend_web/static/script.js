@@ -1,132 +1,20 @@
 // ========== SISTEMA DE LOGROS ==========
-
-// Definición de logros disponibles
 const achievementsList = [
-    {
-        id: 'first_star',
-        name: 'Primera Estrella',
-        description: 'Gana tu primera estrella',
-        icon: '⭐',
-        requirement: { type: 'stars', value: 1 },
-        color: '#FFD24C'
-    },
-    {
-        id: 'star_collector_10',
-        name: 'Coleccionista de Estrellas',
-        description: 'Consigue 10 estrellas',
-        icon: '⭐⭐',
-        requirement: { type: 'stars', value: 10 },
-        color: '#FFB347'
-    },
-    {
-        id: 'star_master_25',
-        name: 'Maestro de Estrellas',
-        description: 'Consigue 25 estrellas',
-        icon: '⭐⭐⭐',
-        requirement: { type: 'stars', value: 25 },
-        color: '#FF8C42'
-    },
-    {
-        id: 'time_explorer_15',
-        name: 'Explorador del Tiempo',
-        description: 'Juega 15 minutos',
-        icon: '⏱️',
-        requirement: { type: 'playTime', value: 15 },
-        color: '#2F80ED'
-    },
-    {
-        id: 'time_master_60',
-        name: 'Maestro del Tiempo',
-        description: 'Juega 60 minutos',
-        icon: '⏰',
-        requirement: { type: 'playTime', value: 60 },
-        color: '#1A5FC1'
-    },
-    {
-        id: 'math_whiz',
-        name: 'Genio Matemático',
-        description: 'Completa 5 juegos de matemáticas',
-        icon: '🔢',
-        requirement: { type: 'activity', value: { activity: 'math', count: 5 } },
-        color: '#27AE60'
-    },
-    {
-        id: 'memory_champion',
-        name: 'Campeón de Memoria',
-        description: 'Completa 5 juegos de memoria',
-        icon: '🧠',
-        requirement: { type: 'activity', value: { activity: 'memory', count: 5 } },
-        color: '#9B51E0'
-    },
-    {
-        id: 'language_expert',
-        name: 'Experto en Idiomas',
-        description: 'Completa juegos de gramática e inglés',
-        icon: '🔤',
-        requirement: {
-            type: 'combined', value: [
-                { activity: 'grammar', count: 3 },
-                { activity: 'english', count: 3 }
-            ]
-        },
-        color: '#3498DB'
-    },
-    {
-        id: 'science_prodigy',
-        name: 'Niño Prodigio de la Ciencia',
-        description: 'Completa 3 juegos de ciencia',
-        icon: '🔬',
-        requirement: { type: 'activity', value: { activity: 'science', count: 3 } },
-        color: '#E74C3C'
-    },
-    {
-        id: 'art_artist',
-        name: 'Pequeño Artista',
-        description: 'Completa 3 juegos de arte',
-        icon: '🎨',
-        requirement: { type: 'activity', value: { activity: 'art', count: 3 } },
-        color: '#FF7AB6'
-    },
-    {
-        id: 'geography_explorer',
-        name: 'Explorador Geográfico',
-        description: 'Completa 3 juegos de geografía',
-        icon: '🌎',
-        requirement: { type: 'activity', value: { activity: 'geography', count: 3 } },
-        color: '#2ECC71'
-    },
-    {
-        id: 'logic_genius',
-        name: 'Genio de la Lógica',
-        description: 'Completa 3 juegos de lógica',
-        icon: '🧩',
-        requirement: { type: 'activity', value: { activity: 'logic', count: 3 } },
-        color: '#F39C12'
-    },
-    {
-        id: 'all_activities',
-        name: 'Completista Total',
-        description: 'Prueba todas las actividades al menos una vez',
-        icon: '🏅',
-        requirement: { type: 'all_activities', value: 8 },
-        color: '#9B59B6'
-    },
-    {
-        id: 'perfect_score',
-        name: 'Puntuación Perfecta',
-        description: 'Responde 10 preguntas correctamente sin errores',
-        icon: '💯',
-        requirement: { type: 'perfect_games', value: 10 },
-        color: '#E91E63'
-    },
-    {
-        id: 'fast_learner',
-        name: 'Aprendiz Rápido',
-        description: 'Gana 5 estrellas en 10 minutos',
-        icon: '⚡',
-        requirement: { type: 'fast_stars', value: 5 },
-        color: '#00BCD4'
-    }
+    { id: 'first_star', name: 'Primera Estrella', description: 'Gana tu primera estrella', icon: '⭐', requirement: { type: 'stars', value: 1 }, color: '#FFD24C' },
+    { id: 'star_collector_10', name: 'Coleccionista de Estrellas', description: 'Consigue 10 estrellas', icon: '⭐⭐', requirement: { type: 'stars', value: 10 }, color: '#FFB347' },
+    { id: 'star_master_25', name: 'Maestro de Estrellas', description: 'Consigue 25 estrellas', icon: '⭐⭐⭐', requirement: { type: 'stars', value: 25 }, color: '#FF8C42' },
+    { id: 'time_explorer_15', name: 'Explorador del Tiempo', description: 'Juega 15 minutos', icon: '⏱️', requirement: { type: 'playTime', value: 15 }, color: '#2F80ED' },
+    { id: 'time_master_60', name: 'Maestro del Tiempo', description: 'Juega 60 minutos', icon: '⏰', requirement: { type: 'playTime', value: 60 }, color: '#1A5FC1' },
+    { id: 'math_whiz', name: 'Genio Matemático', description: 'Completa 5 juegos de matemáticas', icon: '🔢', requirement: { type: 'activity', value: { activity: 'math', count: 5 } }, color: '#27AE60' },
+    { id: 'memory_champion', name: 'Campeón de Memoria', description: 'Completa 5 juegos de memoria', icon: '🧠', requirement: { type: 'activity', value: { activity: 'memory', count: 5 } }, color: '#9B51E0' },
+    { id: 'language_expert', name: 'Experto en Idiomas', description: 'Completa juegos de gramática e inglés', icon: '🔤', requirement: { type: 'combined', value: [{ activity: 'grammar', count: 3 }, { activity: 'english', count: 3 }] }, color: '#3498DB' },
+    { id: 'science_prodigy', name: 'Niño Prodigio de la Ciencia', description: 'Completa 3 juegos de ciencia', icon: '🔬', requirement: { type: 'activity', value: { activity: 'science', count: 3 } }, color: '#E74C3C' },
+    { id: 'art_artist', name: 'Pequeño Artista', description: 'Completa 3 juegos de arte', icon: '🎨', requirement: { type: 'activity', value: { activity: 'art', count: 3 } }, color: '#FF7AB6' },
+    { id: 'geography_explorer', name: 'Explorador Geográfico', description: 'Completa 3 juegos de geografía', icon: '🌎', requirement: { type: 'activity', value: { activity: 'geography', count: 3 } }, color: '#2ECC71' },
+    { id: 'logic_genius', name: 'Genio de la Lógica', description: 'Completa 3 juegos de lógica', icon: '🧩', requirement: { type: 'activity', value: { activity: 'logic', count: 3 } }, color: '#F39C12' },
+    { id: 'all_activities', name: 'Completista Total', description: 'Prueba todas las actividades al menos una vez', icon: '🏅', requirement: { type: 'all_activities', value: 8 }, color: '#9B59B6' },
+    { id: 'perfect_score', name: 'Puntuación Perfecta', description: 'Responde 10 preguntas correctamente sin errores', icon: '💯', requirement: { type: 'perfect_games', value: 10 }, color: '#E91E63' },
+    { id: 'fast_learner', name: 'Aprendiz Rápido', description: 'Gana 5 estrellas en 10 minutos', icon: '⚡', requirement: { type: 'fast_stars', value: 5 }, color: '#00BCD4' }
 ];
 
 // Estado de logros por usuario
@@ -193,33 +81,12 @@ function saveUserAchievements() {
 // Actualizar logros rápidos en sidebar
 function updateQuickAchievements() {
     if (!currentUser) return;
+    
+    // AGREGA ESTE ESCUDO:
+    const quickAchievements = document.getElementById('quickAchievements');
+    if (!quickAchievements) return; 
 
-    const unlocked = Object.keys(userAchievements)
-        .filter(id => userAchievements[id].unlocked)
-        .slice(0, 4); // Mostrar máximo 4 logros
-
-    quickAchievements.innerHTML = '';
-
-    unlocked.forEach(achievementId => {
-        const achievement = achievementsList.find(a => a.id === achievementId);
-        if (achievement) {
-            const badge = document.createElement('div');
-            badge.className = 'badge';
-            badge.title = achievement.name;
-            badge.innerHTML = achievement.icon;
-            badge.style.background = achievement.color;
-            quickAchievements.appendChild(badge);
-        }
-    });
-
-    // Si no hay logros, mostrar placeholder
-    if (unlocked.length === 0) {
-        quickAchievements.innerHTML = `
-            <div class="badge" style="background: var(--accent-blue)">⭐</div>
-            <div class="badge" style="background: var(--accent-green)">⏱️</div>
-            <div class="badge" style="background: var(--accent-purple)">🎮</div>
-        `;
-    }
+    // ... aquí sigue tu código original (const unlocked = Object.keys...)
 }
 
 // Mostrar modal de logros
@@ -521,56 +388,262 @@ const startNewUserBtn = document.getElementById('startNewUserBtn');
 const playAsGuestBtn = document.getElementById('playAsGuestBtn');
 
 // Mostrar pantalla de bienvenida
+// Mostrar pantalla de bienvenida (LIMPIA)
 function showWelcomeScreen() {
-    loadUsers(); // Cargar usuarios existentes
+    const welcomeOverlay = document.getElementById('welcomeOverlay');
+    const mainContainer = document.getElementById('mainContainer');
+    const welcomeOptions = document.getElementById('welcomeOptions');
+    const roleSelector = document.getElementById('roleSelector');
+    const authContainer = document.getElementById('authContainer');
+    const backBtn = document.getElementById('backToRoles');
 
-    welcomeOverlay.style.display = 'flex';
-    mainContainer.style.display = 'none';
+    // Mostramos el fondo del inicio y ocultamos el juego
+    if (welcomeOverlay) welcomeOverlay.style.display = 'flex';
+    if (mainContainer) mainContainer.style.display = 'none';
+    
+    // Limpiamos los perfiles o cualquier mensaje viejo
+    if (welcomeOptions) welcomeOptions.innerHTML = '';
+    
+    // Mostramos SOLO los botones principales
+    if (roleSelector) roleSelector.style.display = 'flex';
+    
+    // Nos aseguramos de que el teclado y el botón de "volver" estén ocultos al principio
+    if (authContainer) authContainer.style.display = 'none';
+    if (backBtn) backBtn.style.display = 'none';
+}
 
-    // Limpiar opciones anteriores
-    welcomeOptions.innerHTML = '';
-    welcomeButtons.style.display = 'flex';
+// Variables globales para guardar la selección durante los pasos
+let avatarSeleccionado = '';
+let gradoSeleccionado = 0;
+let pinRegistroActual = "";
 
-    // Si hay usuarios registrados, mostrar opción para seleccionar uno
-    if (users.length > 0) {
-        const userSelectionList = document.createElement('div');
-        userSelectionList.className = 'user-selection-list';
+function mostrarRegistroAlumno() {
+    document.getElementById('roleSelector').style.display = 'none';
+    const authContainer = document.getElementById('authContainer');
+    document.getElementById('backToRoles').style.display = 'inline-block';
+    
+    // Reiniciamos todo al abrir
+    avatarSeleccionado = '';
+    gradoSeleccionado = 0;
+    pinRegistroActual = "";
+    
+    const avatares = ['🦊', '🐶', '🐱', '🦄', '🚀', '🌟'];
+    const grados = [1, 2, 3, 4, 5, 6];
 
-        const message = document.createElement('div');
-        message.className = 'welcome-message';
-        message.textContent = 'Selecciona un usuario existente para continuar:';
-        welcomeOptions.appendChild(message);
+    authContainer.style.display = 'block';
+    
+    // Creamos la estructura con 3 "pasos" ocultos
+    authContainer.innerHTML = `
+        <div class="ep-box" style="text-align: center; max-width: 350px; margin: 0 auto;">
+            
+            <div id="regStep1" style="display: block;">
+                <h3 style="color: #27AE60; margin-bottom: 15px;">Paso 1: ¿Quién eres? 📝</h3>
+                
+                <input type="text" id="regNombre" placeholder="Tu nombre" 
+                    style="width: 90%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #27AE60; text-align: center; font-size: 16px;">
+                
+                <input type="email" id="regEmail" placeholder="Email de tu tutor" 
+                    style="width: 90%; padding: 12px; margin-bottom: 20px; border-radius: 10px; border: 2px solid #27AE60; text-align: center;">
+                    
+                <button onclick="siguientePaso(2)" class="ep-btn juicy-btn" style="background: #2F80ED; color: white;">
+                    Siguiente ➡️
+                </button>
+            </div>
 
-        users.forEach(user => {
-            const userItem = document.createElement('div');
-            userItem.className = 'user-selection-item';
-            userItem.innerHTML = `
-                <div class="user-selection-avatar" style="background: ${getUserColor(user.id)}">
-                    ${user.avatar}
+            <div id="regStep2" style="display: none;">
+                <h3 style="color: #F2994A; margin-bottom: 15px;">Paso 2: Tu Personaje 🎨</h3>
+                
+                <p style="margin: 0 0 10px; font-weight: bold;">Elige tu Avatar:</p>
+                <div id="avatarGrid" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+                    ${avatares.map(a => `<div class="avatar-option" id="av-${a}" onclick="seleccionarAvatar('${a}')">${a}</div>`).join('')}
                 </div>
-                <div class="user-selection-info">
-                    <div class="user-selection-name">${user.name}</div>
-                    <div class="user-selection-stats">${user.age} años | ${user.stars} ⭐ | ${user.playTime} min</div>
+
+                <p style="margin: 0 0 10px; font-weight: bold;">Tu Grado Escolar:</p>
+                <div id="gradoGrid" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+                    ${grados.map(g => `<div class="grado-option" id="gr-${g}" onclick="seleccionarGrado(${g})">${g}º</div>`).join('')}
                 </div>
-            `;
-            userItem.onclick = () => selectUserFromWelcome(user.id);
-            userSelectionList.appendChild(userItem);
-        });
+                
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="siguientePaso(1)" class="ep-btn" style="background: #95A5A6; color: white; border-radius: 50px; padding: 10px 20px;">⬅️ Atrás</button>
+                    <button onclick="siguientePaso(3)" class="ep-btn juicy-btn" style="background: #2F80ED; color: white; width: auto; padding: 10px 20px;">Siguiente ➡️</button>
+                </div>
+            </div>
 
-        welcomeOptions.appendChild(userSelectionList);
+            <div id="regStep3" style="display: none;">
+                <h3 style="color: #9B59B6; margin-bottom: 10px;">Paso 3: PIN Secreto 🔐</h3>
+                <p style="font-size: 14px; margin-bottom: 10px;">Inventa 4 números mágicos</p>
+                
+                <div id="regPinDisplay" style="font-size: 28px; letter-spacing: 8px; margin-bottom: 10px; height: 35px; color: #9B59B6;"></div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 5px; margin-bottom: 15px;">
+                    <button onclick="tecladoPinRegistro('1')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">1</button>
+                    <button onclick="tecladoPinRegistro('2')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">2</button>
+                    <button onclick="tecladoPinRegistro('3')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">3</button>
+                    <button onclick="tecladoPinRegistro('4')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">4</button>
+                    <button onclick="tecladoPinRegistro('5')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">5</button>
+                    <button onclick="tecladoPinRegistro('6')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">6</button>
+                    <button onclick="tecladoPinRegistro('7')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">7</button>
+                    <button onclick="tecladoPinRegistro('8')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">8</button>
+                    <button onclick="tecladoPinRegistro('9')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">9</button>
+                    <button onclick="siguientePaso(2)" class="ep-btn" style="background: #95A5A6; color: white; font-size: 14px; padding: 10px;">⬅️</button>
+                    <button onclick="tecladoPinRegistro('0')" class="ep-btn" style="background: #f0f0f0; color: #333; font-size: 18px; padding: 10px;">0</button>
+                    <button onclick="borrarPinRegistro()" class="ep-btn" style="background: #FF6B6B; font-size: 18px; padding: 10px;">❌</button>
+                </div>
+                
+                <button onclick="crearAlumnoBackend()" class="ep-btn juicy-btn" style="background: #27AE60; color: white;">
+                    ¡Listo para jugar! 🚀
+                </button>
+            </div>
 
-        // También mostrar opción de crear nuevo usuario
-        const orMessage = document.createElement('div');
-        orMessage.className = 'welcome-message';
-        orMessage.textContent = 'O si prefieres:';
-        welcomeOptions.appendChild(orMessage);
-    } else {
-        // Si no hay usuarios, mostrar mensaje de bienvenida
-        const message = document.createElement('div');
-        message.className = 'welcome-message';
-        message.textContent = '¡Bienvenido a EduPlay! Crea tu primer usuario para comenzar la aventura educativa.';
-        welcomeOptions.appendChild(message);
+        </div>
+    `;
+}
+
+function siguientePaso(pasoDestino) {
+    if (pasoDestino === 2) {
+        const nombre = document.getElementById('regNombre').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        if (!nombre || !email) {
+            // AHORA USAMOS LA ALERTA MÁGICA: Mensaje, Emoji, Color (naranja)
+            mostrarAlertaMagica("¡No olvides escribir tu nombre y el correo de tu tutor!", "📝", "#F2994A");
+            return;
+        }
     }
+    if (pasoDestino === 3) {
+        if (!avatarSeleccionado || gradoSeleccionado === 0) {
+            // AHORA USAMOS LA ALERTA MÁGICA
+            mostrarAlertaMagica("¡Elige un avatar y tu grado para continuar!", "🎨", "#2F80ED");
+            return;
+        }
+    }
+
+    // (El resto del código se queda igual...)
+    document.getElementById('regStep1').style.display = 'none';
+    document.getElementById('regStep2').style.display = 'none';
+    document.getElementById('regStep3').style.display = 'none';
+    document.getElementById(`regStep${pasoDestino}`).style.display = 'block';
+}
+
+// Funciones visuales para resaltar la selección (se mantienen igual)
+function seleccionarAvatar(avatar) {
+    avatarSeleccionado = avatar;
+    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`av-${avatar}`).classList.add('selected');
+}
+
+function seleccionarGrado(grado) {
+    gradoSeleccionado = grado;
+    document.querySelectorAll('.grado-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`gr-${grado}`).classList.add('selected');
+}
+
+// Lógica del teclado numérico para el REGISTRO
+function tecladoPinRegistro(numero) {
+    if (pinRegistroActual.length < 4) {
+        pinRegistroActual += numero;
+        document.getElementById('regPinDisplay').textContent = "⭐".repeat(pinRegistroActual.length);
+    }
+}
+
+function borrarPinRegistro() {
+    pinRegistroActual = "";
+    document.getElementById('regPinDisplay').textContent = "";
+}
+
+// Enviar datos finalmente al servidor
+// Enviar datos finalmente al servidor
+function crearAlumnoBackend() {
+    // 1. Alerta si el PIN está incompleto (Morado para que combine con el Paso 3)
+    if (pinRegistroActual.length < 4) {
+        mostrarAlertaMagica("¡Tu PIN secreto debe tener 4 números (4 estrellitas)!", "🔐", "#9B59B6");
+        return;
+    }
+
+    const nombre = document.getElementById('regNombre').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+
+    fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            nombre: nombre,
+            email: email,
+            grado_escolar: gradoSeleccionado,
+            pin: pinRegistroActual,
+            avatar: avatarSeleccionado
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.id) {
+            // 2. Alerta de Éxito (Verde festivo)
+            mostrarAlertaMagica("¡Personaje creado con éxito! Ahora entra con tu nuevo PIN secreto.", "🎉", "#27AE60");
+            volverARoles();
+        } else {
+            // 3. Alerta si falta algún dato o hay un error en Flask (Rojo)
+            mostrarAlertaMagica(data.error || "Hubo un problema al crear tu perfil.", "❌", "#E74C3C");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        // 4. Alerta si el servidor está apagado (Rojo coral)
+        mostrarAlertaMagica("Error de conexión. ¿El servidor está encendido?", "🔌", "#FF6B6B");
+    });
+}
+
+async function guardarPreguntaReal() {
+    const texto = document.getElementById('q-text').value.trim();
+    const materia = document.getElementById('q-subject').value;
+    const grado = parseInt(document.getElementById('q-grade').value);
+    
+    // Obtenemos las 4 opciones
+    const opciones = [
+        document.getElementById('opt-0').value.trim(),
+        document.getElementById('opt-1').value.trim(),
+        document.getElementById('opt-2').value.trim(),
+        document.getElementById('opt-3').value.trim()
+    ];
+
+    // Obtenemos cuál es la correcta (el índice 0, 1, 2 o 3)
+    const correcta = parseInt(document.querySelector('input[name="correcta"]:checked').value);
+
+    // Validación básica
+    if (!texto || opciones.some(opt => opt === "")) {
+        mostrarAlertaMagica("¡Faltan datos! Escribe la pregunta y todas las opciones.", "⚠️", "#F39C12");
+        return;
+    }
+
+    // Enviamos a tu backend (asegúrate de tener esta ruta en actividades_bp)
+    fetch('/api/preguntas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            materia: materia,
+            grado: grado,
+            texto: texto,
+            opciones: opciones,
+            correcta: correcta
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            mostrarAlertaMagica("¡Pregunta guardada en Neon exitosamente!", "🚀", "#27AE60");
+            // Limpiar formulario
+            document.getElementById('q-text').value = '';
+            opciones.forEach((_, i) => document.getElementById(`opt-${i}`).value = '');
+        } else {
+            mostrarAlertaMagica("Error al guardar: " + data.error, "❌", "#E74C3C");
+        }
+    })
+    .catch(err => mostrarAlertaMagica("Error de conexión con el servidor.", "🔌", "#FF6B6B"));
+}
+
+// Función auxiliar para regresar al menú de botones
+function volverARoles() {
+    document.getElementById('authContainer').style.display = 'none';
+    document.getElementById('backToRoles').style.display = 'none';
+    document.getElementById('roleSelector').style.display = 'flex';
 }
 
 // Seleccionar usuario desde la pantalla de bienvenida
@@ -671,6 +744,22 @@ const activities = {
         `,
         gameTypes: ['operaciones', 'dinero', 'tiempo', 'fracciones']
     },
+    logic: {
+        emoji: '🧩',
+        title: 'Lógica y Puzzles',
+        instructions: `
+            <p><strong>¡Pon a prueba tu cerebro con estos acertijos!</strong></p>
+            <div class="instructions-example">
+                <strong>Tipos de juegos:</strong><br>
+                • Patrones y secuencias: Descubre qué sigue<br>
+                • Rompecabezas: Ordena las piezas<br>
+                • Acertijos visuales: Encuentra la lógica oculta<br>
+                • Pensamiento lateral: Piensa fuera de la caja
+            </div>
+            <p>¡Entrena tu mente para resolver cualquier problema!</p>
+        `,
+        gameTypes: ['patrones', 'rompecabezas', 'acertijos', 'pensamiento']
+    },
     grammar: {
         emoji: '📝',
         title: 'Gramática Divertida',
@@ -753,276 +842,6 @@ const activities = {
     }
 };
 
-
-const gameContent = {
-    // ========== MEMORIA ==========
-    memory: {
-        parejas: {
-            title: "Memoria de Parejas",
-            description: "Encuentra todas las parejas de cartas iguales",
-            difficulties: {
-                easy: { pairs: 6, grid: 'repeat(4, 1fr)' },
-                medium: { pairs: 8, grid: 'repeat(4, 1fr)' },
-                hard: { pairs: 12, grid: 'repeat(4, 1fr)' }
-            }
-        },
-        secuencias: {
-            title: "Memoria de Secuencias",
-            description: "Memoriza y repite la secuencia de colores"
-        },
-        visual: {
-            title: "Memoria Visual",
-            description: "Encuentra los objetos que cambiaron de lugar"
-        }
-    },
-
-    // ========== MATEMÁTICAS ==========
-    math: {
-        operaciones: {
-            title: "Operaciones Básicas",
-            questions: [
-                { question: "15 + 8 = ?", options: ["22", "23", "24", "25"], correct: 1 },
-                { question: "25 - 7 = ?", options: ["17", "18", "19", "20"], correct: 1 },
-                { question: "6 × 4 = ?", options: ["20", "22", "24", "26"], correct: 2 },
-                { question: "36 ÷ 6 = ?", options: ["5", "6", "7", "8"], correct: 1 },
-                { question: "9 × 7 = ?", options: ["56", "63", "72", "81"], correct: 1 },
-                { question: "48 ÷ 8 = ?", options: ["5", "6", "7", "8"], correct: 1 }
-            ]
-        },
-        dinero: {
-            title: "Matemáticas con Dinero",
-            questions: [
-                { question: "Si tengo 2 monedas de $10 y 3 de $5, ¿cuánto dinero tengo?", options: ["$25", "$30", "$35", "$40"], correct: 2 },
-                { question: "Un helado cuesta $15, si pago con $20, ¿cuánto me devuelven?", options: ["$3", "$4", "$5", "$6"], correct: 2 },
-                { question: "¿Cuánto es $50 - $28?", options: ["$20", "$22", "$24", "$26"], correct: 1 }
-            ]
-        },
-        tiempo: {
-            title: "Reloj y Tiempo",
-            questions: [
-                { question: "Si son las 3:30, ¿cuánto falta para las 4:00?", options: ["15 min", "20 min", "30 min", "45 min"], correct: 2 },
-                { question: "¿Cuántos minutos tiene una hora?", options: ["50", "60", "70", "80"], correct: 1 },
-                { question: "Si empezamos a las 2:15 y terminamos a las 3:00, ¿cuánto duró?", options: ["30 min", "45 min", "60 min", "75 min"], correct: 1 }
-            ]
-        },
-        fracciones: {
-            title: "Fracciones Divertidas",
-            questions: [
-                { question: "Si divido una pizza en 4 partes iguales, cada parte es:", options: ["1/2", "1/3", "1/4", "1/5"], correct: 2 },
-                { question: "¿Cuánto es 1/2 + 1/2?", options: ["1/4", "1/2", "1", "2"], correct: 2 },
-                { question: "Si tengo 3/4 de un pastel, ¿me falta?", options: ["1/8", "1/4", "1/3", "1/2"], correct: 1 }
-            ]
-        }
-    },
-
-    // ========== GRAMÁTICA ==========
-    grammar: {
-        completar: {
-            title: "Completar Oraciones",
-            questions: [
-                { question: "Los niños ___ en el parque.", options: ["juega", "juegan", "juego", "jugamos"], correct: 1 },
-                { question: "Mi hermana ___ muy inteligente.", options: ["es", "son", "está", "están"], correct: 0 },
-                { question: "Nosotros ___ al cine los viernes.", options: ["vamos", "va", "van", "voy"], correct: 0 },
-                { question: "Tú ___ muy rápido.", options: ["corres", "corre", "corro", "corren"], correct: 0 }
-            ]
-        },
-        sinonimos: {
-            title: "Sinónimos y Antónimos",
-            questions: [
-                { question: "Sinónimo de 'alegre':", options: ["feliz", "triste", "enojado", "serio"], correct: 0 },
-                { question: "Antónimo de 'grande':", options: ["enorme", "pequeño", "mediano", "alto"], correct: 1 },
-                { question: "Sinónimo de 'rápido':", options: ["lento", "veloz", "tranquilo", "calmado"], correct: 1 }
-            ]
-        },
-        ordenar: {
-            title: "Ordenar Palabras",
-            questions: [
-                { question: "Ordena: 'ella - parque - al - va'", options: ["Ella va al parque", "Al parque ella va", "Va ella al parque", "Parque al va ella"], correct: 0 },
-                { question: "Ordena: 'libro - leo - yo - un'", options: ["Yo leo un libro", "Un libro yo leo", "Leo yo un libro", "Libro un leo yo"], correct: 0 }
-            ]
-        },
-        verbos: {
-            title: "Identificar Verbos",
-            questions: [
-                { question: "¿Cuál es el verbo en: 'El gato corre rápido'?", options: ["gato", "corre", "rápido", "el"], correct: 1 },
-                { question: "¿Cuál es el verbo en: 'Nosotros comemos pizza'?", options: ["nosotros", "comemos", "pizza", "y"], correct: 1 }
-            ]
-        }
-    },
-
-    // ========== INGLÉS ==========
-    english: {
-        vocabulario: {
-            title: "Vocabulario Básico",
-            words: [
-                { spanish: "casa", english: "House", options: ["House", "Car", "Tree", "Book"] },
-                { spanish: "perro", english: "Dog", options: ["Cat", "Dog", "Bird", "Fish"] },
-                { spanish: "sol", english: "Sun", options: ["Sun", "Moon", "Star", "Cloud"] },
-                { spanish: "agua", english: "Water", options: ["Water", "Milk", "Juice", "Soda"] },
-                { spanish: "escuela", english: "School", options: ["School", "House", "Park", "Store"] },
-                { spanish: "familia", english: "Family", options: ["Family", "Friends", "Teachers", "Animals"] }
-            ]
-        },
-        pronombres: {
-            title: "Pronombres en Inglés",
-            words: [
-                { spanish: "yo", english: "I", options: ["I", "You", "He", "She"] },
-                { spanish: "tú", english: "You", options: ["I", "You", "We", "They"] },
-                { spanish: "él", english: "He", options: ["She", "He", "It", "They"] },
-                { spanish: "ella", english: "She", options: ["He", "She", "It", "We"] },
-                { spanish: "nosotros", english: "We", options: ["We", "They", "You", "I"] }
-            ]
-        },
-        frases: {
-            title: "Frases Útiles",
-            words: [
-                { spanish: "Buenos días", english: "Good morning", options: ["Good morning", "Good afternoon", "Good night", "Hello"] },
-                { spanish: "¿Cómo estás?", english: "How are you?", options: ["How are you?", "What's your name?", "Where are you?", "How old are you?"] },
-                { spanish: "Gracias", english: "Thank you", options: ["Thank you", "Please", "Sorry", "Welcome"] },
-                { spanish: "Por favor", english: "Please", options: ["Please", "Thank you", "Sorry", "Hello"] }
-            ]
-        },
-        opuestos: {
-            title: "Opuestos en Inglés",
-            words: [
-                { word: "Big", opposite: "Small", options: ["Small", "Large", "Huge", "Tall"] },
-                { word: "Hot", opposite: "Cold", options: ["Cold", "Warm", "Cool", "Freezing"] },
-                { word: "Up", opposite: "Down", options: ["Down", "Left", "Right", "Above"] },
-                { word: "Fast", opposite: "Slow", options: ["Slow", "Quick", "Rapid", "Swift"] }
-            ]
-        }
-    },
-
-    // ========== GEOGRAFÍA ==========
-    geography: {
-        paises: {
-            title: "Países y Capitales",
-            questions: [
-                { question: "¿Cuál es la capital de México?", options: ["Guadalajara", "Monterrey", "Ciudad de México", "Puebla"], correct: 2 },
-                { question: "¿Qué país tiene como capital París?", options: ["Italia", "Francia", "España", "Alemania"], correct: 1 },
-                { question: "¿Cuál es la capital de Argentina?", options: ["Buenos Aires", "Santiago", "Lima", "Montevideo"], correct: 0 },
-                { question: "¿Qué país tiene como capital Tokio?", options: ["China", "Corea", "Japón", "Tailandia"], correct: 2 }
-            ]
-        },
-        banderas: {
-            title: "Banderas del Mundo",
-            questions: [
-                { question: "¿Qué bandera tiene una hoja de maple?", options: ["Estados Unidos", "Canadá", "Australia", "Reino Unido"], correct: 1 },
-                { question: "¿Qué bandera es roja con un círculo rojo?", options: ["China", "Japón", "Corea", "Vietnam"], correct: 1 },
-                { question: "¿Qué bandera tiene estrellas en su escudo?", options: ["Estados Unidos", "Canadá", "Australia", "Reino Unido"], correct: 0 }
-            ]
-        },
-        geografia: {
-            title: "Accidentes Geográficos",
-            questions: [
-                { question: "¿Cuál es el río más largo del mundo?", options: ["Amazonas", "Nilo", "Misisipi", "Yangtsé"], correct: 0 },
-                { question: "¿En qué continente está el desierto del Sahara?", options: ["Asia", "África", "América", "Australia"], correct: 1 },
-                { question: "¿Qué montaña es la más alta del mundo?", options: ["Monte Everest", "K2", "Aconcagua", "Mont Blanc"], correct: 0 }
-            ]
-        },
-        culturas: {
-            title: "Culturas del Mundo",
-            questions: [
-                { question: "¿En qué país se originó la pizza?", options: ["Francia", "Italia", "España", "Grecia"], correct: 1 },
-                { question: "¿Qué país es famoso por los samuráis?", options: ["China", "Japón", "Corea", "Tailandia"], correct: 1 },
-                { question: "¿Dónde se encuentra la estatua de la Libertad?", options: ["Londres", "París", "Nueva York", "Roma"], correct: 2 }
-            ]
-        }
-    },
-
-    // ========== ARTE ==========
-    art: {
-        colores: {
-            title: "Mezcla de Colores",
-            questions: [
-                { question: "¿Qué colores forman el naranja?", options: ["Rojo y azul", "Rojo y amarillo", "Azul y amarillo", "Verde y rojo"], correct: 1 },
-                { question: "¿Qué color se obtiene mezclando azul y amarillo?", options: ["Verde", "Morado", "Naranja", "Rojo"], correct: 0 },
-                { question: "¿Qué color se obtiene mezclando rojo y azul?", options: ["Verde", "Morado", "Naranja", "Amarillo"], correct: 1 }
-            ]
-        },
-        reconocimiento: {
-            title: "Reconocimiento de Colores",
-            questions: [
-                { question: "¿El verde es un color primario?", options: ["Sí", "No", "A veces", "Depende"], correct: 1 },
-                { question: "¿Cuáles son los colores primarios?", options: ["Rojo, azul, amarillo", "Verde, naranja, morado", "Blanco, negro, gris", "Rosa, celeste, beige"], correct: 0 }
-            ]
-        },
-        formas: {
-            title: "Formas Geométricas",
-            questions: [
-                { question: "¿Qué figura tiene 4 lados iguales?", options: ["Triángulo", "Cuadrado", "Círculo", "Rectángulo"], correct: 1 },
-                { question: "¿Cuántos lados tiene un triángulo?", options: ["3", "4", "5", "6"], correct: 0 },
-                { question: "¿Qué figura no tiene lados?", options: ["Cuadrado", "Triángulo", "Círculo", "Rectángulo"], correct: 2 }
-            ]
-        },
-        'arte-famoso': {
-            title: "Arte Famoso",
-            questions: [
-                { question: "¿Quién pintó la Mona Lisa?", options: ["Picasso", "Van Gogh", "Da Vinci", "Monet"], correct: 2 },
-                { question: "¿Qué artista cortó su propia oreja?", options: ["Picasso", "Van Gogh", "Da Vinci", "Monet"], correct: 1 }
-            ]
-        }
-    },
-
-    // ========== CIENCIA ==========
-    science: {
-        animales: {
-            title: "Animales y Hábitat",
-            questions: [
-                { question: "¿Qué animal vive en el desierto?", options: ["Pingüino", "Camello", "Oso polar", "Mono"], correct: 1 },
-                { question: "¿Qué animal es mamífero marino?", options: ["Tiburón", "Delfín", "Pulpo", "Medusa"], correct: 1 },
-                { question: "¿Qué animal pone huevos?", options: ["Perro", "Gato", "Pájaro", "Ballena"], correct: 2 }
-            ]
-        },
-        'cuerpo-humano': {
-            title: "Cuerpo Humano",
-            questions: [
-                { question: "¿Qué órgano bombea la sangre?", options: ["Pulmón", "Corazón", "Estómago", "Cerebro"], correct: 1 },
-                { question: "¿Cuántos huesos tiene el cuerpo humano aproximadamente?", options: ["106", "206", "306", "406"], correct: 1 },
-                { question: "¿Qué sentido usamos para oler?", options: ["Vista", "Oído", "Olfato", "Gusto"], correct: 2 }
-            ]
-        },
-        plantas: {
-            title: "Plantas y Naturaleza",
-            questions: [
-                { question: "¿Qué necesitan las plantas para hacer fotosíntesis?", options: ["Agua y tierra", "Sol y agua", "Aire y sol", "Tierra y aire"], correct: 1 },
-                { question: "¿Qué parte de la planta absorbe agua?", options: ["Hojas", "Flores", "Raíces", "Tallo"], correct: 2 }
-            ]
-        },
-        experimentos: {
-            title: "Experimentos Simples",
-            questions: [
-                { question: "¿Qué flota en el agua?", options: ["Piedra", "Llave", "Pelota", "Moneda"], correct: 2 },
-                { question: "¿Qué se disuelve en agua?", options: ["Aceite", "Azúcar", "Arena", "Piedra"], correct: 1 },
-                { question: "¿Qué atrae un imán?", options: ["Plástico", "Madera", "Metal", "Vidrio"], correct: 2 }
-            ]
-        }
-    },
-
-    // ========== LÓGICA ==========
-    logic: {
-        secuencias: {
-            title: "Secuencias Lógicas",
-            questions: [
-                { question: "Completa: 2, 4, 6, ?", options: ["7", "8", "9", "10"], correct: 1 },
-                { question: "Completa: A, C, E, ?", options: ["F", "G", "H", "I"], correct: 1 },
-                { question: "Completa: 🟥, 🟦, 🟥, 🟦, ?", options: ["🟥", "🟦", "🟩", "🟨"], correct: 0 }
-            ]
-        },
-        laberintos: {
-            title: "Laberintos",
-            description: "Encuentra el camino correcto para llegar al tesoro"
-        },
-        rompecabezas: {
-            title: "Rompecabezas",
-            description: "Arma la figura dividida en piezas"
-        },
-        sudoku: {
-            title: "Sudoku Infantil",
-            description: "Completa el tablero con números del 1 al 4"
-        }
-    }
-};
 
 // Estado de la aplicación
 let currentActivity = null;
@@ -1623,30 +1442,25 @@ function saveUsers() {
     localStorage.setItem('eduplay_users', JSON.stringify(users));
 }
 
-// Actualizar la visualización del usuario actual
 function updateCurrentUserDisplay() {
     if (currentUser) {
-        currentUserName.textContent = currentUser.name;
-        currentUserAvatar.textContent = currentUser.avatar;
-        // Generar color único para el avatar basado en el ID (no jala como pense)
-        const colors = [
-            '#2F80ED', '#F2994A', '#27AE60', '#FF7AB6',
-            '#FFD24C', '#9B51E0', '#56CCF2', '#BB6BD9'
-        ];
-        currentUserAvatar.style.background = colors[currentUser.id % colors.length];
-
-        // Actualizar estadísticas del sidebar
-        starsCount.textContent = currentUser.stars;
-        playTime.textContent = `${currentUser.playTime} min`;
-        progressBar.style.width = `${Math.min((currentUser.stars / 100) * 100, 100)}%`;
-
-        // Mostrar botón de cerrar sesión si hay usuario
-        logoutBtn.style.display = 'flex';
+        if(currentUserName) currentUserName.textContent = currentUser.name;
+        if(currentUserAvatar) {
+            currentUserAvatar.textContent = currentUser.avatar;
+            const colors = ['#2F80ED', '#F2994A', '#27AE60', '#FF7AB6', '#FFD24C', '#9B51E0', '#56CCF2', '#BB6BD9'];
+            currentUserAvatar.style.background = colors[currentUser.id % colors.length];
+        }
+        if(starsCount) starsCount.textContent = currentUser.stars;
+        if(playTime) playTime.textContent = `${currentUser.playTime} min`;
+        if(progressBar) progressBar.style.width = `${Math.min((currentUser.stars / 100) * 100, 100)}%`;
+        if(logoutBtn) logoutBtn.style.display = 'flex';
     } else {
-        currentUserName.textContent = 'Usuario';
-        currentUserAvatar.textContent = 'U';
-        currentUserAvatar.style.background = '#2F80ED';
-        logoutBtn.style.display = 'none';
+        if(currentUserName) currentUserName.textContent = 'Usuario';
+        if(currentUserAvatar) {
+            currentUserAvatar.textContent = 'U';
+            currentUserAvatar.style.background = '#2F80ED';
+        }
+        if(logoutBtn) logoutBtn.style.display = 'none';
     }
 }
 
@@ -1774,23 +1588,20 @@ function cancelEditUser() {
 
 // Renderizar lista de usuarios
 function renderUserList() {
-    userList.innerHTML = '';
+    const userListContainer = document.getElementById('userList');
+    
+    // ESCUDO: Si no estamos en la pantalla de gestión de usuarios, salimos sin error [cite: 320]
+    if (!userListContainer) return;
 
+    userListContainer.innerHTML = '';
+    
     if (users.length === 0) {
-        userList.innerHTML = `
-            <div class="user-item" style="text-align: center; flex-direction: column; gap: 10px;">
-                <div style="font-size: 40px; margin-bottom: 10px;">👤</div>
+        userListContainer.innerHTML = `
+            <div class="user-item">
                 <div class="user-info">
-                    <div class="user-name">¡Bienvenido a EduPlay!</div>
-                    <div class="user-stats">Crea tu primer usuario para empezar</div>
+                    <div class="user-name">No hay usuarios registrados</div>
                 </div>
-                <div style="margin-top: 10px;">
-                    <button class="btn btn-primary" onclick="createNewUser()" style="padding: 10px 20px;">
-                        <span>➕</span> Crear Primer Usuario
-                    </button>
-                </div>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
@@ -1800,32 +1611,15 @@ function renderUserList() {
         userItem.className = `user-item ${isCurrent ? 'active' : ''}`;
         userItem.innerHTML = `
             <div class="user-header">
-                <div class="user-avatar" style="background: ${getUserColor(user.id)}">
-                    ${user.avatar}
-                </div>
+                <div class="user-avatar" style="background: ${getUserColor(user.id)}">${user.avatar}</div>
                 <div class="user-info">
                     <div class="user-name">${user.name}</div>
-                    <div class="user-stats">${user.age} años | ${user.stars} ⭐ | ${user.playTime} min</div>
+                    <div class="user-stats">${user.stars} ⭐ | ${user.playTime} min</div>
                 </div>
-            </div>
-            <div class="user-actions">
-                ${isCurrent ?
-                '<span class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">✓ Actual</span>' :
-                `<button class="btn btn-secondary" onclick="selectUser(${user.id})" style="padding: 5px 10px; font-size: 12px;">
-                                <span>👉</span> Seleccionar
-                            </button>`
-            }
-                <button class="btn btn-secondary" onclick="editUser(${user.id})" style="padding: 5px 10px; font-size: 12px;">
-                    <span>✏️</span> Editar
-                </button>
-                <button class="btn btn-danger" onclick="deleteUser(${user.id})" style="padding: 5px 10px; font-size: 12px;">
-                    <span>🗑️</span> Eliminar
-                </button>
-            </div>
-        `;
-        userList.appendChild(userItem);
+            </div>`;
+        userListContainer.appendChild(userItem);
     });
-}
+} 
 
 // Seleccionar usuario
 function selectUser(userId) {
@@ -1902,61 +1696,25 @@ function showInstructions(activityKey) {
     if (!activity) return;
 
     currentActivity = activityKey;
-    instructionsTitle.textContent = activity.title;
-    instructionsText.innerHTML = activity.instructions;
+    
+    // ESCUDOS: Solo cambia el texto si el modal existe en el HTML
+    const instTitle = document.getElementById('instructionsTitle');
+    const instText = document.getElementById('instructionsText');
+    const instModal = document.getElementById('instructionsModal');
 
-    // Si la actividad tiene tipos de juego, mostrarlos
-    if (activity.gameTypes && activity.gameTypes.length > 0) {
-        instructionsText.innerHTML += `
-            <div class="game-types-container">
-                <h3>Selecciona un tipo de juego:</h3>
-                ${activity.gameTypes.map((type, index) => {
-            let displayName = type;
-            switch (type) {
-                case 'parejas': displayName = 'Memoria de Parejas'; break;
-                case 'secuencias': displayName = 'Memoria de Secuencias'; break;
-                case 'visual': displayName = 'Memoria Visual'; break;
-                case 'operaciones': displayName = 'Operaciones Básicas'; break;
-                case 'dinero': displayName = 'Matemáticas con Dinero'; break;
-                case 'tiempo': displayName = 'Reloj y Tiempo'; break;
-                case 'fracciones': displayName = 'Fracciones Divertidas'; break;
-                case 'completar': displayName = 'Completar Oraciones'; break;
-                case 'sinonimos': displayName = 'Sinónimos y Antónimos'; break;
-                case 'ordenar': displayName = 'Ordenar Palabras'; break;
-                case 'verbos': displayName = 'Identificar Verbos'; break;
-                case 'vocabulario': displayName = 'Vocabulario Básico'; break;
-                case 'pronombres': displayName = 'Pronombres en Inglés'; break;
-                case 'frases': displayName = 'Frases Útiles'; break;
-                case 'opuestos': displayName = 'Opuestos en Inglés'; break;
-                case 'paises': displayName = 'Países y Capitales'; break;
-                case 'banderas': displayName = 'Banderas del Mundo'; break;
-                case 'geografia': displayName = 'Accidentes Geográficos'; break;
-                case 'culturas': displayName = 'Culturas del Mundo'; break;
-                case 'colores': displayName = 'Mezcla de Colores'; break;
-                case 'reconocimiento': displayName = 'Reconocimiento de Colores'; break;
-                case 'formas': displayName = 'Formas Geométricas'; break;
-                case 'arte-famoso': displayName = 'Arte Famoso'; break;
-                case 'animales': displayName = 'Animales y Hábitat'; break;
-                case 'cuerpo-humano': displayName = 'Cuerpo Humano'; break;
-                case 'plantas': displayName = 'Plantas y Naturaleza'; break;
-                case 'experimentos': displayName = 'Experimentos Simples'; break;
-                case 'secuencias': displayName = 'Secuencias Lógicas'; break;
-                case 'laberintos': displayName = 'Laberintos'; break;
-                case 'rompecabezas': displayName = 'Rompecabezas'; break;
-                case 'sudoku': displayName = 'Sudoku Infantil'; break;
-            }
-            return `
-                                <div class="game-type-option" onclick="selectGameType('${type}')">
-                                    <h4>${displayName}</h4>
-                                    <p>${getGameTypeDescription(activityKey, type)}</p>
-                                </div>
-                            `;
-        }).join('')}
-            </div>
-        `;
+    if (instTitle) instTitle.textContent = activity.title;
+    
+    if (instText) {
+        instText.innerHTML = activity.instructions;
+        // ... (aquí sigue el código que inyecta los botones de "gameTypes") ...
     }
 
-    instructionsModal.style.display = 'flex';
+    // Solo mostramos el modal si existe, si no, lanzamos un aviso
+    if (instModal) {
+        instModal.style.display = 'flex';
+    } else {
+        console.error("Falta agregar el modal de instrucciones y juegos en el index.html");
+    }
 }
 
 // Obtener descripción del tipo de juego
@@ -2055,6 +1813,43 @@ function loadGame(activity, gameType) {
 
         default:
             gameContainer.innerHTML = `<p>Juego en desarrollo: ${game.title}</p>`;
+    }
+}
+
+function toggleProfileMenu() {
+    const menu = document.getElementById('profileMenu');
+    const isVisible = menu.style.display === 'block';
+    menu.style.display = isVisible ? 'none' : 'block';
+    
+    if (!isVisible) {
+        cargarDatosPerfil();
+    }
+}
+
+async function cargarDatosPerfil() {
+    const uid = localStorage.getItem('userId');
+    if (!uid) return;
+
+    try {
+        // Llamamos a una nueva ruta de API que crearemos
+        const res = await fetch(`/api/usuarios/perfil/${uid}`);
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('menuFullname').innerText = data.nombre;
+            document.getElementById('statGrado').innerText = `${data.grado}º Grado`;
+            document.getElementById('statEdad').innerText = `${data.edad} años`;
+            document.getElementById('statMejorMateria').innerText = `🚀 ${data.mejor_materia}`;
+        }
+    } catch (e) {
+        console.error("Error al cargar perfil:", e);
+    }
+}
+
+// Cerrar el menú si haces clic afuera
+window.onclick = function(event) {
+    if (!event.target.closest('.profile-dropdown')) {
+        document.getElementById('profileMenu').style.display = 'none';
     }
 }
 
@@ -3003,99 +2798,44 @@ activityCards.forEach(card => {
     card.addEventListener('click', () => showInstructions(card.dataset.target));
 });
 
-startGame.addEventListener('click', startGameFunction);
-closeInstructions.addEventListener('click', () => instructionsModal.style.display = 'none');
-closeGame.addEventListener('click', closeModals);
-backToInstructions.addEventListener('click', () => {
-    gameModal.style.display = 'none';
-    instructionsModal.style.display = 'flex';
-});
-backToMenu.addEventListener('click', closeModals);
-darkModeToggle.addEventListener('click', toggleDarkMode);
-audioToggle.addEventListener('click', toggleAudio);
+// Busca donde seleccionas la tarjeta (línea 3006 aprox)
+const tarjetaEstudiante = document.querySelector('.student-profile-card');
 
-voiceBtn.addEventListener('click', () => {
-    if (!recognition) return;
-    if (isListening) {
-        recognition.stop();
-        resetVoiceStatus();
-    } else {
-        try { recognition.start(); }
-        catch (error) {
-            voiceStatus.textContent = "Error al iniciar reconocimiento";
-            setTimeout(resetVoiceStatus, 2000);
-        }
-    }
-});
-
-startNewUserBtn.addEventListener('click', () => {
-    createNewUser();
-    userManagementModal.style.display = 'flex';
-    welcomeOverlay.style.display = 'none';
-});
-
-playAsGuestBtn.addEventListener('click', playWithoutUser);
-currentUserDisplay.addEventListener('click', () => {
-    renderUserList();
-    userManagementModal.style.display = 'flex';
-});
-
-createNewUserBtn.addEventListener('click', createNewUser);
-saveUserBtn.addEventListener('click', saveUser);
-cancelEditBtn.addEventListener('click', cancelEditUser);
-logoutBtn.addEventListener('click', logout);
-document.getElementById('continueWithoutUser').addEventListener('click', playWithoutUser);
-
-closeUserManagement.addEventListener('click', () => {
-    if (currentUser) {
-        userManagementModal.style.display = 'none';
-    } else {
-        userManagementModal.style.display = 'none';
-        showWelcomeScreen();
-    }
-});
-
-confirmDeleteBtn.addEventListener('click', confirmDelete);
-cancelDeleteBtn.addEventListener('click', () => {
-    confirmationModal.style.display = 'none';
-    userToDelete = null;
-});
-
-viewAchievementsBtn.addEventListener('click', showAchievementsModal);
-closeAchievements.addEventListener('click', () => achievementsModal.style.display = 'none');
-closeAchievementsBtn.addEventListener('click', () => achievementsModal.style.display = 'none');
-closeUnlocked.addEventListener('click', () => achievementUnlocked.style.display = 'none');
-
-parentReportBtn.addEventListener('click', showParentReport);
-closeParentReport.addEventListener('click', () => parentReportModal.style.display = 'none');
-closeReport.addEventListener('click', () => parentReportModal.style.display = 'none');
-
-reportTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-        const tabId = tab.dataset.tab;
-        reportTabs.forEach(t => t.classList.remove('active'));
-        reportTabContents.forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById(`${tabId}Tab`).classList.add('active');
+if (tarjetaEstudiante) { // <--- ESTO EVITA EL ERROR NULL
+    tarjetaEstudiante.addEventListener('click', () => {
+        
+        // 1. Aquí capturamos el ID para evitar el "undefined"
+        const studentId = tarjetaEstudiante.getAttribute('data-id');
+        
+        // 2. Aquí armas tu URL de fetch para el login
+        const url = `/api/estudiantes/${studentId}/login`; 
+        
+        // ... aquí sigue tu código de fetch() ...
     });
+}
+// Verificamos que el botón de inicio del juego exista antes de agregarle eventos
+if (startGame) {
+    startGame.addEventListener('click', startGameFunction);
+    closeInstructions.addEventListener('click', () => instructionsModal.style.display = 'none');
+    closeGame.addEventListener('click', closeModals);
+    backToInstructions.addEventListener('click', () => {
+        gameModal.style.display = 'none';
+        instructionsModal.style.display = 'flex';
+    });
+    backToMenu.addEventListener('click', closeModals);
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+    audioToggle.addEventListener('click', toggleAudio);
+}
+console.log({
+  startGame,
+  closeInstructions,
+  closeGame,
+  backToInstructions,
+  backToMenu,
+  darkModeToggle,
+  audioToggle
 });
 
-printReport.addEventListener('click', () => window.print());
-exportReport.addEventListener('click', () => alert('En una versión completa, esto exportaría el informe como PDF'));
-
-setInterval(() => {
-    if (gameModal.style.display === 'flex') addPlayTime(0.1);
-}, 60000);
-
-const toggleLayoutBtn = document.getElementById('toggleLayoutBtn');
-const sidebar = document.querySelector('.sidebar');
-
-toggleLayoutBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('mobile-collapsed');
-    toggleLayoutBtn.innerHTML = sidebar.classList.contains('mobile-collapsed')
-        ? '<span>📱</span> Vista Completa'
-        : '<span>📱</span> Vista Compacta';
-});
 
 function checkResponsive() {
     if (window.innerWidth <= 768) {
@@ -3107,37 +2847,167 @@ function checkResponsive() {
     }
 }
 
-window.addEventListener('resize', checkResponsive);
-checkResponsive();
-
-
-function createParticles() {
-    const colors = ['#FFD24C', '#FF7AB6', '#2F80ED', '#27AE60', '#9B51E0'];
-    for (let i = 0; i < 15; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.width = `${Math.random() * 20 + 10}px`;
-        particle.style.height = particle.style.width;
-        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-        particle.style.opacity = '0.3';
-        particle.style.left = `${Math.random() * 100}%`;
-        particle.style.top = `${Math.random() * 100}%`;
-        document.body.appendChild(particle);
-
-        particle.animate([
-            { transform: 'translateY(0px)' },
-            { transform: `translateY(${Math.random() * 100 - 50}px)` }
-        ], {
-            duration: 3000 + Math.random() * 4000,
-            direction: 'alternate',
-            iterations: Infinity,
-            easing: 'ease-in-out'
+// ========== INICIALIZACIÓN SEGURA DE EVENTOS ==========
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Escudo para tarjetas de actividades [cite: 563]
+    const activityCards = document.querySelectorAll('.activity-card');
+    if (activityCards.length > 0) {
+        activityCards.forEach(card => {
+            card.addEventListener('click', () => showInstructions(card.dataset.target));
         });
     }
+
+    // 2. Escudo para controles del juego [cite: 567, 568, 569]
+    if (getEl('startGame')) getEl('startGame').addEventListener('click', startGameFunction);
+    if (getEl('closeInstructions')) getEl('closeInstructions').addEventListener('click', () => instructionsModal.style.display = 'none');
+    if (getEl('closeGame')) getEl('closeGame').addEventListener('click', closeModals);
+    
+    if (getEl('backToInstructions')) {
+        getEl('backToInstructions').addEventListener('click', () => {
+            gameModal.style.display = 'none';
+            instructionsModal.style.display = 'flex';
+        });
+    }
+
+    if (getEl('backToMenu')) getEl('backToMenu').addEventListener('click', closeModals);
+    if (getEl('darkModeToggle')) getEl('darkModeToggle').addEventListener('click', toggleDarkMode);
+    if (getEl('audioToggle')) getEl('audioToggle').addEventListener('click', toggleAudio);
+
+    // 3. Gestión de Voz [cite: 571]
+    const vBtn = getEl('voiceBtn');
+    if (vBtn) {
+        vBtn.addEventListener('click', () => {
+            if (!recognition) return;
+            if (isListening) {
+                recognition.stop();
+                resetVoiceStatus();
+            } else {
+                try { recognition.start(); }
+                catch (error) {
+                    voiceStatus.textContent = "Error al iniciar reconocimiento";
+                    setTimeout(resetVoiceStatus, 2000);
+                }
+            }
+        });
+    }
+
+    // 4. Gestión de Usuarios y Pantalla de Bienvenida [cite: 572, 573, 574]
+    if (getEl('startNewUserBtn')) {
+        getEl('startNewUserBtn').addEventListener('click', () => {
+            createNewUser();
+            userManagementModal.style.display = 'flex';
+            welcomeOverlay.style.display = 'none';
+        });
+    }
+
+    if (getEl('playAsGuestBtn')) getEl('playAsGuestBtn').addEventListener('click', playWithoutUser);
+    if (getEl('currentUserDisplay')) {
+        getEl('currentUserDisplay').addEventListener('click', () => {
+            renderUserList();
+            userManagementModal.style.display = 'flex';
+        });
+    }
+
+    if (getEl('createNewUserBtn')) getEl('createNewUserBtn').addEventListener('click', createNewUser);
+    if (getEl('saveUser')) getEl('saveUser').addEventListener('click', saveUser);
+    if (getEl('cancelEditBtn')) getEl('cancelEditBtn').addEventListener('click', cancelEditUser);
+    if (getEl('logoutBtn')) getEl('logoutBtn').addEventListener('click', logout);
+    if (getEl('continueWithoutUser')) getEl('continueWithoutUser').addEventListener('click', playWithoutUser);
+
+    if (getEl('closeUserManagement')) {
+        getEl('closeUserManagement').addEventListener('click', () => {
+            if (currentUser) {
+                userManagementModal.style.display = 'none';
+            } else {
+                userManagementModal.style.display = 'none';
+                showWelcomeScreen();
+            }
+        });
+    }
+
+    // 5. Confirmaciones y Logros [cite: 575, 576, 577]
+    if (getEl('confirmDeleteBtn')) getEl('confirmDeleteBtn').addEventListener('click', confirmDelete);
+    if (getEl('cancelDeleteBtn')) {
+        getEl('cancelDeleteBtn').addEventListener('click', () => {
+            confirmationModal.style.display = 'none';
+            userToDelete = null;
+        });
+    }
+
+    if (getEl('viewAchievementsBtn')) getEl('viewAchievementsBtn').addEventListener('click', showAchievementsModal);
+    if (getEl('closeAchievements')) getEl('closeAchievements').addEventListener('click', () => achievementsModal.style.display = 'none');
+    if (getEl('closeAchievementsBtn')) getEl('closeAchievementsBtn').addEventListener('click', () => achievementsModal.style.display = 'none');
+    if (getEl('closeUnlocked')) getEl('closeUnlocked').addEventListener('click', () => achievementUnlocked.style.display = 'none');
+
+    // 6. Reporte para Padres e Interfaz [cite: 576, 577, 579, 580, 581]
+    if (getEl('parentReportBtn')) getEl('parentReportBtn').addEventListener('click', showParentReport);
+    if (getEl('closeParentReport')) getEl('closeParentReport').addEventListener('click', () => parentReportModal.style.display = 'none');
+    if (getEl('closeReport')) getEl('closeReport').addEventListener('click', () => parentReportModal.style.display = 'none');
+    if (getEl('printReport')) getEl('printReport').addEventListener('click', () => window.print());
+    
+    if (getEl('toggleLayoutBtn')) {
+        getEl('toggleLayoutBtn').addEventListener('click', () => {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('mobile-collapsed');
+                getEl('toggleLayoutBtn').innerHTML = sidebar.classList.contains('mobile-collapsed')
+                    ? '<span>📱</span> Vista Completa'
+                    : '<span>📱</span> Vista Compacta';
+            }
+        });
+    }
+
+    // Inicializar app después de configurar eventos
+    initializeApp();
+});
+
+// Función auxiliar para acortar el código
+function getEl(id) {
+    return document.getElementById(id);
+};
+
+// Función auxiliar para acortar el código
+function getEl(id) {
+    return document.getElementById(id);
+};
+// === SISTEMA DE ALERTAS MÁGICAS ===
+function mostrarAlertaMagica(mensaje, emoji = "⚠️", colorBorde = "#FF6B6B") {
+    // Si ya hay una alerta, la quitamos primero
+    const alertaPrevia = document.getElementById('alertaMagicaOverlay');
+    if (alertaPrevia) alertaPrevia.remove();
+
+    // Creamos el fondo oscuro y borroso
+    const overlay = document.createElement('div');
+    overlay.id = 'alertaMagicaOverlay';
+    overlay.className = 'custom-alert-overlay';
+    
+    // Armamos la caja
+    overlay.innerHTML = `
+        <div class="custom-alert-box" id="alertaMagicaBox" style="border-color: ${colorBorde};">
+            <div class="custom-alert-icon">${emoji}</div>
+            <h3 style="margin-bottom: 10px; font-size: 22px; color: ${colorBorde};">¡Ups!</h3>
+            <p style="margin-bottom: 25px; font-size: 16px;">${mensaje}</p>
+            <button class="ep-btn juicy-btn" onclick="cerrarAlertaMagica()" style="background: ${colorBorde}; color: white; padding: 12px 25px; margin: 0 auto; display: block; width: 80%;">
+                ¡Entendido! 👍
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+
+    // Activamos la animación un instante después de agregarla al DOM
+    setTimeout(() => {
+        overlay.classList.add('show');
+        document.getElementById('alertaMagicaBox').classList.add('show');
+    }, 10);
 }
 
-createParticles();
-
-setTimeout(() => {
-    if (!currentUser) console.log('¡Bienvenido a EduPlay! Crea tu primer usuario para empezar.');
-}, 1000);
+function cerrarAlertaMagica() {
+    const overlay = document.getElementById('alertaMagicaOverlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+        document.getElementById('alertaMagicaBox').classList.remove('show');
+        // Esperamos a que termine la animación de salida para borrarla
+        setTimeout(() => overlay.remove(), 300);
+    }
+}

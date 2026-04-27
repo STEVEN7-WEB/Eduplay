@@ -1,0 +1,134 @@
+<style>
+.ep-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;align-items:center;justify-content:center}
+.ep-box{background:#fff;border-radius:18px;padding:24px;width:92%;max-width:400px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);position:relative}
+.ep-close{position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#999;line-height:1}
+.ep-btn{display:block;width:100%;padding:12px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:8px}
+.ep-btn-blue{background:#3498DB;color:#fff}
+.ep-btn-green{background:#27AE60;color:#fff}
+.ep-btn-link{background:none;color:#3498DB;text-decoration:underline;font-size:.85rem;text-align:center}
+.ep-err{color:#E74C3C;font-size:.85rem;min-height:18px;margin:4px 0}
+.ep-fg label{display:block;font-size:.88rem;font-weight:600;color:#555;margin-bottom:3px}
+.ep-fg{margin-bottom:11px}
+.ep-fg input,.ep-fg select{width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:.95rem;box-sizing:border-box}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin:12px 0}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid #3498DB;transition:background .15s;flex-shrink:0}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:200px;margin:0 auto 10px}
+.pin-btn{padding:11px;font-size:1.1rem;font-weight:700;border:2px solid #ddd;border-radius:10px;background:#fff;cursor:pointer;text-align:center;transition:all .15s}
+.pin-btn:hover,.pin-btn:active{background:#3498DB;color:#fff;border-color:#3498DB}
+.pin-del{background:#ffeaea;border-color:#E74C3C;color:#E74C3C}
+.pin-ok{background:#eafaf1;border-color:#2ECC71;color:#2ECC71}
+</style>
+
+<div class="ep-overlay" id="epPinModal">
+ <div class="ep-box" style="text-align:center">
+  <button class="ep-close" onclick="epPinClose()">×</button>
+  <div id="epPinAvatar" style="font-size:2.5rem;margin-bottom:4px">🎮</div>
+  <h3 id="epPinName" style="margin:0 0 2px">PIN</h3>
+  <p style="color:#888;font-size:.88rem;margin:0 0 10px">Ingresa tu PIN de 4 dígitos</p>
+  <div class="pin-dots">
+   <span class="pin-dot" id="pd0"></span><span class="pin-dot" id="pd1"></span>
+   <span class="pin-dot" id="pd2"></span><span class="pin-dot" id="pd3"></span>
+  </div>
+  <div class="pin-grid">
+   <button class="pin-btn" onclick="epPinKey('1')">1</button>
+   <button class="pin-btn" onclick="epPinKey('2')">2</button>
+   <button class="pin-btn" onclick="epPinKey('3')">3</button>
+   <button class="pin-btn" onclick="epPinKey('4')">4</button>
+   <button class="pin-btn" onclick="epPinKey('5')">5</button>
+   <button class="pin-btn" onclick="epPinKey('6')">6</button>
+   <button class="pin-btn" onclick="epPinKey('7')">7</button>
+   <button class="pin-btn" onclick="epPinKey('8')">8</button>
+   <button class="pin-btn" onclick="epPinKey('9')">9</button>
+   <button class="pin-btn pin-del" onclick="epPinDel()">⌫</button>
+   <button class="pin-btn" onclick="epPinKey('0')">0</button>
+   <button class="pin-btn pin-ok" id="btn-entrar" onclick="epPinOk()">✓</button>
+  </div>
+  <p class="ep-err" id="epPinErr"></p>
+ </div>
+</div>
+
+<script>
+// PARCHE ANTI-UNDEFINED: Atrapa el ID exactamente cuando le das clic al usuario
+document.addEventListener('click', (e) => {
+    // Buscamos si dimos clic a algún elemento que tenga el comando selectUser(...)
+    const target = e.target.closest('[onclick^="selectUser"]');
+    if (target) {
+        // Extraemos solo el número (el ID del estudiante)
+        const match = target.getAttribute('onclick').match(/\d+/);
+        if (match) {
+            window.epPinId = match[0];
+            const btnEntrar = document.getElementById('btn-entrar');
+            if (btnEntrar) btnEntrar.setAttribute('data-estudiante-id', match[0]);
+            console.log("ID de estudiante capturado con éxito:", match[0]);
+        }
+    }
+});
+
+// VALIDACIÓN DEL PIN
+window.epPinOk = async function() {
+    console.log("Iniciando validación de PIN...");
+    
+    const pin = document.getElementById('pd0').innerText + 
+                document.getElementById('pd1').innerText + 
+                document.getElementById('pd2').innerText + 
+                document.getElementById('pd3').innerText;
+
+    if (pin.length < 4) {
+        document.getElementById('epPinErr').innerText = "Faltan números.";
+        return;
+    }
+
+    try {
+        // Doble seguridad para obtener el ID
+        const btnEntrar = document.getElementById('btn-entrar');
+        const uid = (btnEntrar && btnEntrar.getAttribute('data-estudiante-id')) || window.epPinId || window.currentUserId;
+
+        if (!uid || uid === 'undefined' || uid === 'null') {
+            document.getElementById('epPinErr').innerText = "Error: Vuelve a seleccionar tu perfil.";
+            return;
+        }
+
+        console.log("Enviando petición para el usuario ID:", uid);
+
+        const res = await fetch(`/api/usuarios/${uid}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: pin })
+        });
+        
+        const data = await res.json();
+        console.log("Respuesta de tu Base de Datos Neon:", data);
+        
+        if (data.ok) {
+            console.log("¡Éxito! Entrando a EduPlay...");
+            
+            localStorage.setItem('session_token', data.session_token);
+            
+            // Forzamos a la interfaz a cargar los datos del estudiante
+            if (typeof selectUser === 'function') {
+                selectUser(parseInt(uid));
+            }
+            
+            // FORZAR ocultar pantallas usando !important
+            document.getElementById('epPinModal').setAttribute('style', 'display: none !important');
+            const overlay = document.getElementById('welcomeOverlay');
+            if(overlay) overlay.setAttribute('style', 'display: none !important');
+            
+            const mainCont = document.getElementById('mainContainer');
+            if(mainCont) mainCont.setAttribute('style', 'display: block !important');
+            
+            // Limpieza visual
+            for(let i=0; i<4; i++) document.getElementById(`pd${i}`).innerText = '';
+            document.getElementById('epPinErr').innerText = '';
+            
+        } else {
+            console.log("PIN Incorrecto detectado.");
+            document.getElementById('epPinErr').innerText = data.error || "PIN incorrecto";
+            for(let i=0; i<4; i++) document.getElementById(`pd${i}`).innerText = '';
+        }
+    } catch (e) {
+        console.error("Error crítico visual:", e);
+        document.getElementById('epPinErr').innerText = "Error de conexión con el servidor.";
+    }
+};
+</script>

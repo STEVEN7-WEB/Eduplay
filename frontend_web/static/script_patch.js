@@ -91,8 +91,13 @@ window.addEventListener('DOMContentLoaded', async function () {
    PERSISTENCIA DE SESIÓN
    ══════════════════════════════════════════════════════════════════ */
 function epSaveSesion(u) {
-    if (!u) { localStorage.removeItem('ep_sesion'); return; }
+    if (!u) { 
+        localStorage.removeItem('ep_sesion'); 
+        localStorage.removeItem('userId'); // Limpiamos también este
+        return; 
+    } 
     localStorage.setItem('ep_sesion', JSON.stringify(u));
+    localStorage.setItem('userId', u.id); // <--- Agregamos esto para el juego
 }
 
 function epRestoreSesion() {
@@ -107,7 +112,32 @@ function epRestoreSesion() {
         return true;
     } catch (_) { return false; }
 }
+/* ══════════════════════════════════════════════════════════════════
+   PERSISTENCIA DE SESIÓN
+   ══════════════════════════════════════════════════════════════════ */
 
+// ... aquí dejas epSaveSesion y epRestoreSesion ...
+
+/* ══════════════════════════════════════════════════════════════════
+   PERSISTENCIA DE SESIÓN
+   ══════════════════════════════════════════════════════════════════ */
+
+// ... aquí dejas epSaveSesion y epRestoreSesion ...
+
+function cerrarSesion() {
+    // 1. Borramos las llaves que identificamos en tu captura
+    localStorage.removeItem('ep_sesion');
+    localStorage.removeItem('session_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('admin_token'); // También este por seguridad
+
+    // 2. Limpiamos variables de ejecución
+    window.usuarioActualId = null;
+    if (typeof currentUser !== 'undefined') currentUser = null;
+
+    // 3. Mandamos al usuario al inicio
+    window.location.href = '/'; 
+}
 /* ══════════════════════════════════════════════════════════════════
    CARGAR USUARIOS
    ══════════════════════════════════════════════════════════════════ */
@@ -296,13 +326,32 @@ if (typeof recordActivity !== 'undefined') {
 var _pinBuf = '', _pinUid = null, _pinCb = null, _recToken = null;
 
 function epPinAbrir(u, cb) {
-    _pinBuf = ''; _pinUid = u.id; _pinCb = cb;
+    if (!u || u instanceof Event) u = {};
+    _pinBuf = ''; 
+    _pinCb = cb;
+    
+    // Si recibe solo el número de ID (ej. 11), buscamos los datos reales del estudiante
+    if (typeof u === 'number' || typeof u === 'string') {
+        _pinUid = u;
+        var estudianteEncontrado = users.find(x => String(x.id) === String(u));
+        if (estudianteEncontrado) u = estudianteEncontrado; 
+        else u = { id: u, name: 'Estudiante', avatar: '🎮' };
+    } else {
+        _pinUid = u.id || u.id_usuario || window.epPinId; 
+    }
+    
+    var nombreEstudiante = u.name || u.nombre || 'Estudiante';
     epPinDots('pd', '');
+    
     document.getElementById('epPinAvatar').textContent = u.avatar || '🎮';
-    document.getElementById('epPinName').textContent   = '¡Hola, ' + u.name + '!';
+    document.getElementById('epPinName').textContent   = '¡Hola, ' + nombreEstudiante + '!';
     document.getElementById('epPinErr').textContent    = '';
     document.getElementById('epPinModal').style.display = 'flex';
+    
+    var btnEntrar = document.getElementById('btn-entrar');
+    if (btnEntrar) btnEntrar.setAttribute('data-estudiante-id', _pinUid);
 }
+
 window.epPinClose = function () {
     document.getElementById('epPinModal').style.display = 'none';
     _pinBuf = ''; _pinUid = null; _pinCb = null;
@@ -323,13 +372,65 @@ function epPinDots(prefix, buf) {
 }
 
 async function epPinConfirmar() {
-    if (_pinBuf.length !== 4) { document.getElementById('epPinErr').textContent = 'Ingresa 4 dígitos'; return; }
-    if (!EP_BACK) { document.getElementById('epPinModal').style.display = 'none'; if (_pinCb) _pinCb(); return; }
+    if (_pinBuf.length !== 4) { 
+        document.getElementById('epPinErr').textContent = 'Ingresa 4 dígitos'; 
+        return; 
+    }
+    if (!EP_BACK) { 
+        document.getElementById('epPinModal').style.display = 'none'; 
+        if (_pinCb) _pinCb(); 
+        return; 
+    }
     try {
-        var r = await epFetch('/usuarios/' + _pinUid + '/login', 'POST', { pin: _pinBuf });
-        if (r.ok) { document.getElementById('epPinModal').style.display = 'none'; if (_pinCb) _pinCb(); }
-        else { document.getElementById('epPinErr').textContent = 'PIN incorrecto ❌'; _pinBuf = ''; epPinDots('pd', ''); }
-    } catch (e) { document.getElementById('epPinErr').textContent = e.message; _pinBuf = ''; epPinDots('pd', ''); }
+        // ----------------------------------------------------
+        // PARCHE ANTI-UNDEFINED: Atrapamos el ID sí o sí
+        // ----------------------------------------------------
+        var uid = _pinUid; // Intentar método original
+        
+        if (!uid || uid === 'undefined' || uid === 'null') {
+            uid = window.epPinId; // Intentar variable de la memoria global
+        }
+        if (!uid || uid === 'undefined' || uid === 'null') {
+            var btn = document.getElementById('btn-entrar');
+            if (btn) uid = btn.getAttribute('data-estudiante-id'); // Intentar leer el botón
+        }
+        
+        // Si después de todo sigue sin ID, detenemos el proceso para evitar el Error 405
+        if (!uid || uid === 'undefined' || uid === 'null') {
+            document.getElementById('epPinErr').textContent = 'Error: ID no encontrado. Por favor cierra y vuelve a seleccionar tu perfil.';
+            _pinBuf = ''; epPinDots('pd', '');
+            return;
+        }
+        // ----------------------------------------------------
+
+        // Ahora sí, hacemos la petición con el ID seguro
+        var r = await epFetch('/usuarios/' + uid + '/login', 'POST', { pin: _pinBuf });
+        
+        if (r.ok) { 
+            document.getElementById('epPinModal').style.display = 'none'; 
+            
+            if (_pinCb) {
+                _pinCb(); 
+            } else {
+                // Si falta la función callback, forzamos la entrada al sistema
+                localStorage.setItem('session_token', r.session_token);
+                if (typeof selectUser === 'function') selectUser(parseInt(uid));
+                
+                var overlay = document.getElementById('welcomeOverlay');
+                var mainCont = document.getElementById('mainContainer');
+                if (overlay) overlay.style.display = 'none';
+                if (mainCont) mainCont.style.display = 'flex';
+            }
+        } else { 
+            document.getElementById('epPinErr').textContent = 'PIN incorrecto ❌'; 
+            _pinBuf = ''; 
+            epPinDots('pd', ''); 
+        }
+    } catch (e) { 
+        document.getElementById('epPinErr').textContent = e.message || 'Error de conexión'; 
+        _pinBuf = ''; 
+        epPinDots('pd', ''); 
+    }
 }
 
 window.epPinOlvide = async function () {
@@ -685,5 +786,149 @@ async function epRenderKNN(uid, sel) {
         el.innerHTML = '<p style="color:#E74C3C;padding:20px;text-align:center">⚠️ ' + e.message + '</p>';
     }
 }
+
+// === MOTOR DE JUEGOS CONECTADO A NEON DB ===
+window.preguntasActuales = [];
+window.preguntaIndice = 0;
+window.puntajeActual = 0;
+window.tiempoInicio = 0;
+window.materiaActual = '';
+
+// 1. Sobrescribimos la función original loadGame
+window.loadGame = async function(activity, gameType) {
+    const gameArea = document.getElementById('gameArea');
+    gameArea.innerHTML = '<h3 style="color:#3498DB;">Cargando preguntas mágicas... ⏳</h3>';
+    
+    window.materiaActual = activity; // Guardamos qué materia está jugando
+    let grado = window.gradoSeleccionado || localStorage.getItem('userGrade') || 1; 
+
+    try {
+        const response = await fetch(`/api/juegos/${activity}/${grado}`);
+        const preguntas = await response.json();
+        
+        if (!preguntas || preguntas.length === 0) {
+            gameArea.innerHTML = `<p style="color:#7F8C8D;">Aún no hay preguntas de <b>${activity}</b> para <b>${grado}º Grado</b>.</p>`;
+            return;
+        }
+        
+        window.preguntasActuales = preguntas;
+        window.preguntaIndice = 0;
+        window.puntajeActual = 0;
+        window.tiempoInicio = Date.now(); // ⏱️ Iniciamos el reloj
+        
+        document.getElementById('scoreDisplay').textContent = window.puntajeActual;
+        mostrarPregunta();
+        
+    } catch (error) {
+        console.error(error);
+        gameArea.innerHTML = '<p style="color:#E74C3C;">Error conectando con la base de datos.</p>';
+    }
+};
+
+// 2. Función para dibujar la pregunta en pantalla y GUARDAR AL TERMINAR
+window.mostrarPregunta = async function() {
+    const gameArea = document.getElementById('gameArea');
+    
+    // Si ya se acabaron las preguntas, GUARDAMOS LA PARTIDA
+    if (window.preguntaIndice >= window.preguntasActuales.length) {
+        const tiempoFin = Date.now();
+        const tiempoSegundos = Math.floor((tiempoFin - window.tiempoInicio) / 1000); // ⏱️ Calculamos segundos
+        
+        gameArea.innerHTML = `<h3 style="color:#F2994A;">Guardando tu aventura... 🚀</h3>`;
+        
+        // Obtén el ID del usuario (ajusta esto si en tu api.js lo guardas con otro nombre)
+        const userId = window.usuarioActualId || localStorage.getItem('userId') || 1;
+
+        try {
+            const res = await fetch('/api/juegos/guardar_partida', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: parseInt(userId),
+                    subject: window.materiaActual,
+                    points: window.puntajeActual,
+                    time_taken_seconds: tiempoSegundos
+                })
+            });
+            
+            const data = await res.json();
+            
+            if (data.success) {
+                // Dibujamos la pantalla de victoria con el MEJOR RÉCORD
+                gameArea.innerHTML = `
+                    <h2 style="color:#27AE60; font-size:30px;">¡Juego Terminado! 🎉</h2>
+                    <p style="font-size:20px;">Ganaste <b>⭐ ${window.puntajeActual}</b> estrellas hoy.</p>
+                    
+                    <div style="background:#FFF3CD; color:#856404; padding:15px; border-radius:10px; margin: 20px auto; max-width: 400px;">
+                        🏆 <b>Tu Récord en esta materia:</b> ${data.mejor_puntaje} estrellas
+                    </div>
+                    
+                    <button class="ep-btn juicy-btn" style="background:#3498DB; color:white; margin-top:10px;" onclick="document.getElementById('closeGame').click()">Volver al Menú</button>
+                `;
+            } else {
+                gameArea.innerHTML = `<p style="color:#E74C3C;">No pudimos guardar, pero ganaste ⭐ ${window.puntajeActual}</p>`;
+            }
+        } catch (e) {
+            console.error(e);
+            gameArea.innerHTML = `<p style="color:#E74C3C;">Error al conectar con el servidor.</p>`;
+        }
+        return;
+    }
+    
+    // Dibujo normal de la pregunta si el juego sigue...
+    const p = window.preguntasActuales[window.preguntaIndice];
+    gameArea.innerHTML = `
+        <h3 id="questionText" style="font-size:24px; margin-bottom:25px; color: #2C3E50;">${p.pregunta}</h3>
+        <div id="optionsContainer" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; max-width: 600px; margin: 0 auto;"></div>
+        <div id="feedbackText" style="margin-top: 20px; font-weight: bold; font-size: 20px; min-height: 28px;"></div>
+    `;
+    
+    const container = document.getElementById('optionsContainer');
+    
+    p.opciones.forEach((opcionTexto, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'ep-btn juicy-btn';
+        btn.style.padding = '15px';
+        btn.style.fontSize = '18px';
+        btn.style.background = '#f9f9f9';
+        btn.style.color = '#333';
+        btn.style.border = '2px solid #ddd';
+        btn.textContent = opcionTexto;
+        
+        btn.onclick = () => verificarRespuesta(index, p.correcta, btn);
+        container.appendChild(btn);
+    });
+};
+
+// 3. Función para verificar si acertó
+window.verificarRespuesta = function(indexSeleccionado, indexCorrecto, botonPresionado) {
+    const feedback = document.getElementById('feedbackText');
+    const botones = document.querySelectorAll('#optionsContainer button');
+    
+    botones.forEach(b => b.disabled = true);
+    
+    if (indexSeleccionado === indexCorrecto) {
+        feedback.textContent = "¡Excelente! 🎉";
+        feedback.style.color = "#27AE60";
+        botonPresionado.style.background = "#27AE60";
+        botonPresionado.style.color = "white";
+        
+        window.puntajeActual += 10;
+        document.getElementById('scoreDisplay').textContent = window.puntajeActual;
+    } else {
+        feedback.textContent = "¡Casi! La próxima será ❌";
+        feedback.style.color = "#E74C3C";
+        botonPresionado.style.background = "#E74C3C";
+        botonPresionado.style.color = "white";
+        
+        botones[indexCorrecto].style.background = "#27AE60";
+        botones[indexCorrecto].style.color = "white";
+    }
+    
+    setTimeout(() => {
+        window.preguntaIndice++;
+        mostrarPregunta();
+    }, 2000);
+};
 
 console.log('✅ EduPlay Patch v4 | Backend:', EP_BACK);

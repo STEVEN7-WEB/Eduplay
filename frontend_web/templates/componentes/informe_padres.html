@@ -1,0 +1,68 @@
+<div class="parent-report-modal" id="parentReportModal">
+    <div class="parent-report-content">
+        <button class="close-modal" id="closeParentReport">×</button>
+        <h2 class="game-title">
+            <span>📊</span> Informe para Padres
+        </h2>
+
+        <div class="report-header">
+            <div class="report-user-info" id="reportUserInfo"></div>
+            <div class="report-actions">
+                <button class="btn btn-primary" id="printReport"><span>🖨️</span> Imprimir Informe</button>
+                <button class="btn btn-secondary" id="exportReport"><span>📥</span> Exportar PDF</button>
+            </div>
+        </div>
+
+        <div class="report-tabs">
+            <button class="report-tab active" data-tab="overview">Resumen General</button>
+            <button class="report-tab" data-tab="activities">Actividades</button>
+            <button class="report-tab" data-tab="achievements">Logros</button>
+            <button class="report-tab" data-tab="recommendations">Recomendaciones</button>
+        </div>
+
+        <div class="report-content">
+            <div class="report-tab-content active" id="overviewTab">
+                <div class="overview-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-info"><div class="stat-value" id="overviewStars">0</div><div class="stat-label">Estrellas Totales</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-info"><div class="stat-value" id="overviewTime">0 min</div><div class="stat-label">Tiempo Jugando</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info"><div class="stat-value" id="overviewAchievements">0/15</div><div class="stat-label">Logros</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-info"><div class="stat-value" id="overviewProgress">0%</div><div class="stat-label">Progreso Total</div></div>
+                    </div>
+                </div>
+                <div class="activity-distribution">
+                    <h3>Distribución de Actividades</h3><div class="distribution-chart" id="distributionChart"></div>
+                </div>
+                <div class="recent-activity">
+                    <h3>Actividad Reciente</h3><div class="activity-timeline" id="activityTimeline"></div>
+                </div>
+            </div>
+
+            <div class="report-tab-content" id="activitiesTab"><div class="activity-details-grid" id="activityDetails"></div></div>
+            <div class="report-tab-content" id="achievementsTab"><div class="achievements-report-grid" id="achievementsReport"></div></div>
+            
+            <div class="report-tab-content" id="recommendationsTab">
+                <div class="recommendations-container">
+                    <div class="recommendation-card" id="strengthsCard"><h3>🏆 Puntos Fuertes</h3><div class="recommendation-content" id="strengthsContent"></div></div>
+                    <div class="recommendation-card" id="improvementCard"><h3>📈 Áreas de Mejora</h3><div class="recommendation-content" id="improvementContent"></div></div>
+                    <div class="recommendation-card" id="suggestionsCard"><h3>💡 Sugerencias</h3><div class="recommendation-content" id="suggestionsContent"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-footer">
+            <p class="report-date">Informe generado: <span id="reportDate"></span></p>
+            <div class="activity-actions"><button class="btn btn-secondary" id="closeReport"><span>←</span> Cerrar Informe</button></div>
+        </div>
+    </div>
+</div>

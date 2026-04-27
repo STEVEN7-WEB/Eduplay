@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPlay - Aprendo Jugando</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* 1. VARIABLES DE COLOR (Unificadas y estéticas) */
+        :root {
+            --bg-main: #F0F4F8;
+            --bg-card: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --border-card: #eef2f7;
+            --header-bg: #FFFFFF;
+            --accent: #2F80ED;
+            
+            /* Nuevas variables para bloques de texto */
+            --bg-example-block: rgba(47, 128, 237, 0.05); /* Muy sutil */
+            --text-example: #555;
+            --border-example: #eef2f7;
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #0F172A; /* Azul medianoche profundo */
+            --bg-card: #1E293B; /* Azul pizarra */
+            --text-primary: #F1F5F9; /* Blanco suave */
+            --text-secondary: #94A3B8; /* Gris azulado */
+            --shadow: 0 10px 25px rgba(0,0,0,0.4);
+            --border-card: #334155;
+            --header-bg: #1E293B;
+            
+            /* Nuevas variables para bloques de texto en modo oscuro (¡Aquí está el secreto!) */
+            --bg-example-block: #2D3748; /* Un gris-azul oscuro sólido */
+            --text-example: #F7FAFC; /* Un blanco suave de alto contraste */
+            --border-example: #4A5568;
+        }
+
+        /* 2. ESTILOS BASE */
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-primary); 
+            transition: all 0.3s ease; 
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .ep-box, .modal-content, .activity-card, .dropdown-content {
+            background-color: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-card) !important;
+            box-shadow: var(--shadow) !important;
+        }
+
+        /* 3. DASHBOARD / DROPDOWN DE PERFIL */
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            min-width: 280px;
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 1000;
+            margin-top: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .profile-info-header {
+            text-align: center;
+            border-bottom: 1px solid var(--border-card);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .stat-label { color: var(--text-secondary); }
+        .stat-value { font-weight: bold; color: var(--accent); }
+
+        .best-subject {
+            background: rgba(47, 128, 237, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        /* ESTILOS PARA BLOQUES DE TEXTO INYECTADOS (Ejemplo de instrucciones) */
+        .instructions-example {
+            background-color: var(--bg-example-block);
+            color: var(--text-example);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid var(--border-example);
+        }
+
+        /* BOTONES JUCY (General) */
+        .juicy-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #27AE60;
+            color: white !important;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            font-family: inherit;
+        }
+        .juicy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+            filter: brightness(1.1);
+        }
+
+        /* Estilo para el botón de Volver, haciéndolo juicy y profesional (Fix del botón feo) */
+        .btn-volver {
+            background: linear-gradient(135deg, #7F8C8D, #95A5A6); /* Un gris profesional y suave */
+            color: white !important;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-left: 10px;
+        }
+        .btn-volver:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            filter: brightness(1.1);
+        }
+
+        /* OTROS BOTONES */
+        .dark-mode-toggle {
+            background: #E2E8F0;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+        [data-theme="dark"] .dark-mode-toggle { background: #334155; }
+
+        .btn-salir {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #FF6B6B, #EE5253);
+            color: white !important;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(238, 82, 83, 0.3);
+        }
+        .btn-salir:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* MODALES Y OVERLAYS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; }
+        #gameModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 9998; display: none; flex-direction: column; overflow-y: auto; }
+        .activities-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="instructionsModal" class="modal-overlay">
+        <div class="modal-content ep-box" style="padding:30px; border-radius:25px; text-align:center; max-width:400px;">
+            <h2 id="instructionsTitle" style="color:#2F80ED !important;">Instrucciones</h2>
+            <p id="instructionsText" style="margin:20px 0;"></p>
+            <div style="display:flex; gap:10px; justify-content:center; align-items: center;">
+                <button id="startGame" class="ep-btn juicy-btn">¡A jugar! 🚀</button>
+                <button id="closeInstructions" class="ep-btn btn-volver">Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameModal">
+        <div class="ep-box" style="max-width:800px; margin:40px auto; min-height:450px; padding: 25px; border-radius: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="color:#2F80ED !important; margin: 0; display:flex; gap:10px; align-items:center;">
+                    <span id="gameEmoji"></span> 
+                    <span id="gameTitle">Actividad</span>
+                </h2>
+                <div style="display:flex; gap:10px; align-items: center;">
+                    <span style="background:#F2994A; color:white; padding:5px 15px; border-radius:20px; font-weight:bold;">
+                        ⭐ <span id="scoreDisplay">0</span>
+                    </span>
+                    <button id="backToInstructions" class="ep-btn" style="font-size:12px;">❔ Ayuda</button>
+                    <button id="closeGame" style="background:#E74C3C; color:white; border:none; border-radius:50%; width:35px; height:35px; cursor:pointer; font-weight:bold;">X</button>
+                </div>
+            </div>
+            <hr style="border:0; border-top:1px solid var(--border-card); margin:15px 0;">
+            <div id="gameArea" style="text-align: center;">
+                <h3 id="questionText" style="font-size:22px; margin-bottom:25px;">Cargando...</h3>
+                <div id="optionsContainer" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; max-width: 600px; margin: 0 auto;"></div>
+                <div id="feedbackText" style="margin-top: 20px; font-weight: bold; font-size: 18px; min-height: 24px;"></div>
+            </div>
+        </div>
+    </div>
+
+   <div class="welcome-overlay" id="welcomeOverlay">
+    
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" style="position:absolute; top:20px; right:20px; z-index: 10;">🌙</button>
+    
+    <div class="welcome-content">
+        <div class="logo">
+            <div class="logo-icon floating">EP</div>
+            <h1>EduPlay</h1>
+        </div>
+        <div id="roleSelector" style="display:flex; flex-direction:column; gap:12px; align-items:center;">
+            <button class="welcome-btn welcome-btn-primary juicy-btn" onclick="mostrarLogin('usuario')">🎓 Entrar a Jugar</button>
+            <button class="welcome-btn juicy-btn" onclick="mostrarRegistroAlumno()" style="background:#27AE60; color:white;">✨ Soy Nuevo</button>
+        </div>
+        <div id="authContainer" style="display:none; margin-top:20px;"></div>
+        <button id="backToRoles" class="ep-btn" style="display:none; margin-top:15px;" onclick="volverARoles()">← Volver</button>
+    </div>
+
+    <div class="admin-ninja-btn" onclick="mostrarLogin('admin')" title="Acceso Administrativo">
+        <i class="fas fa-cog" style="font-size: 24px;"></i>
+    </div>
+</div>
+
+    <div class="container" id="mainContainer" style="display:none;">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:20px; background: var(--header-bg); border-bottom: 1px solid var(--border-card);">
+            <div class="logo"><div class="logo-icon floating">EP</div></div>
+            <div class="header-controls" style="display:flex; gap:15px; align-items:center;">
+                
+                <button class="dark-mode-toggle" id="mainThemeToggle" onclick="toggleDarkMode()">🌙</button>
+
+                <div class="profile-dropdown">
+                    <div class="current-user-display" id="currentUserDisplay" onclick="toggleProfileMenu()" style="cursor:pointer;">
+                        <div class="current-user-avatar" id="currentUserAvatar">S</div>
+                        <span id="currentUserName" style="font-weight: bold;">Steven</span>
+                        <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                    </div>
+
+                    <div id="profileMenu" class="dropdown-content">
+                        <div class="profile-info-header">
+                            <strong id="menuFullname">Steven Martinez</strong>
+                        </div>
+                        <div class="stats-container">
+                            <div class="stat-item"><span class="stat-label">Grado:</span><span class="stat-value" id="statGrado">-</span></div>
+                            <div class="stat-item"><span class="stat-label">Edad:</span><span class="stat-value" id="statEdad">-</span></div>
+                            <div class="best-subject">
+                                <span style="font-size:11px; display:block; color:var(--text-secondary);">Tu mejor materia:</span>
+                                <strong id="statMejorMateria">Analizando...</strong>
+                            </div>
+                        </div>
+                        <hr style="border:0; border-top:1px solid var(--border-card); margin:15px 0;">
+                        <button class="ep-btn" style="width:100%; font-size:13px;">Ajustes</button>
+                    </div>
+                </div>
+
+                <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+            </div>
+        </header>
+
+        <main style="padding:40px 20px;">
+            <div class="activities-panel">
+                <h2 style="text-align:center; margin-bottom:40px; font-size: 28px;">🎮 Elige tu actividad favorita</h2>
+                <div class="activities-grid">
+                    <div class="activity-card" onclick="lanzarJuego('memory')"><div class="activity-emoji">🧠</div><p>Memoria Increíble</p></div>
+                    <div class="activity-card" onclick="lanzarJuego('math')"><div class="activity-emoji">🔢</div><p>Matemáticas Mágicas</p></div>
+                    <div class="activity-card" onclick="lanzarJuego('logic')"><div class="activity-emoji">🧩</div><p>Lógica y Puzzles</p></div>
+                    <div class="activity-card" onclick="lanzarJuego('grammar')"><div class="activity-emoji">✍️</div><p>Gramática Divertida</p></div>
+                    <div class="activity-card" onclick="lanzarJuego('english')"><div class="activity-emoji">🗣️</div><p>Inglés Básico</p></div>
+                    <div class="activity-card" onclick="lanzarJuego('geography')"><div class="activity-emoji">🌎</div><p>Aventura Geográfica</p></div>
+                    <div class="activity-card" onclick="lanzarJuego('art')"><div class="activity-emoji">🎨</div><p>Arte Creativo</p></div>
+                    <div class="activity-card" onclick="lanzarJuego('science')"><div class="activity-emoji">🔬</div><p>Ciencia Divertida</p></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/script.js"></script>
+    <script src="/api.js"></script>
+    <script src="/script_patch.js"></script>
+
+    <script>
+        // MODO OSCURO
+        function toggleDarkMode() {
+            const body = document.documentElement;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            const icons = isDark ? '🌙' : '☀️';
+            document.querySelectorAll('.dark-mode-toggle').forEach(btn => btn.innerText = icons);
+        }
+
+        // LÓGICA DEL PERFIL
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profileMenu');
+            const isVisible = menu.style.display === 'block';
+            menu.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) cargarDatosPerfil();
+        }
+
+        async function cargarDatosPerfil() {
+            const uid = localStorage.getItem('userId');
+            if (!uid) return;
+            try {
+                const res = await fetch(`/api/usuarios/perfil/${uid}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('menuFullname').innerText = data.nombre;
+                    document.getElementById('statGrado').innerText = data.grado + 'º Grado';
+                    document.getElementById('statEdad').innerText = data.edad + ' años';
+                    document.getElementById('statMejorMateria').innerText = '🚀 ' + data.mejor_materia;
+                }
+            } catch (e) { console.error("Error al cargar perfil:", e); }
+        }
+
+        // PERSISTENCIA TEMA AL CARGAR
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.querySelectorAll('.dark-mode-toggle').forEach(btn => btn.innerText = '☀️');
+            }
+        });
+
+        // CERRAR DROPDOWN SI HACES CLICK AFUERA
+        window.onclick = function(event) {
+            if (!event.target.closest('.profile-dropdown')) {
+                const profileMenu = document.getElementById('profileMenu');
+                if(profileMenu) profileMenu.style.display = 'none';
+            }
+        }
+
+        // FUNCIONES DE NAVEGACIÓN
+        function lanzarJuego(tipo) { 
+            if(window.showInstructions) {
+                window.showInstructions(tipo);
+            } else {
+                console.error("No disponible showInstructions");
+            }
+        }
+        
+        function volverARoles() { 
+            document.getElementById('authContainer').style.display = 'none'; 
+            document.getElementById('backToRoles').style.display = 'none'; 
+            document.getElementById('roleSelector').style.display = 'flex'; 
+        }
+        
+        function cerrarSesion() {
+            localStorage.removeItem('ep_sesion');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            window.location.href = '/'; 
+        }
+    </script>
+</body>
+</html>

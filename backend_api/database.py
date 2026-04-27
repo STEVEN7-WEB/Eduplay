@@ -1,90 +1,82 @@
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import DictCursor
+from dotenv import load_dotenv
 
-# Rutas base
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH  = os.path.join(BASE_DIR, 'backend_api', 'eduplay.db')
+# Cargamos las variables de entorno (.env)
+load_dotenv()
+DB_URL = os.getenv("NEON_DB_URL")
 
 def db():
-    c = sqlite3.connect(DB_PATH)
-    c.row_factory = sqlite3.Row
-    c.execute("PRAGMA foreign_keys=ON")
-    return c
+    # Nos conectamos a Neon con DictCursor para mantener la compatibilidad con tu código actual
+    conn = psycopg2.connect(DB_URL, cursor_factory=DictCursor)
+    return conn
 
 def init_db():
-    with db() as c:
-        c.executescript("""
-        CREATE TABLE IF NOT EXISTS padres(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
-            pin_hash TEXT NOT NULL, pregunta_secreta TEXT NOT NULL, respuesta_hash TEXT NOT NULL,
-            creado_en TEXT DEFAULT(datetime('now'))
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        # Verificamos/Creamos la estructura base sin borrar datos existentes
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(150) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            grade INTEGER DEFAULT 1,
+            role VARCHAR(20) DEFAULT 'student'
         );
-        CREATE TABLE IF NOT EXISTS usuarios(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL, edad INTEGER NOT NULL,
-            email TEXT UNIQUE,
-            grado_escolar TEXT DEFAULT '',
-            avatar TEXT DEFAULT '🎮',
-            pin_hash TEXT, pregunta_secreta TEXT, respuesta_hash TEXT,
-            estrellas INTEGER DEFAULT 0, tiempo_juego INTEGER DEFAULT 0,
-            padre_id INTEGER REFERENCES padres(id) ON DELETE SET NULL,
-            es_tutor INTEGER DEFAULT 0,
-            info_tutor TEXT DEFAULT '',
-            creado_en TEXT DEFAULT(datetime('now'))
+        
+        CREATE TABLE IF NOT EXISTS questions (
+            id SERIAL PRIMARY KEY,
+            subject VARCHAR(50) NOT NULL,
+            grade INTEGER NOT NULL,
+            question_text TEXT NOT NULL,
+            options JSONB NOT NULL,
+            correct_option INTEGER NOT NULL, 
+            time_limit_seconds INTEGER DEFAULT 60,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        CREATE TABLE IF NOT EXISTS puntuaciones(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            area TEXT NOT NULL, puntuacion REAL NOT NULL,
-            correctas INTEGER DEFAULT 0, total_preguntas INTEGER DEFAULT 0,
-            registrado_en TEXT DEFAULT(datetime('now'))
+        
+        CREATE TABLE IF NOT EXISTS scores (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+            subject VARCHAR(50) NOT NULL,
+            points INTEGER DEFAULT 0,
+            time_taken_seconds INTEGER DEFAULT 0,
+            last_played TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        CREATE TABLE IF NOT EXISTS historial_actividades(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            actividad TEXT, tipo_juego TEXT, resultado TEXT DEFAULT 'completado',
-            estrellas INTEGER DEFAULT 0, registrado_en TEXT DEFAULT(datetime('now'))
+        
+        CREATE TABLE IF NOT EXISTS knn_results (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+            rango INTEGER,
+            etiqueta VARCHAR(50),
+            promedio_general REAL,
+            recomendacion TEXT,
+            generado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        CREATE TABLE IF NOT EXISTS logros(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            logro_id TEXT NOT NULL, desbloqueado INTEGER DEFAULT 0,
-            progreso REAL DEFAULT 0, fecha_desbloqueo TEXT,
-            UNIQUE(usuario_id, logro_id)
-        );
-        CREATE TABLE IF NOT EXISTS clasificaciones_knn(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            rango INTEGER, rango_etiqueta TEXT, puntuacion_prom REAL,
-            prob_critico REAL DEFAULT 0, prob_desarrollo REAL DEFAULT 0,
-            prob_basico REAL DEFAULT 0, prob_competente REAL DEFAULT 0, prob_excelente REAL DEFAULT 0,
-            recomendacion TEXT, generado_en TEXT DEFAULT(datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS tokens_rec(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo TEXT, ref_id INTEGER, token TEXT UNIQUE,
-            expira_en TEXT, usado INTEGER DEFAULT 0
-        );
-        CREATE TABLE IF NOT EXISTS reporte_tiempo(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-            fecha TEXT DEFAULT(date('now')),
-            minutos INTEGER DEFAULT 0,
-            categoria TEXT DEFAULT 'General',
-            descripcion TEXT DEFAULT '',
-            registrado_en TEXT DEFAULT(datetime('now'))
+
+        -- Tabla de tokens necesaria para el sistema de sesiones
+        CREATE TABLE IF NOT EXISTS tokens_rec (
+            id SERIAL PRIMARY KEY,
+            tipo VARCHAR(50),
+            ref_id INTEGER,
+            token VARCHAR(255) UNIQUE,
+            expira_en TIMESTAMP,
+            usado INTEGER DEFAULT 0
         );
         """)
         
-        # Migraciones
-        cols = [r[1] for r in c.execute("PRAGMA table_info(usuarios)").fetchall()]
-        if 'email' not in cols:
-            c.execute("ALTER TABLE usuarios ADD COLUMN email TEXT")
-        if 'grado_escolar' not in cols:
-            c.execute("ALTER TABLE usuarios ADD COLUMN grado_escolar TEXT DEFAULT ''")
-        if 'es_tutor' not in cols:
-            c.execute("ALTER TABLE usuarios ADD COLUMN es_tutor INTEGER DEFAULT 0")
-        if 'info_tutor' not in cols:
-            c.execute("ALTER TABLE usuarios ADD COLUMN info_tutor TEXT DEFAULT ''")
-    print(f"✅ BD Inicializada: {DB_PATH}")
+        conn.commit()
+        print("✅ Base de datos Neon conectada y tablas verificadas.")
+        
+    except Exception as e:
+        print(f"❌ Error conectando a Neon: {e}")
+        if 'conn' in locals():
+            conn.rollback()
+    finally:
+        if 'c' in locals(): c.close()
+        if 'conn' in locals(): conn.close()

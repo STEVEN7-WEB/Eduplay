@@ -2332,3 +2332,335 @@ footer {
     margin-bottom: 30px;
     line-height: 1.6;
 }
+
+.pin-dot.on {
+    background: #3498DB; /* Color azul para indicar que se ingresó un número */
+}
+
+/* --- ESTILOS DE BOTONES INFANTILES (JUICY) --- */
+.juicy-btn {
+    border-radius: 50px !important; /* Forma de píldora */
+    font-weight: bold;
+    border: none;
+    padding: 15px 30px;
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote */
+}
+
+.juicy-btn:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+/* --- MODO OSCURO PARA EL LOGIN --- */
+body.dark-mode .welcome-overlay {
+    background: linear-gradient(135deg, #0F2027, #203A43, #2C5364); /* Cielo nocturno */
+}
+
+body.dark-mode .welcome-content {
+    background: #1A2634; /* Azul marino oscuro para la tarjeta */
+    border: 1px solid #2C3E50;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .welcome-content h1, 
+body.dark-mode .welcome-content p,
+body.dark-mode .ep-box h3 {
+    color: #E2E8F0;
+}
+
+body.dark-mode .ep-box {
+    background: #2C3E50;
+    color: white;
+}
+
+body.dark-mode input {
+    background: #1A2634;
+    color: white;
+    border-color: #4A5568;
+}
+
+/* --- ESTILOS PARA FORMULARIO INTERACTIVO --- */
+.avatar-option {
+    font-size: 35px;
+    padding: 5px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    border-radius: 50%;
+    border: 3px solid transparent;
+}
+.avatar-option:hover {
+    transform: scale(1.1);
+}
+.avatar-option.selected {
+    border-color: #2F80ED;
+    background: #E8F0FE;
+    transform: scale(1.2);
+}
+
+.grado-option {
+    padding: 10px 15px;
+    background: #f0f0f0;
+    border-radius: 12px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 3px solid transparent;
+}
+.grado-option:hover {
+    background: #e0e0e0;
+}
+.grado-option.selected {
+    background: #F2994A;
+    color: white;
+    border-color: #E67E22;
+    transform: scale(1.1);
+}
+
+body.dark-mode .grado-option {
+    background: #34495E;
+    color: white;
+}
+body.dark-mode .grado-option.selected {
+    background: #F2994A;
+}
+/* --- ALERTA MÁGICA PERSONALIZADA --- */
+.custom-alert-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.custom-alert-overlay.show {
+    opacity: 1;
+}
+
+.custom-alert-box {
+    background: white;
+    padding: 30px;
+    border-radius: 25px;
+    text-align: center;
+    max-width: 320px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    transform: scale(0.5);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 4px solid #FF6B6B; /* Rojo por defecto, se puede cambiar en JS */
+}
+
+body.dark-mode .custom-alert-box {
+    background: #1A2634;
+    color: white;
+    border-color: #E74C3C;
+}
+
+.custom-alert-box.show {
+    transform: scale(1);
+}
+
+.custom-alert-icon {
+    font-size: 55px;
+    margin-bottom: 10px;
+    animation: bounceAlert 2s infinite;
+}
+
+@keyframes bounceAlert {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-15px); }
+    60% { transform: translateY(-7px); }
+}
+
+/* Colores por defecto (Modo Claro) */
+:root {
+    --bg-main: #F0F4F8;
+    --bg-card: #FFFFFF;
+    --text-primary: #2C3E50;
+    --text-secondary: #7F8C8D;
+    --shadow: 0 4px 15px rgba(0,0,0,0.1);
+    --border-card: #eef2f7;
+}
+
+/* Colores para el Modo Oscuro */
+[data-theme="dark"] {
+    --bg-main: #0F172A; /* Azul oscuro profundo */
+    --bg-card: #1E293B; /* Azul pizarra para las tarjetas */
+    --text-primary: #F1F5F9; /* Blanco suave */
+    --text-secondary: #94A3B8; /* Gris azulado claro */
+    --shadow: 0 10px 25px rgba(0,0,0,0.4);
+    --border-card: #334155;
+}
+
+/* Aplicamos las variables a tu interfaz actual */
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    transition: all 0.3s ease; /* Para que el cambio no sea brusco */
+}
+
+/* Ajuste para tus tarjetas (cards) */
+.activity-card { 
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-card);
+    box-shadow: var(--shadow);
+}
+
+.activity-card p {
+    color: var(--text-secondary) !important;
+}
+
+/* Estilo para el botón de modo oscuro */
+.dark-mode-toggle {
+    background: #E2E8F0;
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    transition: 0.3s;
+    margin-right: 15px;
+}
+
+[data-theme="dark"] .dark-mode-toggle {
+    background: #334155;
+}
+
+/* Contenedor del Dropdown */
+.profile-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* El menú oculto */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: var(--bg-card);
+    min-width: 260px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-card);
+    border-radius: 20px;
+    padding: 20px;
+    z-index: 1000;
+    margin-top: 10px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Información del alumno dentro del menú */
+.profile-info-header {
+    text-align: center;
+    border-bottom: 1px solid var(--border-card);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.stat-label { color: var(--text-secondary); }
+.stat-value { font-weight: bold; color: #2F80ED; }
+
+.best-subject {
+    background: rgba(47, 128, 237, 0.1);
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* --- FIX DE LA PANTALLA DE BIENVENIDA --- */
+.welcome-overlay {
+    /* Fondo degradado chido para modo claro */
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+[data-theme="dark"] .welcome-overlay {
+    /* Fondo degradado oscuro para modo noche */
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
+}
+
+.welcome-content {
+    background-color: var(--bg-card) !important;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.welcome-content h1 {
+    /* ¡Esto mata al texto fantasma! */
+    color: var(--text-primary) !important; 
+}
+
+/* --- BOTÓN SECRETO ADMIN (NINJA) --- */
+.admin-ninja-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 15px;
+    color: var(--text-primary);
+    opacity: 0; /* Totalmente invisible por defecto */
+    transition: opacity 0.3s ease;
+    z-index: 10000;
+}
+
+/* Solo aparece cuando el mouse pasa por esa esquina */
+.admin-ninja-btn:hover {
+    opacity: 0.5; 
+}
+
+/* --- FIX DEL FONDO MODO CLARO --- */
+.welcome-overlay {
+    /* Un azul océano oscuro y mate, súper profesional y relajante a la vista */
+    background: linear-gradient(135deg, #2980B9 0%, #6DD5FA 100%) !important;
+}
+
+[data-theme="dark"] .welcome-overlay {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
+}
+
+/* --- FIX DEL BOTÓN "VOLVER" FEO --- */
+#backToRoles {
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    border: 2px solid var(--border-card) !important;
+    padding: 8px 25px !important;
+    border-radius: 50px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    margin-top: 25px !important;
+}
+
+#backToRoles:hover {
+    background: var(--bg-card) !important; /* Toma el color de la tarjeta */
+    color: var(--text-primary) !important;
+    border-color: #2F80ED !important; /* Brilla azul al pasar el mouse */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
