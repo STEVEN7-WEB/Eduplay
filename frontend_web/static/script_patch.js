@@ -14,11 +14,27 @@ const EP_API  = 'http://localhost:5000/api';
 let   EP_BACK = false;
 let   EP_PADRE = null;
 
-/* ── API helper ───────────────────────────────────────────────────── */
+/* ── API helper (MEJORADO: Escudo anti-404 y string vacío) ──────────────────────── */
 async function epFetch(path, method, body) {
+    // 🛡️ ESCUDO V2: Bloquea 'null', 'undefined' y también el ID vacío (ruta termina en '/')
+    // Nota: '/usuarios' (sin barra) es válido para traer todos, '/usuarios/' (con barra) es el error.
+    if (path.includes('undefined') || path.includes('null') || path === '/usuarios/') {
+        console.warn("Fetch bloqueado silenciosamente: Intento de petición con ID vacío ->", path);
+        throw new Error('ID de usuario no válido');
+    }
+
     const opts = { method: method || 'GET', headers: { 'Content-Type': 'application/json' } };
     if (body) opts.body = JSON.stringify(body);
-    const r = await fetch(EP_API + path, opts);
+    
+    let r = await fetch(EP_API + path, opts);
+    
+    // 🔄 AUTO-CORRECTOR FLASK: Intento de rescate si falta/sobra la barra final
+    if (r.status === 404) {
+        const altPath = path.endsWith('/') ? path.slice(0, -1) : path + '/';
+        let r2 = await fetch(EP_API + altPath, opts);
+        if (r2.ok) r = r2; 
+    }
+
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Error ' + r.status);
     return d;
@@ -55,7 +71,11 @@ window.addEventListener('DOMContentLoaded', async function () {
 
     var ind = epMakeInd();
     try {
-        await fetch(EP_API + '/usuarios', { signal: AbortSignal.timeout(2500) });
+       // FIX: Intenta conectar primero, y si falla por la barra, intenta la alternativa
+        let testRes = await fetch(EP_API + '/lista', { signal: AbortSignal.timeout(2500) });
+        if (testRes.status === 404) {
+            await fetch(EP_API + '/usuarios/', { signal: AbortSignal.timeout(2500) });
+        }
         EP_BACK = true;
         ind.textContent = '🟢 BD Conectada';
         ind.style.background = '#d4edda'; ind.style.color = '#155724';
@@ -144,7 +164,7 @@ function cerrarSesion() {
 async function epLoadUsers() {
     if (EP_BACK) {
         try {
-            var data = await epFetch('/usuarios');
+            var data = await epFetch('/lista');
             users = data.map(epNorm);
             localStorage.setItem('eduplay_users', JSON.stringify(users));
             return;
@@ -760,21 +780,36 @@ window.epAbrirInformeAlumno = function (uid) {
 async function epRenderKNN(uid, sel) {
     var el = document.querySelector(sel);
     if (!el) return;
+
+    // 🛡️ ESCUDO AÑADIDO: Evita 404 si el reporte se abre sin alumno (ID vacío, nulo o indefinido)
+    if (!uid || uid === 'undefined' || uid === 'null') {
+        el.innerHTML = '<p style="color:#E74C3C;padding:20px;text-align:center">⚠️ Error: ID de estudiante no encontrado.</p>';
+        return;
+    }
+
     el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">🔄 Clasificando con IA...</div>';
-    if (!EP_BACK) { el.innerHTML = '<p style="color:#E67E22;padding:20px;text-align:center">⚠️ Inicia <code>python app.py</code> para usar la clasificación IA.</p>'; return; }
+    
+    if (!EP_BACK) { 
+        el.innerHTML = '<p style="color:#E67E22;padding:20px;text-align:center">⚠️ Inicia <code>python app.py</code> para usar la clasificación IA.</p>'; 
+        return; 
+    }
+    
     try {
         var d = await epFetch('/usuarios/' + uid + '/clasificar');
         var C = { 'Crítico': '#E74C3C', 'En Desarrollo': '#E67E22', 'Básico': '#F1C40F', 'Competente': '#2ECC71', 'Excelente': '#3498DB' };
         var c = C[d.etiqueta] || '#888';
+        
         var aH = Object.entries(d.areas || {}).map(function (kv) {
             var a = kv[0], v = kv[1], pc = Math.min(100, v);
             var bc = v >= 90 ? '#3498DB' : v >= 75 ? '#2ECC71' : v >= 60 ? '#F1C40F' : v >= 40 ? '#E67E22' : '#E74C3C';
             return '<div style="display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:.82rem">' + a + '</span><div style="background:#e9ecef;border-radius:8px;height:10px;overflow:hidden"><div style="width:' + pc + '%;background:' + bc + ';height:100%;border-radius:8px"></div></div><span style="font-size:.8rem;font-weight:600">' + v + '</span></div>';
         }).join('');
+        
         var pH = Object.entries(d.probabilidades || {}).map(function (kv) {
             var l = kv[0], p = kv[1];
             return '<div style="display:grid;grid-template-columns:130px 1fr 52px;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:.82rem">' + l + '</span><div style="background:#e9ecef;border-radius:8px;height:10px;overflow:hidden"><div style="width:' + (p * 100).toFixed(1) + '%;background:' + (C[l] || '#888') + ';height:100%;border-radius:8px"></div></div><span style="font-size:.8rem;font-weight:600">' + (p * 100).toFixed(1) + '%</span></div>';
         }).join('');
+        
         el.innerHTML = '<div style="padding:16px">'
             + '<div style="display:flex;align-items:center;gap:14px;padding:14px;background:#f8f9fa;border-radius:10px;margin-bottom:14px;border-left:5px solid ' + c + '">'
             + '<span style="font-size:2.5rem">' + d.emoji + '</span>'
@@ -782,6 +817,7 @@ async function epRenderKNN(uid, sel) {
             + '<div style="background:#eef6ff;border-left:4px solid #3498DB;padding:10px 14px;border-radius:6px;margin-bottom:14px;font-size:.9rem">💡 ' + d.recomendacion + '</div>'
             + '<h4 style="font-size:.95rem;font-weight:700;color:#2c3e50;margin:14px 0 8px">📊 Puntuación por Área</h4>' + aH
             + '<h4 style="font-size:.95rem;font-weight:700;color:#2c3e50;margin:14px 0 8px">🤖 Probabilidades KNN</h4>' + pH + '</div>';
+            
     } catch (e) {
         el.innerHTML = '<p style="color:#E74C3C;padding:20px;text-align:center">⚠️ ' + e.message + '</p>';
     }

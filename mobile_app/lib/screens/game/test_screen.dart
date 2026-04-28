@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <--- AGREGA ESTA LÍNEA
 import '../../models/pregunta_model.dart';
 import '../../services/neon_db_service.dart';
 
@@ -25,14 +26,16 @@ class _TestScreenState extends State<TestScreen> {
     _loadQuestions();
   }
 
-  void _loadQuestions() async {
-    final rawPreguntas = await NeonDbService.obtenerPreguntasPorMateria(widget.subject, 1); // Grado 1 por defecto para pruebas
+void _loadQuestions() async {
+    // Para probar, forzamos el grado 1 que vemos en tu captura de Neon
+    final rawPreguntas = await NeonDbService.obtenerPreguntasPorMateria(widget.subject, 1);
+    
     setState(() {
       _preguntas = rawPreguntas.map((p) => Pregunta.fromDatabase(p)).toList();
       _isLoading = false;
     });
   }
-
+  
   void _verificarRespuesta(int indexSeleccionado) {
     if (_answered) return; // Ya respondió, no hacer nada
 
@@ -135,7 +138,8 @@ class _TestScreenState extends State<TestScreen> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(25),
-                      margin: const EdgeInsets.bottom(30),
+                      // Antes: EdgeInsets.bottom(30)
+                      margin: const EdgeInsets.only(bottom: 30),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1B263B), // Tarjeta
                         borderRadius: BorderRadius.circular(25),

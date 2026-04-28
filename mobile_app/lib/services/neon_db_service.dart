@@ -13,13 +13,19 @@ class NeonDbService {
     return await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.require));
   }
 
-  // AHORA PIDE EL GRADO PARA REGISTRAR
   static Future<bool> registrarUsuario(String nombre, String email, String password, int grado) async {
     try {
       final connection = await _conectar();
       await connection.execute(
-        Sql.named('INSERT INTO users (name, email, password, grade) VALUES (@nombre, @email, @password, @grado)'),
-        parameters: {'nombre': nombre, 'email': email, 'password': password, 'grado': grado},
+        // Agregamos 'student' como rol por defecto
+        Sql.named('INSERT INTO users (name, email, password, grade, role) VALUES (@nombre, @email, @password, @grado, @rol)'),
+        parameters: {
+          'nombre': nombre, 
+          'email': email, 
+          'password': password, 
+          'grado': grado,
+          'rol': 'student'
+        },
       );
       await connection.close();
       return await loginDirecto(email, password);
@@ -29,26 +35,25 @@ class NeonDbService {
     }
   }
 
-  // AHORA LEE EL GRADO AL INICIAR SESIÓN
   static Future<bool> loginDirecto(String email, String password) async {
     try {
       final connection = await _conectar();
       final result = await connection.execute(
-        // Extraemos ID y Grade
-        Sql.named('SELECT id, grade FROM users WHERE email = @email AND password = @password'),
+        Sql.named('SELECT id, grade, name FROM users WHERE email = @email AND password = @password'),
         parameters: {'email': email, 'password': password},
       );
       await connection.close();
 
       if (result.isNotEmpty) {
         final int userId = result[0][0] as int;
-        // Si la columna grade es nula por alguna razón, ponemos grado 1 por defecto
         final int grado = result[0][1] != null ? result[0][1] as int : 1; 
+        final String nombre = result[0][2].toString();
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('sesion_iniciada', true);
         await prefs.setInt('id_usuario', userId);
-        await prefs.setInt('grado_usuario', grado); // Guardamos el grado en el celular
+        await prefs.setInt('grado_usuario', grado);
+        await prefs.setString('userName', nombre);
         return true;
       }
       return false;
@@ -58,22 +63,34 @@ class NeonDbService {
     }
   }
 
-  static Future<bool> guardarPuntaje(String materia, int puntosObtenidos) async {
+  static Future<List<Map<String, dynamic>>> obtenerPreguntasPorMateria(String materia, int grado) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final int? userId = prefs.getInt('id_usuario');
-      if (userId == null) return false;
-
       final connection = await _conectar();
-      await connection.execute(
-        Sql.named('INSERT INTO scores (user_id, subject, points) VALUES (@userId, @materia, @puntos)'),
-        parameters: {'userId': userId, 'materia': materia, 'puntos': puntosObtenidos},
+      
+      // La tabla se llama 'preguntas' y usamos los nombres de columna exactos
+      final result = await connection.execute(
+        Sql.named('SELECT id, pregunta_texto, opciones, respuesta_correcta, materia, grado '
+                  'FROM preguntas '
+                  'WHERE materia = @materia AND grado = @grado'),
+        parameters: {
+          'materia': materia, 
+          'grado': grado
+        },
       );
       await connection.close();
-      return true;
+
+      return result.map((row) => {
+        'id': row[0],
+        'text': row[1].toString(),           // pregunta_texto
+        'options': row[2],                  // opciones (jsonb)
+        'correct_option': row[3],           // respuesta_correcta
+        'subject': row[4].toString(),       // materia
+        'grade': row[5],                    // grado
+      }).toList();
+
     } catch (e) {
-      print('Error al guardar: $e');
-      return false;
+      print('❌ Error al jalar preguntas de Neon: $e');
+      return [];
     }
   }
 

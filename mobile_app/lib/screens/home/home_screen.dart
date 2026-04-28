@@ -26,7 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _userName = prefs.getString('userName') ?? 'Estudiante';
       _userId = prefs.getString('userId') ?? '0';
-      _avatarInitial = _userName.isNotEmpty ? _userName.charAt(0).toUpperCase() : 'U';
+      // Antes: _userName.charAt(0)
+      _avatarInitial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
     });
   }
 

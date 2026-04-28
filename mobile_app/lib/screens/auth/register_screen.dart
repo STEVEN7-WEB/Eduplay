@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/neon_db_service.dart';
 import '../home/home_screen.dart';
+import 'package:flutter/services.dart'; // <--- Agrega este import
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -93,20 +94,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildField(TextEditingController controller, String label, IconData icon, Color color, {bool isPass = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: isPass,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: color),
-        hintText: label,
-        hintStyle: const TextStyle(color: Colors.white38),
-        filled: true,
-        fillColor: const Color(0xFF0D1B2A),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+  return TextField(
+    controller: controller,
+    obscureText: isPass,
+    // --- NUEVO: Si es contraseña, usamos teclado numérico ---
+    keyboardType: isPass ? TextInputType.number : TextInputType.text,
+    
+    // --- NUEVO: Limitadores para que solo acepte 4 dígitos ---
+    inputFormatters: isPass ? [
+      FilteringTextInputFormatter.digitsOnly, // Solo números del 0-9
+      LengthLimitingTextInputFormatter(4),    // Máximo 4 caracteres
+    ] : [],
+    
+    style: const TextStyle(color: Colors.white),
+    decoration: InputDecoration(
+      prefixIcon: Icon(icon, color: color),
+      hintText: label,
+      hintStyle: const TextStyle(color: Colors.white38),
+      filled: true,
+      fillColor: const Color(0xFF0D1B2A), // El azul profundo de EduPlay
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15), 
+        borderSide: BorderSide.none,
       ),
-    );
-  }
+      // Muestra un contador de caracteres si quieres (opcional), 
+      // o ponlo en null para que sea invisible:
+      counterText: "", 
+    ),
+  );
+}
 
   void _registrar() async {
     if (_nombreController.text.isEmpty || _emailController.text.isEmpty || _passController.text.isEmpty) {
