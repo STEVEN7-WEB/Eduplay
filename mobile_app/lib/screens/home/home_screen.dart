@@ -1,79 +1,134 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/neon_db_service.dart';
+import '../game/test_screen.dart';
 import '../auth/login_screen.dart';
-import '../game/test_screen.dart'; // <-- Importamos la pantalla de juego
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _userName = 'Estudiante';
+  String _userId = '';
+  String _avatarInitial = 'U';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarSesion();
+  }
+
+  void _cargarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? 'Estudiante';
+      _userId = prefs.getString('userId') ?? '0';
+      _avatarInitial = _userName.isNotEmpty ? _userName.charAt(0).toUpperCase() : 'U';
+    });
+  }
+
+  void _cerrarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Borra todo
+    if (mounted) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A), 
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('EDUPLAY 2.0', style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.w900)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.pinkAccent),
-            onPressed: () async {
-              await NeonDbService.cerrarSesion();
-              if (context.mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-            },
-          )
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 15,
-          mainAxisSpacing: 15,
+      backgroundColor: const Color(0xFF0D1B2A), // Fondo Deep Dark
+      body: SafeArea(
+        child: Column(
           children: [
-            _buildCard(context, 'MATEMÁTICAS', Icons.calculate, Colors.cyanAccent),
-            _buildCard(context, 'ESPAÑOL', Icons.abc, Colors.yellowAccent),
-            _buildCard(context, 'CIENCIAS', Icons.science, Colors.greenAccent),
-            _buildCard(context, 'GEOGRAFÍA', Icons.public, Colors.orangeAccent),
+            // --- CABECERA DE PERFIL (Estilo Web Dropdown) ---
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  const Text("EduPlay", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  // Avatar circular con acento cian
+                  Container(
+                    width: 45, height: 45,
+                    decoration: BoxDecoration(
+                      color: Colors.cyanAccent.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.cyanAccent, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(_avatarInitial, style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 18)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(_userName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  IconButton(onPressed: _cerrarSesion, icon: const Icon(Icons.exit_to_app, color: Colors.pinkAccent)),
+                ],
+              ),
+            ),
+
+            // --- TÍTULO PRINCIPAL ---
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                "🎮 Elige tu actividad",
+                style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
+              ),
+            ),
+
+            // --- GRILLA DE ACTIVIDADES (Estilo Web Cards) ---
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2, // 2 columnas en móvil
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
+                padding: const EdgeInsets.all(20),
+                children: [
+                  _buildActivityCard(context, 'math', 'Matemáticas', '🔢'),
+                  _buildActivityCard(context, 'memory', 'Memoria', '🧠'),
+                  _buildActivityCard(context, 'logic', 'Lógica', '🧩'),
+                  _buildActivityCard(context, 'grammar', 'Gramática', '✍️'),
+                  _buildActivityCard(context, 'english', 'Inglés', '🗣️'),
+                  _buildActivityCard(context, 'geography', 'Geografía', '🌎'),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, IconData icon, Color accentColor) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1B263B),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: accentColor.withOpacity(0.5), width: 2),
-        boxShadow: [BoxShadow(color: accentColor.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+  Widget _buildActivityCard(BuildContext context, String subjectKey, String title, String emoji) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TestScreen(subject: subjectKey)),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B263B), // Fondo de tarjeta
           borderRadius: BorderRadius.circular(25),
-          onTap: () async {
-            // SACAMOS EL GRADO DEL NIÑO Y NAVEGAMOS
-            final prefs = await SharedPreferences.getInstance();
-            int grado = prefs.getInt('grado_usuario') ?? 1;
-            
-            if (context.mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => TestScreen(materia: title, gradoUsuario: grado, accentColor: accentColor)),
-              );
-            }
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 50, color: accentColor),
-              const SizedBox(height: 12),
-              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.2)),
-            ],
-          ),
+          border: Border.all(color: const Color(0xFF334155)), // Borde sutil
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 5))],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 50)),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+          ],
         ),
       ),
     );

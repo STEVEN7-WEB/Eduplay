@@ -12,7 +12,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
-  int _gradoSeleccionado = 1; // Grado por defecto
+  int _gradoSeleccionado = 1; 
   bool _isLoading = false;
 
   @override

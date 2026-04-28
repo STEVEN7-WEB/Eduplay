@@ -1,29 +1,60 @@
+import 'dart:convert';
+
 class Pregunta {
-  final String enunciado;
-  final List<String> opciones;
-  final int respuestaCorrecta;
-  final int gradoMinimo;
+  final int id;
+  final String text;
+  final List<String> options;
+  final int correctOption;
+  final String subject;
+  final int grade;
+  final String emoji; // Nuevo campo para el emoji visual
 
   Pregunta({
-    required this.enunciado,
-    required this.opciones,
-    required this.respuestaCorrecta,
-    required this.gradoMinimo,
+    required this.id,
+    required this.text,
+    required this.options,
+    required this.correctOption,
+    required this.subject,
+    required this.grade,
+    required this.emoji,
   });
+
+  // Mapa de emojis según la materia (igual que en la web)
+  static final Map<String, String> subjectEmojis = {
+    'math': '🔢',
+    'memory': '🧠',
+    'logic': '🧩',
+    'grammar': '✍️',
+    'english': '🗣️',
+    'geography': '🌎',
+    'art': '🎨',
+    'science': '🔬',
+  };
+
+  factory Pregunta.fromDatabase(Map<String, dynamic> row) {
+    // Manejamos las opciones si vienen como texto (A,B,C,D) o como lista JSON
+    List<String> rawOptions = [];
+    if (row['options'] is String) {
+      try {
+        rawOptions = List<String>.from(jsonDecode(row['options']));
+      } catch (e) {
+        rawOptions = row['options'].toString().split(',').map((e) => e.trim()).toList();
+      }
+    } else {
+      rawOptions = List<String>.from(row['options']);
+    }
+
+    final sub = row['subject'].toString().toLowerCase();
+
+    return Pregunta(
+      id: row['id'],
+      text: row['text'],
+      options: rawOptions,
+      correctOption: row['correct_option'],
+      subject: sub,
+      grade: row['grade'],
+      // Asignamos el emoji o uno por defecto si no existe
+      emoji: subjectEmojis[sub] ?? '🎮', 
+    );
+  }
 }
-
-// Ejemplo de base de datos local temporal
-List<Pregunta> bancoMatematicas = [
-  Pregunta(enunciado: "2 + 2 = ?", opciones: ["3", "4", "5"], respuestaCorrecta: 1, gradoMinimo: 1),
-  Pregunta(enunciado: "10 - 4 = ?", opciones: ["6", "7", "5"], respuestaCorrecta: 0, gradoMinimo: 1),
-  Pregunta(enunciado: "5 x 4 = ?", opciones: ["20", "25", "15"], respuestaCorrecta: 0, gradoMinimo: 2),
-  Pregunta(enunciado: "100 / 4 = ?", opciones: ["20", "25", "30"], respuestaCorrecta: 1, gradoMinimo: 3),
-  Pregunta(enunciado: "¿Cuál es el área de un cuadrado de lado 5?", opciones: ["10", "20", "25"], respuestaCorrecta: 2, gradoMinimo: 4),
-  Pregunta(enunciado: "Raíz cuadrada de 64", opciones: ["6", "8", "12"], respuestaCorrecta: 1, gradoMinimo: 5),
-];
-
-List<Pregunta> bancoEspanol = [
-  Pregunta(enunciado: "¿Qué palabra es un verbo?", opciones: ["Perro", "Correr", "Bonito"], respuestaCorrecta: 1, gradoMinimo: 1),
-  Pregunta(enunciado: "Sinónimo de Feliz", opciones: ["Triste", "Enojado", "Alegre"], respuestaCorrecta: 2, gradoMinimo: 2),
-];
-// Agrega más bancos para Ciencias y Geografía...

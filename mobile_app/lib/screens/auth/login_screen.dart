@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/neon_db_service.dart';
 import '../home/home_screen.dart';
-import 'register_screen.dart'; // <-- Importamos la nueva pantalla
+import 'register_screen.dart'; 
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
