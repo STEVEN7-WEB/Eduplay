@@ -25,7 +25,7 @@ from routes.juego import rutas_juego
 
 # --- REGISTRO DE BLUEPRINTS ---
 app.register_blueprint(padres_bp, url_prefix='/api')
-app.register_blueprint(usuarios_bp, url_prefix='/api/usuarios/')
+app.register_blueprint(usuarios_bp, url_prefix='/api')
 app.register_blueprint(actividades_bp, url_prefix='/api')
 app.register_blueprint(rutas_juego, url_prefix='/api/juegos') # ¡Agregamos /juegos aquí!
 

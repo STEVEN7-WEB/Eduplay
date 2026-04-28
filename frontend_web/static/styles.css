@@ -2489,15 +2489,6 @@ body.dark-mode .custom-alert-box {
     --border-card: #eef2f7;
 }
 
-/* Colores para el Modo Oscuro */
-[data-theme="dark"] {
-    --bg-main: #0F172A; /* Azul oscuro profundo */
-    --bg-card: #1E293B; /* Azul pizarra para las tarjetas */
-    --text-primary: #F1F5F9; /* Blanco suave */
-    --text-secondary: #94A3B8; /* Gris azulado claro */
-    --shadow: 0 10px 25px rgba(0,0,0,0.4);
-    --border-card: #334155;
-}
 
 /* Aplicamos las variables a tu interfaz actual */
 body {
@@ -2528,10 +2519,6 @@ body {
     font-size: 20px;
     transition: 0.3s;
     margin-right: 15px;
-}
-
-[data-theme="dark"] .dark-mode-toggle {
-    background: #334155;
 }
 
 /* Contenedor del Dropdown */
@@ -2593,11 +2580,6 @@ body {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
 }
 
-[data-theme="dark"] .welcome-overlay {
-    /* Fondo degradado oscuro para modo noche */
-    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
-}
-
 .welcome-content {
     background-color: var(--bg-card) !important;
     padding: 40px;
@@ -2639,9 +2621,35 @@ body {
     background: linear-gradient(135deg, #2980B9 0%, #6DD5FA 100%) !important;
 }
 
-[data-theme="dark"] .welcome-overlay {
-    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
-}
+[data-theme="dark"] {
+            --bg-main: #0F172A; 
+            --bg-card: #1E293B; 
+            --text-primary: #F1F5F9; 
+            --text-secondary: #94A3B8; 
+            --shadow: 0 10px 25px rgba(0,0,0,0.4);
+            --border-card: #334155;
+            --header-bg: #1E293B;
+            
+            --bg-example-block: #2D3748; 
+            --text-example: #F7FAFC; 
+            --border-example: #4A5568;
+        }
+
+        /* 👇 AGREGA ESTO JUSTO DESPUÉS DE LAS VARIABLES DEL MODO OSCURO 👇 */
+        [data-theme="dark"] #optionsContainer button {
+            background-color: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-card) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+        }
+        
+        [data-theme="dark"] #optionsContainer button:hover {
+            background-color: #2D3748 !important;
+        }
+
+        [data-theme="dark"] #questionText {
+            color: var(--text-primary) !important;
+        }
 
 /* --- FIX DEL BOTÓN "VOLVER" FEO --- */
 #backToRoles {

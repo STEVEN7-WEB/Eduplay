@@ -2813,17 +2813,23 @@ if (tarjetaEstudiante) { // <--- ESTO EVITA EL ERROR NULL
         // ... aquí sigue tu código de fetch() ...
     });
 }
-// Verificamos que el botón de inicio del juego exista antes de agregarle eventos
-if (startGame) {
-    startGame.addEventListener('click', startGameFunction);
-    closeInstructions.addEventListener('click', () => instructionsModal.style.display = 'none');
-    closeGame.addEventListener('click', closeModals);
-    backToInstructions.addEventListener('click', () => {
-        gameModal.style.display = 'none';
-        instructionsModal.style.display = 'flex';
-    });
-    backToMenu.addEventListener('click', closeModals);
+// Verificamos botón por botón antes de agregarle eventos (Protección anti-errores)
+if (startGame) startGame.addEventListener('click', startGameFunction);
+if (closeInstructions) closeInstructions.addEventListener('click', () => {
+    if(instructionsModal) instructionsModal.style.display = 'none';
+});
+if (closeGame) closeGame.addEventListener('click', closeModals);
+if (backToInstructions) backToInstructions.addEventListener('click', () => {
+    if(gameModal) gameModal.style.display = 'none';
+    if(instructionsModal) instructionsModal.style.display = 'flex';
+});
+if (backToMenu) backToMenu.addEventListener('click', closeModals);
+
+// Protegemos los toggles de tema y audio por si no están en la pantalla actual
+if (typeof darkModeToggle !== 'undefined' && darkModeToggle) {
     darkModeToggle.addEventListener('click', toggleDarkMode);
+}
+if (typeof audioToggle !== 'undefined' && audioToggle) {
     audioToggle.addEventListener('click', toggleAudio);
 }
 console.log({

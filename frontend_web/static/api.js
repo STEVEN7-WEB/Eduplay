@@ -326,7 +326,7 @@ function entrarEstudiante() {
     }
 
     // 1. Buscamos al estudiante por su nombre en la base de datos
-    fetch('/api/usuarios')
+    fetch('/api/lista')
         .then(res => res.json())
         .then(estudiantes => {
             // Buscamos ignorando mayúsculas y minúsculas

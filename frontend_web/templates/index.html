@@ -218,6 +218,7 @@
                         ⭐ <span id="scoreDisplay">0</span>
                     </span>
                     <button id="backToInstructions" class="ep-btn" style="font-size:12px;">❔ Ayuda</button>
+                    <button id="backToMenu" style="display:none;"></button>
                     <button id="closeGame" style="background:#E74C3C; color:white; border:none; border-radius:50%; width:35px; height:35px; cursor:pointer; font-weight:bold;">X</button>
                 </div>
             </div>
@@ -230,9 +231,27 @@
         </div>
     </div>
 
+    <div id="epPinModal" class="modal-overlay" style="z-index: 10001;">
+        <div class="modal-content ep-box" style="padding:30px; border-radius:25px; text-align:center; max-width:350px; width: 90%; display: flex; flex-direction: column; align-items: center;">
+            <div id="epPinAvatar" style="font-size: 50px; background: var(--bg-main); width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: var(--shadow); margin-bottom: 15px;">🎮</div>
+            <h2 id="epPinName" style="color: var(--text-primary); margin: 0 0 10px 0;">¡Hola!</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">Ingresa tu PIN secreto para empezar a jugar.</p>
+            
+            <div id="pd" style="display: flex; gap: 15px; margin-bottom: 15px; justify-content: center; min-height: 20px;">
+                </div>
+            
+            <p id="epPinErr" style="color: #E74C3C; font-weight: bold; min-height: 20px; margin-bottom: 20px;"></p>
+            
+            <div style="display:flex; gap:10px; width: 100%;">
+                <button id="btn-entrar" class="ep-btn juicy-btn" style="flex:1; justify-content: center;">Entrar ✨</button>
+                <button onclick="document.getElementById('epPinModal').style.display='none'" class="ep-btn btn-volver" style="flex:1; justify-content: center; margin-left: 0;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
    <div class="welcome-overlay" id="welcomeOverlay">
     
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()" style="position:absolute; top:20px; right:20px; z-index: 10;">🌙</button>
+    <button id="theme-toggle" class="dark-mode-toggle" onclick="toggleDarkMode()" style="position:absolute; top:20px; right:20px; z-index: 10;">🌙</button>
     
     <div class="welcome-content">
         <div class="logo">
@@ -308,8 +327,8 @@
     <script src="/api.js"></script>
     <script src="/script_patch.js"></script>
 
-    <script>
-        // MODO OSCURO
+   <script>
+        // --- 1. MODO OSCURO ---
         function toggleDarkMode() {
             const body = document.documentElement;
             const isDark = body.getAttribute('data-theme') === 'dark';
@@ -320,7 +339,7 @@
             document.querySelectorAll('.dark-mode-toggle').forEach(btn => btn.innerText = icons);
         }
 
-        // LÓGICA DEL PERFIL
+        // --- 2. LÓGICA DEL PERFIL ---
         function toggleProfileMenu() {
             const menu = document.getElementById('profileMenu');
             const isVisible = menu.style.display === 'block';
@@ -332,7 +351,8 @@
             const uid = localStorage.getItem('userId');
             if (!uid) return;
             try {
-                const res = await fetch(`/api/usuarios/perfil/${uid}`);
+                // 👇 ¡Aquí está la corrección! Ahora apunta directo a /api/perfil/
+                const res = await fetch(`/api/perfil/${uid}`);
                 const data = await res.json();
                 if (data.success) {
                     document.getElementById('menuFullname').innerText = data.nombre;
@@ -343,16 +363,62 @@
             } catch (e) { console.error("Error al cargar perfil:", e); }
         }
 
-        // PERSISTENCIA TEMA AL CARGAR
+        // --- 3. AUTO-LOGIN Y RESTAURACIÓN ---
         window.addEventListener('DOMContentLoaded', () => {
+            // Restaurar Tema
             const savedTheme = localStorage.getItem('theme') || 'light';
             if (savedTheme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 document.querySelectorAll('.dark-mode-toggle').forEach(btn => btn.innerText = '☀️');
             }
+
+            // Restaurar Sesión
+            const savedUserId = localStorage.getItem('userId');
+            const savedUserName = localStorage.getItem('userName');
+            
+            if (savedUserId) {
+                // Inyectamos los datos en todas las variables globales posibles
+                window.usuarioActualId = savedUserId;
+                window.usuarioActual = { id: savedUserId, nombre: savedUserName };
+                window.estudianteSeleccionado = { id: savedUserId, nombre: savedUserName };
+                
+                // Actualizamos la interfaz
+                const nameEl = document.getElementById('currentUserName');
+                const avatarEl = document.getElementById('currentUserAvatar');
+                if (nameEl) nameEl.innerText = savedUserName;
+                if (avatarEl && savedUserName) avatarEl.innerText = savedUserName.charAt(0).toUpperCase();
+
+                // ¡ATENCIÓN AQUÍ! Ocultamos la bienvenida y mostramos el dashboard automáticamente
+                const welcomeOverlay = document.getElementById('welcomeOverlay');
+                const mainContainer = document.getElementById('mainContainer');
+                if (welcomeOverlay) welcomeOverlay.style.display = 'none';
+                if (mainContainer) mainContainer.style.display = 'block';
+            }
         });
 
-        // CERRAR DROPDOWN SI HACES CLICK AFUERA
+        // --- 4. PARCHE VIP (ELIMINA EL MODAL DE PIN REPETIDO) ---
+        // Buscamos la función del PIN y la "secuestramos" para que no moleste si ya hay sesión
+        const checkPinInterval = setInterval(() => {
+            if (typeof window.epPinAbrir === 'function') {
+                const originalPinFn = window.epPinAbrir;
+                window.epPinAbrir = function(u, cb) {
+                    // Si ya estamos logueados en localStorage, nos saltamos la validación
+                    if (localStorage.getItem('userId')) {
+                        // Aseguramos que el modal no se vea
+                        document.getElementById('epPinModal').style.display = 'none';
+                        // Ejecutamos la función que abre el juego directamente
+                        if (typeof cb === 'function') cb(); 
+                        return;
+                    }
+                    // Si no hay sesión (usuario nuevo), funciona normal
+                    originalPinFn(u, cb);
+                };
+                clearInterval(checkPinInterval); // Detenemos el buscador una vez parchado
+            }
+        }, 50); // Revisa cada 50 milisegundos hasta encontrar la función
+
+        // --- 5. UTILIDADES DE INTERFAZ ---
+        // Cerrar dropdown si haces clic afuera
         window.onclick = function(event) {
             if (!event.target.closest('.profile-dropdown')) {
                 const profileMenu = document.getElementById('profileMenu');
@@ -360,12 +426,22 @@
             }
         }
 
-        // FUNCIONES DE NAVEGACIÓN
+        // --- 6. FUNCIONES DE NAVEGACIÓN ---
         function lanzarJuego(tipo) { 
+            const uid = localStorage.getItem('userId');
+            if (!uid) {
+                alert("Debes iniciar sesión primero.");
+                // Si por algún error no hay sesión, lo regresamos al inicio
+                cerrarSesion();
+                return;
+            }
+
             if(window.showInstructions) {
+                // Al llamar a esta función, si script.js intenta pedir el PIN,
+                // nuestro Parche VIP de arriba lo interceptará y dejará pasar el juego limpio.
                 window.showInstructions(tipo);
             } else {
-                console.error("No disponible showInstructions");
+                console.error("El script de instrucciones no está disponible.");
             }
         }
         
@@ -379,7 +455,9 @@
             localStorage.removeItem('ep_sesion');
             localStorage.removeItem('userId');
             localStorage.removeItem('userName');
-            window.location.href = '/'; 
+            window.usuarioActualId = null;
+            window.usuarioActual = null;
+            window.location.reload(); 
         }
     </script>
 </body>

@@ -78,8 +78,6 @@ def crear_usuario():
         cur.close()
         conn.close()
 
-
-
 @usuarios_bp.route('/usuarios/<int:uid>', methods=['GET'])
 def get_usuario(uid):
     conn = db()
@@ -101,7 +99,7 @@ def get_usuario(uid):
         conn.close()
 
 # --- RUTA 1: LOGIN POR EMAIL ---
-@usuarios_bp.route('/login', methods=['POST', 'OPTIONS'], strict_slashes=False)
+@usuarios_bp.route('/usuarios/login', methods=['POST', 'OPTIONS'], strict_slashes=False)
 def login_usuario_email():
     if request.method == 'OPTIONS':
         return jsonify({}), 200
@@ -136,10 +134,8 @@ def login_usuario_email():
         cur.close()
         conn.close()
 
-
 # --- RUTA 2: LOGIN POR ID (PIN) ---
-# Le cambiamos el nombre a la función a "login_usuario_pin" para evitar choques
-@usuarios_bp.route('/<int:uid>/login', methods=['POST', 'OPTIONS'], strict_slashes=False)
+@usuarios_bp.route('/usuarios/<int:uid>/login', methods=['POST', 'OPTIONS'], strict_slashes=False)
 def login_usuario_pin(uid):
     if request.method == 'OPTIONS':
         return jsonify({}), 200
@@ -166,7 +162,6 @@ def login_usuario_pin(uid):
         cur.close()
         conn.close()
 
-
 @usuarios_bp.route('/usuarios/<int:uid>/pregunta', methods=['GET'])
 def pregunta_usuario(uid):
     return jsonify({'error':'La recuperación por pregunta no está habilitada en la nueva base de datos.'}), 400
@@ -186,8 +181,6 @@ def logout_usuario():
             cur.close()
             conn.close()
     return jsonify({'ok':True})
-
-
 
 @usuarios_bp.route('/admin/registro', methods=['POST'])
 def registrar_admin():
@@ -226,7 +219,6 @@ def obtener_perfil_detallado(uid):
         conn = db()
         c = conn.cursor()
         
-        # 👇 ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE! Ya no pedimos 'age'
         c.execute("SELECT name, grade FROM users WHERE id = %s", (uid,))
         u = c.fetchone()
         
