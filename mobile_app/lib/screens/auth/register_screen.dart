@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/neon_db_service.dart';
 import '../home/home_screen.dart';
-import 'package:flutter/services.dart'; // <--- Agrega este import
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -10,11 +10,20 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   int _gradoSeleccionado = 1; 
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _emailController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,113 +40,134 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Column(
-            children: [
-              const Icon(Icons.person_add_alt_1_rounded, size: 80, color: Colors.greenAccent),
-              const SizedBox(height: 20),
-              const Text("NUEVO PERFIL", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 2)),
-              const SizedBox(height: 30),
-              Container(
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(color: const Color(0xFF1B263B), borderRadius: BorderRadius.circular(30)),
-                child: Column(
-                  children: [
-                    _buildField(_nombreController, "Tu Nombre", Icons.face, Colors.greenAccent),
-                    const SizedBox(height: 15),
-                    _buildField(_emailController, "Correo", Icons.email, Colors.cyanAccent),
-                    const SizedBox(height: 15),
-                    _buildField(_passController, "Contraseña", Icons.lock, Colors.pinkAccent, isPass: true),
-                    const SizedBox(height: 15),
-                    
-                    // SELECTOR DE GRADO
-                    DropdownButtonFormField<int>(
-                      value: _gradoSeleccionado,
-                      dropdownColor: const Color(0xFF1B263B),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.school, color: Colors.orangeAccent),
-                        filled: true,
-                        fillColor: const Color(0xFF0D1B2A),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-                      ),
-                      items: [1, 2, 3, 4, 5, 6].map((grado) {
-                        return DropdownMenuItem(value: grado, child: Text("Grado $gradoº"));
-                      }).toList(),
-                      onChanged: (val) => setState(() => _gradoSeleccionado = val!),
-                    ),
-
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.greenAccent,
-                          foregroundColor: const Color(0xFF0D1B2A),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          child: Form(
+            key: _formKey, // Usamos Form para validaciones
+            child: Column(
+              children: [
+                const Icon(Icons.person_add_alt_1_rounded, size: 80, color: Colors.greenAccent),
+                const SizedBox(height: 20),
+                const Text("NUEVO PERFIL", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                const SizedBox(height: 30),
+                Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(color: const Color(0xFF1B263B), borderRadius: BorderRadius.circular(30)),
+                  child: Column(
+                    children: [
+                      _buildField(_nombreController, "Tu Nombre", Icons.face, Colors.greenAccent, false),
+                      const SizedBox(height: 15),
+                      _buildField(_emailController, "Correo", Icons.email, Colors.cyanAccent, false),
+                      const SizedBox(height: 15),
+                      _buildField(_passController, "PIN de 4 números", Icons.lock, Colors.pinkAccent, true),
+                      const SizedBox(height: 15),
+                      
+                      // SELECTOR DE GRADO
+                      DropdownButtonFormField<int>(
+                        value: _gradoSeleccionado,
+                        dropdownColor: const Color(0xFF1B263B),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.school, color: Colors.orangeAccent),
+                          filled: true,
+                          fillColor: const Color(0xFF0D1B2A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                         ),
-                        onPressed: _isLoading ? null : _registrar,
-                        child: _isLoading 
-                          ? const CircularProgressIndicator(color: Color(0xFF0D1B2A))
-                          : const Text("CREAR MI CUENTA", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                        items: [1, 2, 3, 4, 5, 6].map((grado) {
+                          return DropdownMenuItem(value: grado, child: Text("Grado $gradoº"));
+                        }).toList(),
+                        onChanged: (val) => setState(() => _gradoSeleccionado = val!),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 30),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.greenAccent,
+                            foregroundColor: const Color(0xFF0D1B2A),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          ),
+                          onPressed: _isLoading ? null : _registrar,
+                          child: _isLoading 
+                            ? const SizedBox(height: 25, width: 25, child: CircularProgressIndicator(color: Color(0xFF0D1B2A), strokeWidth: 3))
+                            : const Text("CREAR MI CUENTA", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildField(TextEditingController controller, String label, IconData icon, Color color, {bool isPass = false}) {
-  return TextField(
-    controller: controller,
-    obscureText: isPass,
-    // --- NUEVO: Si es contraseña, usamos teclado numérico ---
-    keyboardType: isPass ? TextInputType.number : TextInputType.text,
-    
-    // --- NUEVO: Limitadores para que solo acepte 4 dígitos ---
-    inputFormatters: isPass ? [
-      FilteringTextInputFormatter.digitsOnly, // Solo números del 0-9
-      LengthLimitingTextInputFormatter(4),    // Máximo 4 caracteres
-    ] : [],
-    
-    style: const TextStyle(color: Colors.white),
-    decoration: InputDecoration(
-      prefixIcon: Icon(icon, color: color),
-      hintText: label,
-      hintStyle: const TextStyle(color: Colors.white38),
-      filled: true,
-      fillColor: const Color(0xFF0D1B2A), // El azul profundo de EduPlay
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15), 
-        borderSide: BorderSide.none,
+  Widget _buildField(TextEditingController controller, String label, IconData icon, Color color, bool isPass) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPass,
+      keyboardType: isPass ? TextInputType.number : 
+                    (label == "Correo" ? TextInputType.emailAddress : TextInputType.name),
+      inputFormatters: isPass ? [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(4),
+      ] : [],
+      style: const TextStyle(color: Colors.white),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Falta llenar este campo';
+        }
+        if (isPass && value.length < 4) {
+          return 'El PIN debe tener 4 números';
+        }
+        if (label == "Correo" && !value.contains("@")) {
+          return 'Ingresa un correo válido';
+        }
+        return null;
+      },
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: color),
+        hintText: label,
+        hintStyle: const TextStyle(color: Colors.white38),
+        filled: true,
+        fillColor: const Color(0xFF0D1B2A),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15), 
+          borderSide: BorderSide.none,
+        ),
+        errorStyle: const TextStyle(color: Colors.pinkAccent),
+        counterText: "", 
       ),
-      // Muestra un contador de caracteres si quieres (opcional), 
-      // o ponlo en null para que sea invisible:
-      counterText: "", 
-    ),
-  );
-}
+    );
+  }
 
   void _registrar() async {
-    if (_nombreController.text.isEmpty || _emailController.text.isEmpty || _passController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("¡No dejes campos vacíos! ✍️")));
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
-    // Mandamos el grado seleccionado
-    bool exito = await NeonDbService.registrarUsuario(_nombreController.text, _emailController.text, _passController.text, _gradoSeleccionado);
+    
+    bool exito = await NeonDbService.registrarUsuario(
+      _nombreController.text.trim(), 
+      _emailController.text.trim(), 
+      _passController.text.trim(), 
+      _gradoSeleccionado
+    );
+    
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (exito && mounted) {
+    if (exito) {
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al registrar ❌")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Error al registrar ❌. Revisa tu conexión."),
+          backgroundColor: Colors.pinkAccent,
+        )
+      );
     }
   }
 }
