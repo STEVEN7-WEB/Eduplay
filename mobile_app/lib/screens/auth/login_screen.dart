@@ -12,13 +12,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _nombreController.dispose();
     _passController.dispose();
     super.dispose();
   }
@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Form(
-              key: _formKey, // Usamos Form para validaciones
+              key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 40),
                   const Text(
-                    "BIENVENIDO",
+                    "¡HOLA!",
                     style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 3),
                   ),
                   const SizedBox(height: 30),
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Column(
         children: [
-          _buildField(_emailController, "Correo", Icons.email, Colors.cyanAccent, false),
+          _buildField(_nombreController, "Tu Nombre", Icons.face, Colors.greenAccent, false),
           const SizedBox(height: 15),
           _buildField(_passController, "PIN Secreto", Icons.lock, Colors.pinkAccent, true),
           const SizedBox(height: 30),
@@ -116,10 +116,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildField(TextEditingController controller, String label, IconData icon, Color color, bool isPass) {
-    return TextFormField( // Cambiado a TextFormField
+    return TextFormField(
       controller: controller,
       obscureText: isPass,
-      keyboardType: isPass ? TextInputType.number : TextInputType.emailAddress,
+      keyboardType: isPass ? TextInputType.number : TextInputType.name,
       inputFormatters: isPass ? [
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(4),
@@ -144,22 +144,20 @@ class _LoginScreenState extends State<LoginScreen> {
           borderRadius: BorderRadius.circular(15), 
           borderSide: BorderSide.none,
         ),
-        errorStyle: const TextStyle(color: Colors.pinkAccent), // Estilo para los errores
+        errorStyle: const TextStyle(color: Colors.pinkAccent),
         counterText: "", 
       ),
     );
   }
 
   void _login() async {
-    // 1. Validamos que el formulario esté correcto antes de enviar nada
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
     
-    // Aquí es donde llamas a tu API de Flask
-    bool exito = await NeonDbService.loginDirecto(_emailController.text.trim(), _passController.text.trim());
+    bool exito = await NeonDbService.loginPorNombre(_nombreController.text.trim(), _passController.text.trim());
     
-    if (!mounted) return; // Buena práctica en Flutter
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (exito) {
@@ -167,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Correo o PIN incorrectos ❌"),
+          content: Text("Nombre o PIN incorrectos ❌"),
           backgroundColor: Colors.pinkAccent,
         )
       );

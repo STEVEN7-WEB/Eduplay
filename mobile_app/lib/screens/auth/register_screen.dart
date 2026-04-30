@@ -41,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 30),
           child: Form(
-            key: _formKey, // Usamos Form para validaciones
+            key: _formKey,
             child: Column(
               children: [
                 const Icon(Icons.person_add_alt_1_rounded, size: 80, color: Colors.greenAccent),
@@ -149,7 +149,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
     
-    bool exito = await NeonDbService.registrarUsuario(
+    // Aquí implementamos la lógica para recibir el string de respuesta
+    dynamic resultado = await NeonDbService.registrarUsuario(
       _nombreController.text.trim(), 
       _emailController.text.trim(), 
       _passController.text.trim(), 
@@ -159,9 +160,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (exito) {
+    // Verificamos el tipo de resultado que devuelve NeonDbService
+    if (resultado == true) {
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
+    } else if (resultado is String && resultado == 'duplicate_email') {
+      // Manejamos el error específico del correo
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("¡Ups! Este correo ya está registrado 📧"),
+          backgroundColor: Colors.orangeAccent,
+          duration: Duration(seconds: 4),
+        )
+      );
     } else {
+      // Error general
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Error al registrar ❌. Revisa tu conexión."),
