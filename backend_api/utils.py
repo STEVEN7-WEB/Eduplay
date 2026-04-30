@@ -5,6 +5,13 @@ from flask import request, jsonify
 from database import db
 
 # --- UTILIDADES GENERALES ---
+import hashlib
+
+def hp(texto):
+    # Convertimos el texto (ej. "1111") a bytes y lo pasamos por SHA-256
+    resultado = hashlib.sha256(str(texto).encode('utf-8')).hexdigest()
+    return resultado
+
 def hp(t): 
     return hashlib.sha256((t or '').strip().lower().encode()).hexdigest()
 

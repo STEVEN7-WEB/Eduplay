@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:postgres/postgres.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,34 +15,54 @@ class NeonDbService {
     return await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.require));
   }
 
+  // === FUNCIÓN PARA ENCRIPTAR EL PIN ===
+  static String hp(String texto) {
+    var bytes = utf8.encode(texto); 
+    var digest = sha256.convert(bytes); 
+    return digest.toString(); 
+  }
+
   /// REGISTRO DIRECTO A NEON
-  static Future<bool> registrarUsuario(String nombre, String email, String password, int grado) async {
+  static Future<dynamic> registrarUsuario(String nombre, String email, String password, int grado) async {
     try {
       final connection = await _conectar();
+      
+      // 1. Encriptamos el PIN antes de guardarlo
+      final String passwordHasheado = hp(password);
+
       await connection.execute(
         Sql.named('INSERT INTO users (name, email, password, grade, role) VALUES (@nombre, @email, @password, @grado, @rol)'),
         parameters: {
           'nombre': nombre, 
           'email': email, 
-          'password': password, // ⚠️ Se guarda en texto plano
+          'password': passwordHasheado, // Guardamos el hash, no el 1111
           'grado': grado,
           'rol': 'student'
         },
       );
       await connection.close();
+      
+      // Si el registro es exitoso, iniciamos sesión automáticamente
       return await loginPorNombre(nombre, password);
+      
     } catch (e) {
+      // ⚠️ Detectamos el error específico de correo duplicado
+      if (e.toString().contains('users_email_key') || e.toString().contains('23505')) {
+        print('Aviso: El correo ya existe en la base de datos.');
+        return 'duplicate_email'; 
+      }
+      
       print('Error al registrar: $e');
       return false;
     }
   }
 
-  /// LOGIN POR NOMBRE Y PIN (Adaptado a tu nueva pantalla)
+  /// LOGIN POR NOMBRE Y PIN
   static Future<bool> loginPorNombre(String nombre, String pin) async {
     try {
       final connection = await _conectar();
       
-      // Buscamos al usuario por nombre ignorando mayúsculas/minúsculas usando LOWER()
+      // Buscamos a TODOS los usuarios con ese nombre
       final result = await connection.execute(
         Sql.named('SELECT id, grade, name, password FROM users WHERE LOWER(name) = LOWER(@nombre)'),
         parameters: {'nombre': nombre},
@@ -48,24 +70,29 @@ class NeonDbService {
       await connection.close();
 
       if (result.isNotEmpty) {
-        final dbPassword = result[0][3].toString();
+        // 1. Encriptamos el PIN que el niño acaba de escribir en la pantalla
+        final String pinHasheadoIntento = hp(pin);
 
-        // ⚠️ Comparamos el PIN exacto. (Fallará con usuarios creados en la Web que tengan Hash)
-        if (dbPassword == pin) {
-          final int userId = result[0][0] as int;
-          final int grado = result[0][1] != null ? result[0][1] as int : 1; 
-          final String userName = result[0][2].toString();
+        // 2. Revisamos todos los "Stevens" que nos devolvió la base de datos
+        for (final row in result) {
+          final dbPassword = row[3].toString();
 
-          // Guardamos sesión en memoria
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('sesion_iniciada', true);
-          await prefs.setInt('id_usuario', userId);
-          await prefs.setInt('grado_usuario', grado);
-          await prefs.setString('userName', userName);
-          return true;
-        } else {
-          print("El PIN no coincide");
+          // 3. Comparamos los hashes
+          if (dbPassword == pinHasheadoIntento) {
+            final int userId = row[0] as int;
+            final int grado = row[1] != null ? row[1] as int : 1; 
+            final String userName = row[2].toString();
+
+            // Guardamos sesión en memoria
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('sesion_iniciada', true);
+            await prefs.setInt('id_usuario', userId);
+            await prefs.setInt('grado_usuario', grado);
+            await prefs.setString('userName', userName);
+            return true; // Login exitoso
+          }
         }
+        print("Se encontró el nombre, pero el PIN no coincide con ninguno.");
       }
       return false;
     } catch (e) {
