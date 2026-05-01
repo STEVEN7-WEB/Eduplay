@@ -27,8 +27,15 @@ class _TestScreenState extends State<TestScreen> {
   }
 
 void _loadQuestions() async {
-    // Para probar, forzamos el grado 1 que vemos en tu captura de Neon
-    final rawPreguntas = await NeonDbService.obtenerPreguntasPorMateria(widget.subject, 1);
+    // 1. Instanciamos SharedPreferences para leer la sesión de tu Login
+    final prefs = await SharedPreferences.getInstance();
+    
+    // 2. Leemos el grado usando la MISMA llave que usaste en tu NeonDbService.
+    // Usamos "?? 1" como comodín por si hay un error y no encuentra el dato.
+    final int gradoActual = prefs.getInt('grado_usuario') ?? 1;
+
+    // 3. Pasamos tu variable "gradoActual" a la consulta de la base de datos
+    final rawPreguntas = await NeonDbService.obtenerPreguntasPorMateria(widget.subject, gradoActual);
     
     setState(() {
       _preguntas = rawPreguntas.map((p) => Pregunta.fromDatabase(p)).toList();
