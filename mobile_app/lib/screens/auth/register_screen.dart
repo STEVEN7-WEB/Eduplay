@@ -18,6 +18,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   int _gradoSeleccionado = 1; 
   bool _isLoading = false;
 
+  // Lista de rutas de los avatares
+  final List<String> _avatars = [
+    'assets/avatars/avatar1.png', 
+    'assets/avatars/avatar2.png',
+    'assets/avatars/avatar3.png', 
+    'assets/avatars/avatar4.png', 
+    'assets/avatars/avatar5.png',
+    'assets/avatars/avatar6.png',
+  ];
+  // Avatar seleccionado por defecto
+  String _avatarSeleccionado = 'assets/avatars/avatar1.png';
+
   @override
   void dispose() {
     _nombreController.dispose();
@@ -29,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF151522), // Fondo oscuro
+      backgroundColor: const Color(0xFF151522),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -53,20 +65,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
             key: _formKey,
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF222232),
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: const Color(0xFF4ECDC4).withOpacity(0.3), blurRadius: 20)],
-                    border: Border.all(color: const Color(0xFF4ECDC4), width: 2),
-                  ),
-                  child: const Icon(Icons.face_retouching_natural_rounded, size: 60, color: Color(0xFF4ECDC4)),
-                ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 10),
                 Text("NUEVO PERFIL", style: GoogleFonts.fredoka(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
                 Text("¡Únete a la tripulación espacial!", style: GoogleFonts.nunito(color: const Color(0xFF48CAE4), fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 25),
+
+                // --- SELECTOR DE AVATARES ---
+                Text("Elige tu Avatar", style: GoogleFonts.fredoka(color: const Color(0xFFFFD93D), fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 15),
+                SizedBox(
+                  height: 90,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _avatars.length,
+                    itemBuilder: (context, index) {
+                      final isSelected = _avatarSeleccionado == _avatars[index];
+                      return GestureDetector(
+                        onTap: () => setState(() => _avatarSeleccionado = _avatars[index]),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          padding: EdgeInsets.all(isSelected ? 3 : 0),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFF4ECDC4) : Colors.transparent,
+                              width: 3,
+                            ),
+                            boxShadow: isSelected ? [
+                              BoxShadow(color: const Color(0xFF4ECDC4).withOpacity(0.5), blurRadius: 10)
+                            ] : [],
+                          ),
+                          child: CircleAvatar(
+                            radius: isSelected ? 40 : 35,
+                            backgroundColor: const Color(0xFF222232),
+                            backgroundImage: AssetImage(_avatars[index]),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 const SizedBox(height: 30),
+
                 Container(
                   padding: const EdgeInsets.all(25),
                   decoration: BoxDecoration(
@@ -84,10 +125,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _buildField(_passController, "PIN de 4 números", Icons.lock_rounded, const Color(0xFFFF6B6B), true),
                       const SizedBox(height: 15),
                       
-                      // SELECTOR DE GRADO DARK
                       DropdownButtonFormField<int>(
                         value: _gradoSeleccionado,
-                        dropdownColor: const Color(0xFF222232), // Dropdown oscuro
+                        dropdownColor: const Color(0xFF222232),
                         icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF9D4EDD)),
                         style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
                         decoration: InputDecoration(
@@ -108,14 +148,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         height: 60,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4ECDC4), // Verde agua brillante
+                            backgroundColor: const Color(0xFF4ECDC4),
                             elevation: 8,
                             shadowColor: const Color(0xFF4ECDC4).withOpacity(0.5),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                           ),
                           onPressed: _isLoading ? null : _registrar,
                           child: _isLoading 
-                            ? const SizedBox(height: 25, width: 25, child: CircularProgressIndicator(color: const Color(0xFF151522), strokeWidth: 3))
+                            ? const SizedBox(height: 25, width: 25, child: CircularProgressIndicator(color: Color(0xFF151522), strokeWidth: 3))
                             : Text("¡CREAR MI CUENTA!", style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 20, color: const Color(0xFF151522))),
                         ),
                       ),
@@ -165,11 +205,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     
+    // NOTA: Recuerda actualizar tu NeonDbService para que acepte el parámetro _avatarSeleccionado
     dynamic resultado = await NeonDbService.registrarUsuario(
       _nombreController.text.trim(), 
       _emailController.text.trim(), 
       _passController.text.trim(), 
-      _gradoSeleccionado
+      _gradoSeleccionado,
+      _avatarSeleccionado // <-- NUEVO PARÁMETRO
     );
     
     if (!mounted) return;
