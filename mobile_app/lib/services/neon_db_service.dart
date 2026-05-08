@@ -27,7 +27,20 @@ class NeonDbService {
     try {
       final connection = await _conectar();
       
-      // 1. Encriptamos el PIN antes de guardarlo
+      // --- 1. Validar si el nombre ya existe ---
+      // Usamos LOWER para que "Steven" y "steven" cuenten como el mismo nombre
+      final nameCheck = await connection.execute(
+        Sql.named('SELECT id FROM users WHERE LOWER(name) = LOWER(@nombre)'),
+        parameters: {'nombre': nombre},
+      );
+
+      if (nameCheck.isNotEmpty) {
+        await connection.close();
+        return 'duplicate_name'; // Manda la señal a la pantalla para mostrar la alerta
+      }
+      // ------------------------------------------------
+
+      // 2. Encriptamos el PIN antes de guardarlo
       final String passwordHasheado = hp(password);
 
       await connection.execute(
@@ -35,7 +48,7 @@ class NeonDbService {
         parameters: {
           'nombre': nombre, 
           'email': email, 
-          'password': passwordHasheado, // Guardamos el hash, no el 1111
+          'password': passwordHasheado, 
           'grado': grado,
           'rol': 'student'
         },
@@ -46,7 +59,7 @@ class NeonDbService {
       return await loginPorNombre(nombre, password);
       
     } catch (e) {
-      // ⚠️ Detectamos el error específico de correo duplicado
+      // Detectamos el error específico de correo duplicado
       if (e.toString().contains('users_email_key') || e.toString().contains('23505')) {
         print('Aviso: El correo ya existe en la base de datos.');
         return 'duplicate_email'; 
@@ -73,7 +86,7 @@ class NeonDbService {
         // 1. Encriptamos el PIN que el niño acaba de escribir en la pantalla
         final String pinHasheadoIntento = hp(pin);
 
-        // 2. Revisamos todos los "Stevens" que nos devolvió la base de datos
+        // 2. Revisamos todos los resultados que nos devolvió la base de datos
         for (final row in result) {
           final dbPassword = row[3].toString();
 
@@ -131,6 +144,7 @@ class NeonDbService {
     }
   }
 
+  /// CERRAR SESIÓN
   static Future<void> cerrarSesion() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="eduplay2_app"
+        android:label="EduPlay 2"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
