@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  assets:
+    - assets/avatars/
   connectivity_plus: ^6.0.3 # Verifica la última versión en pub.dev
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.6

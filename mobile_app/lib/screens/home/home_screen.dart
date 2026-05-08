@@ -14,7 +14,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _userName = 'Estudiante';
   String _userId = '';
-  String _avatarInitial = 'U';
+  // Se reemplaza la inicial por la ruta del avatar por defecto
+  String _userAvatar = 'assets/avatars/avatar1.png';
 
   @override
   void initState() {
@@ -27,7 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _userName = prefs.getString('userName') ?? 'Estudiante';
       _userId = prefs.getString('userId') ?? '0';
-      _avatarInitial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
+      // Obtenemos la ruta del avatar guardada (o ponemos uno por defecto)
+      _userAvatar = prefs.getString('userAvatar') ?? 'assets/avatars/avatar1.png';
     });
   }
 
@@ -42,8 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF151522), // Fondo oscuro espacial
-      // --- BARRA FLOTANTE DE HERRAMIENTAS ---
+      backgroundColor: const Color(0xFF151522),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _buildFloatingDock(),
       body: SafeArea(
@@ -87,18 +88,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Avatar circular 
+                  // --- AVATAR SELECCIONADO ---
                   Container(
                     width: 55, height: 55,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF9D4EDD), // Morado
                       shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFF9D4EDD), width: 2), // Borde morado para que combine
                       boxShadow: [
                         BoxShadow(color: const Color(0xFF9D4EDD).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 4))
                       ]
                     ),
-                    child: Center(
-                      child: Text(_avatarInitial, style: GoogleFonts.fredoka(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+                    child: CircleAvatar(
+                      backgroundColor: const Color(0xFF222232),
+                      backgroundImage: AssetImage(_userAvatar),
                     ),
                   ),
                 ],
@@ -110,29 +112,28 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Text(
                 "¿Qué misión haremos hoy?",
-                style: GoogleFonts.fredoka(color: const Color(0xFF48CAE4), fontSize: 22, fontWeight: FontWeight.w600), // Cian
+                style: GoogleFonts.fredoka(color: const Color(0xFF48CAE4), fontSize: 22, fontWeight: FontWeight.w600),
               ),
             ),
 
-            // --- GRILLA DE 8 ACTIVIDADES ---
+            // --- GRILLA DE ACTIVIDADES ---
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2, 
                 crossAxisSpacing: 18,
                 mainAxisSpacing: 18,
-                childAspectRatio: 0.9, // Hace las tarjetas un poco más alargadas como en tu foto
-                padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 110), // Espacio inferior para el dock
+                childAspectRatio: 0.9,
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 110),
                 physics: const BouncingScrollPhysics(), 
                 children: [
                   _buildActivityCard(context, 'math', 'Matemáticas', '🔢', const Color(0xFFFF6B6B)), 
                   _buildActivityCard(context, 'memory', 'Memoria', '🧠', const Color(0xFF4ECDC4)), 
-                  _buildActivityCard(context, 'logic', 'Lógica', '🧩', const Color(0xFFA0D468)), // Verde manzana
+                  _buildActivityCard(context, 'logic', 'Lógica', '🧩', const Color(0xFFA0D468)),
                   _buildActivityCard(context, 'grammar', 'Gramática', '✍️', const Color(0xFF9D4EDD)), 
                   _buildActivityCard(context, 'english', 'Inglés', '🗣️', const Color(0xFF48CAE4)), 
                   _buildActivityCard(context, 'geography', 'Geografía', '🌎', const Color(0xFFFF9F43)), 
-                  // --- LAS 2 MATERIAS NUEVAS ---
-                  _buildActivityCard(context, 'art', 'Arte', '🎨', const Color(0xFFFF66C4)), // Rosa Neón
-                  _buildActivityCard(context, 'science', 'Ciencia', '🔬', const Color(0xFF5E60CE)), // Índigo
+                  _buildActivityCard(context, 'art', 'Arte', '🎨', const Color(0xFFFF66C4)),
+                  _buildActivityCard(context, 'science', 'Ciencia', '🔬', const Color(0xFF5E60CE)),
                 ],
               ),
             ),
@@ -142,13 +143,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET DEL DOCK INFERIOR ---
+  // --- WIDGET DEL DOCK INFERIOR (Sin cambios) ---
   Widget _buildFloatingDock() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2E), // Un poco más claro que el fondo
+        color: const Color(0xFF1E1E2E),
         borderRadius: BorderRadius.circular(35),
         border: Border.all(color: const Color(0xFF333344), width: 2), 
         boxShadow: [
@@ -188,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        color: Colors.transparent, // Facilita el toque
+        color: Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -202,7 +203,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- FUNCIÓN PARA MOSTRAR LOS MODALES AL TOCAR LOS BOTONES ---
   void _mostrarModal(String titulo, String mensaje, Color colorNeon) {
     showDialog(
       context: context,
@@ -255,7 +255,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- TARJETA DE ACTIVIDAD ESTILIZADA ---
   Widget _buildActivityCard(BuildContext context, String subjectKey, String title, String emoji, Color accentColor) {
     return InkWell(
       borderRadius: BorderRadius.circular(25),
@@ -267,12 +266,12 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF222232), // Fondo de tarjeta oscuro
+          color: const Color(0xFF222232),
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: accentColor.withOpacity(0.4), width: 1.5), // Borde sutil
+          border: Border.all(color: accentColor.withOpacity(0.4), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: accentColor.withOpacity(0.08), // Brillo muy suave
+              color: accentColor.withOpacity(0.08),
               blurRadius: 15, 
               offset: const Offset(0, 5)
             )
@@ -284,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.12), // Fondo circular interior
+                color: accentColor.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
               child: Text(emoji, style: const TextStyle(fontSize: 35)),

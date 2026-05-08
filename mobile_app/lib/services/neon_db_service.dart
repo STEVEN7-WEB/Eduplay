@@ -9,7 +9,7 @@ class NeonDbService {
       host: 'ep-bold-sea-ammozaye-pooler.c-5.us-east-1.aws.neon.tech',
       database: 'neondb',
       username: 'neondb_owner',
-      password: 'npg_XkHAZ3tCTf8U',
+      password: 'npg_XkHAZ3tCTf8U', // Nota de seguridad: Cuidado con compartir esta contraseña en entornos públicos
       port: 5432,
     );
     return await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.require));
@@ -23,12 +23,12 @@ class NeonDbService {
   }
 
   /// REGISTRO DIRECTO A NEON
-  static Future<dynamic> registrarUsuario(String nombre, String email, String password, int grado) async {
+  // Añadimos "String avatar" como parámetro
+  static Future<dynamic> registrarUsuario(String nombre, String email, String password, int grado, String avatar) async {
     try {
       final connection = await _conectar();
       
       // --- 1. Validar si el nombre ya existe ---
-      // Usamos LOWER para que "Steven" y "steven" cuenten como el mismo nombre
       final nameCheck = await connection.execute(
         Sql.named('SELECT id FROM users WHERE LOWER(name) = LOWER(@nombre)'),
         parameters: {'nombre': nombre},
@@ -36,21 +36,23 @@ class NeonDbService {
 
       if (nameCheck.isNotEmpty) {
         await connection.close();
-        return 'duplicate_name'; // Manda la señal a la pantalla para mostrar la alerta
+        return 'duplicate_name'; 
       }
       // ------------------------------------------------
 
       // 2. Encriptamos el PIN antes de guardarlo
       final String passwordHasheado = hp(password);
 
+      // 3. Insertamos el nuevo usuario con su avatar
       await connection.execute(
-        Sql.named('INSERT INTO users (name, email, password, grade, role) VALUES (@nombre, @email, @password, @grado, @rol)'),
+        Sql.named('INSERT INTO users (name, email, password, grade, role, avatar) VALUES (@nombre, @email, @password, @grado, @rol, @avatar)'),
         parameters: {
           'nombre': nombre, 
           'email': email, 
           'password': passwordHasheado, 
           'grado': grado,
-          'rol': 'student'
+          'rol': 'student',
+          'avatar': avatar // Guardamos la ruta de la imagen
         },
       );
       await connection.close();
@@ -59,7 +61,6 @@ class NeonDbService {
       return await loginPorNombre(nombre, password);
       
     } catch (e) {
-      // Detectamos el error específico de correo duplicado
       if (e.toString().contains('users_email_key') || e.toString().contains('23505')) {
         print('Aviso: El correo ya existe en la base de datos.');
         return 'duplicate_email'; 
@@ -75,33 +76,34 @@ class NeonDbService {
     try {
       final connection = await _conectar();
       
-      // Buscamos a TODOS los usuarios con ese nombre
+      // Agregamos "avatar" a la consulta SELECT (posición 4)
       final result = await connection.execute(
-        Sql.named('SELECT id, grade, name, password FROM users WHERE LOWER(name) = LOWER(@nombre)'),
+        Sql.named('SELECT id, grade, name, password, avatar FROM users WHERE LOWER(name) = LOWER(@nombre)'),
         parameters: {'nombre': nombre},
       );
       await connection.close();
 
       if (result.isNotEmpty) {
-        // 1. Encriptamos el PIN que el niño acaba de escribir en la pantalla
         final String pinHasheadoIntento = hp(pin);
 
-        // 2. Revisamos todos los resultados que nos devolvió la base de datos
         for (final row in result) {
           final dbPassword = row[3].toString();
 
-          // 3. Comparamos los hashes
           if (dbPassword == pinHasheadoIntento) {
             final int userId = row[0] as int;
             final int grado = row[1] != null ? row[1] as int : 1; 
             final String userName = row[2].toString();
+            // Obtenemos el avatar de la base de datos. Si es nulo, ponemos el de por defecto.
+            final String userAvatar = row[4] != null ? row[4].toString() : 'assets/avatars/avatar1.png';
 
-            // Guardamos sesión en memoria
+            // Guardamos todo en memoria
             final prefs = await SharedPreferences.getInstance();
             await prefs.setBool('sesion_iniciada', true);
             await prefs.setInt('id_usuario', userId);
             await prefs.setInt('grado_usuario', grado);
             await prefs.setString('userName', userName);
+            await prefs.setString('userAvatar', userAvatar); // Guardamos la ruta del avatar para usarlo en HomeScreen
+            
             return true; // Login exitoso
           }
         }
@@ -131,7 +133,7 @@ class NeonDbService {
 
       return result.map((row) => {
         'id': row[0],
-        'text': row[1].toString(),           
+        'text': row[1].toString(),          
         'options': row[2],                  
         'correct_option': row[3],           
         'subject': row[4].toString(),       
