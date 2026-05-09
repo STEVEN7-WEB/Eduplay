@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/neon_db_service.dart';
+import '../../main.dart'; // ¡Importante para cambiar el tema global!
 import '../home/home_screen.dart';
 import 'register_screen.dart';
 
@@ -24,6 +26,21 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // --- FUNCIÓN PARA CAMBIAR EL TEMA DESDE EL LOGIN ---
+  void _toggleTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Detectamos en qué modo estamos actualmente
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final newMode = !isDarkMode; // Lo invertimos
+
+    // Cambiamos la variable global de main.dart
+    themeNotifier.value = newMode ? ThemeMode.dark : ThemeMode.light;
+    
+    // Guardamos la preferencia en el celular para que siempre inicie así
+    await prefs.setBool('isDarkMode', newMode);
+  }
+
   @override
   Widget build(BuildContext context) {
     // --- DETECTOR DE MODO OSCURO ---
@@ -35,6 +52,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
+      // Añadimos un AppBar invisible solo para poner el botón a la derecha
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 20, top: 10),
+            decoration: BoxDecoration(
+              color: cardColor,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isDarkMode ? const Color(0xFFFFD93D).withOpacity(0.5) : const Color(0xFF5E60CE).withOpacity(0.5), 
+                width: 1.5
+              ),
+            ),
+            child: IconButton(
+              onPressed: _toggleTheme, 
+              icon: Icon(
+                isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded, 
+                color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE), 
+                size: 22
+              )
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
