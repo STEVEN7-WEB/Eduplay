@@ -26,8 +26,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // --- DETECTOR DE MODO OSCURO ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
+    final subtitleColor = isDarkMode ? const Color(0xFF48CAE4) : const Color(0xFF0096C7);
+    final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF151522), // Fondo oscuro espacial
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -41,11 +48,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     height: 120, width: 120,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF222232),
+                      color: cardColor,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF9D4EDD).withOpacity(0.4), // Brillo morado
+                          color: const Color(0xFF9D4EDD).withOpacity(0.4),
                           blurRadius: 25, spreadRadius: 2,
                         )
                       ],
@@ -63,14 +70,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 30),
                   Text(
                     "¡HOLA!",
-                    style: GoogleFonts.fredoka(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: 2),
+                    style: GoogleFonts.fredoka(color: textColor, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: 2),
                   ),
                   Text(
                     "¡Listo para otra misión!",
-                    style: GoogleFonts.nunito(color: const Color(0xFF48CAE4), fontSize: 16, fontWeight: FontWeight.w700), // Texto cian
+                    style: GoogleFonts.nunito(color: subtitleColor, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 30),
-                  _buildLoginBox(),
+                  _buildLoginBox(isDarkMode),
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () {
@@ -81,7 +88,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: Text(
                       "¿Eres nuevo? ¡Crea tu perfil aquí! ✨",
-                      style: GoogleFonts.nunito(color: const Color(0xFFFFD93D), fontWeight: FontWeight.w800, fontSize: 16), // Amarillo neón
+                      style: GoogleFonts.nunito(
+                        color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFFE8B900), 
+                        fontWeight: FontWeight.w800, fontSize: 16
+                      ),
                     ),
                   ),
                 ],
@@ -93,29 +103,32 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLoginBox() {
+  Widget _buildLoginBox(bool isDarkMode) {
+    final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final borderColor = isDarkMode ? const Color(0xFF333344) : Colors.grey.shade300;
+
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: const Color(0xFF222232), // Gris azulado oscuro
+        color: cardColor,
         borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: const Color(0xFF333344), width: 2),
+        border: Border.all(color: borderColor, width: 2),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))
+          BoxShadow(color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05), blurRadius: 20, offset: const Offset(0, 10))
         ],
       ),
       child: Column(
         children: [
-          _buildField(_nombreController, "Tu Nombre", Icons.face_retouching_natural_rounded, const Color(0xFF4ECDC4), false),
+          _buildField(_nombreController, "Tu Nombre", Icons.face_retouching_natural_rounded, const Color(0xFF4ECDC4), false, isDarkMode),
           const SizedBox(height: 15),
-          _buildField(_passController, "PIN Secreto", Icons.lock_rounded, const Color(0xFFFF6B6B), true),
+          _buildField(_passController, "PIN Secreto", Icons.lock_rounded, const Color(0xFFFF6B6B), true, isDarkMode),
           const SizedBox(height: 30),
           SizedBox(
             width: double.infinity,
             height: 60,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9D4EDD), // Botón Morado Neón
+                backgroundColor: const Color(0xFF9D4EDD),
                 elevation: 8,
                 shadowColor: const Color(0xFF9D4EDD).withOpacity(0.6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
@@ -131,7 +144,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController controller, String label, IconData icon, Color neonColor, bool isPass) {
+  Widget _buildField(TextEditingController controller, String label, IconData icon, Color neonColor, bool isPass, bool isDarkMode) {
+    final fillColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final hintColor = isDarkMode ? Colors.white38 : Colors.black38;
+
     return TextFormField(
       controller: controller,
       obscureText: isPass,
@@ -140,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(4),
       ] : [],
-      style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18),
+      style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.w700, fontSize: 18),
       validator: (value) {
         if (value == null || value.trim().isEmpty) return '¡Falta este dato!';
         if (isPass && value.length < 4) return 'El PIN necesita 4 números';
@@ -149,20 +166,20 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: neonColor, size: 28),
         hintText: label,
-        hintStyle: GoogleFonts.nunito(color: Colors.white38, fontWeight: FontWeight.w700),
+        hintStyle: GoogleFonts.nunito(color: hintColor, fontWeight: FontWeight.w700),
         filled: true,
-        fillColor: const Color(0xFF151522), // Fondo del input más oscuro que la tarjeta
+        fillColor: fillColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20), 
           borderSide: BorderSide(color: neonColor.withOpacity(0.3), width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20), 
-          borderSide: BorderSide(color: Colors.transparent, width: 1),
+          borderSide: const BorderSide(color: Colors.transparent, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20), 
-          borderSide: BorderSide(color: neonColor, width: 2), // Brilla al tocarlo
+          borderSide: BorderSide(color: neonColor, width: 2),
         ),
         errorStyle: GoogleFonts.nunito(color: const Color(0xFFFF6B6B), fontWeight: FontWeight.bold),
         counterText: "", 
@@ -185,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Nombre o PIN incorrectos ❌", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
-          backgroundColor: const Color(0xFFFF6B6B), // Rojo pastel
+          backgroundColor: const Color(0xFFFF6B6B),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         )

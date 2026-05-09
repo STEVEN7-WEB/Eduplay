@@ -18,7 +18,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   int _gradoSeleccionado = 1; 
   bool _isLoading = false;
 
-  // Lista de rutas de los avatares
   final List<String> _avatars = [
     'assets/avatars/avatar1.png', 
     'assets/avatars/avatar2.png',
@@ -27,7 +26,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'assets/avatars/avatar5.png',
     'assets/avatars/avatar6.png',
   ];
-  // Avatar seleccionado por defecto
   String _avatarSeleccionado = 'assets/avatars/avatar1.png';
 
   @override
@@ -40,8 +38,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // --- DETECTOR DE MODO OSCURO ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
+    final subtitleColor = isDarkMode ? const Color(0xFF48CAE4) : const Color(0xFF0096C7);
+    final borderColor = isDarkMode ? const Color(0xFF333344) : Colors.grey.shade300;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF151522),
+      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -49,7 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF222232),
+              color: cardColor,
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFF4ECDC4), width: 1.5),
             ),
@@ -66,12 +72,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 10),
-                Text("NUEVO PERFIL", style: GoogleFonts.fredoka(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
-                Text("¡Únete a la tripulación espacial!", style: GoogleFonts.nunito(color: const Color(0xFF48CAE4), fontSize: 16, fontWeight: FontWeight.w700)),
+                Text("NUEVO PERFIL", style: GoogleFonts.fredoka(color: textColor, fontSize: 32, fontWeight: FontWeight.w900)),
+                Text("¡Únete a la tripulación espacial!", style: GoogleFonts.nunito(color: subtitleColor, fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 25),
 
                 // --- SELECTOR DE AVATARES ---
-                Text("Elige tu Avatar", style: GoogleFonts.fredoka(color: const Color(0xFFFFD93D), fontSize: 20, fontWeight: FontWeight.bold)),
+                Text("Elige tu Avatar", style: GoogleFonts.fredoka(color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFFD4A000), fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 15),
                 SizedBox(
                   height: 90,
@@ -98,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           child: CircleAvatar(
                             radius: isSelected ? 40 : 35,
-                            backgroundColor: const Color(0xFF222232),
+                            backgroundColor: cardColor,
                             backgroundImage: AssetImage(_avatars[index]),
                           ),
                         ),
@@ -111,33 +117,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Container(
                   padding: const EdgeInsets.all(25),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF222232), 
+                    color: cardColor, 
                     borderRadius: BorderRadius.circular(35),
-                    border: Border.all(color: const Color(0xFF333344), width: 2),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
+                    border: Border.all(color: borderColor, width: 2),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05), blurRadius: 20, offset: const Offset(0, 10))],
                   ),
                   child: Column(
                     children: [
-                      _buildField(_nombreController, "Tu Nombre", Icons.person_rounded, const Color(0xFFFFD93D), false),
+                      _buildField(_nombreController, "Tu Nombre", Icons.person_rounded, const Color(0xFFFFD93D), false, isDarkMode),
                       const SizedBox(height: 15),
-                      _buildField(_emailController, "Correo", Icons.email_rounded, const Color(0xFF48CAE4), false),
+                      _buildField(_emailController, "Correo", Icons.email_rounded, const Color(0xFF48CAE4), false, isDarkMode),
                       const SizedBox(height: 15),
-                      _buildField(_passController, "PIN de 4 números", Icons.lock_rounded, const Color(0xFFFF6B6B), true),
+                      _buildField(_passController, "PIN de 4 números", Icons.lock_rounded, const Color(0xFFFF6B6B), true, isDarkMode),
                       const SizedBox(height: 15),
                       
                       DropdownButtonFormField<int>(
                         value: _gradoSeleccionado,
-                        dropdownColor: const Color(0xFF222232),
+                        dropdownColor: cardColor,
                         icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF9D4EDD)),
-                        style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+                        style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.w800, fontSize: 16),
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.school_rounded, color: Color(0xFF9D4EDD)),
                           filled: true,
-                          fillColor: const Color(0xFF151522),
+                          fillColor: isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                         ),
                         items: [1, 2, 3, 4, 5, 6].map((grado) {
-                          return DropdownMenuItem(value: grado, child: Text("Grado $gradoº 🎒", style: const TextStyle(color: Colors.white)));
+                          return DropdownMenuItem(value: grado, child: Text("Grado $gradoº 🎒", style: TextStyle(color: textColor)));
                         }).toList(),
                         onChanged: (val) => setState(() => _gradoSeleccionado = val!),
                       ),
@@ -155,7 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           onPressed: _isLoading ? null : _registrar,
                           child: _isLoading 
-                            ? const SizedBox(height: 25, width: 25, child: CircularProgressIndicator(color: Color(0xFF151522), strokeWidth: 3))
+                            ? const SizedBox(height: 25, width: 25, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
                             : Text("¡CREAR MI CUENTA!", style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 20, color: const Color(0xFF151522))),
                         ),
                       ),
@@ -171,7 +177,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController controller, String label, IconData icon, Color neonColor, bool isPass) {
+  Widget _buildField(TextEditingController controller, String label, IconData icon, Color neonColor, bool isPass, bool isDarkMode) {
+    final fillColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final hintColor = isDarkMode ? Colors.white38 : Colors.black38;
+
     return TextFormField(
       controller: controller,
       obscureText: isPass,
@@ -180,7 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(4),
       ] : [],
-      style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18),
+      style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.w700, fontSize: 18),
       validator: (value) {
         if (value == null || value.trim().isEmpty) return '¡Falta este dato!';
         if (isPass && value.length < 4) return 'El PIN necesita 4 números';
@@ -190,9 +200,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: neonColor, size: 26),
         hintText: label,
-        hintStyle: GoogleFonts.nunito(color: Colors.white38, fontWeight: FontWeight.w700),
+        hintStyle: GoogleFonts.nunito(color: hintColor, fontWeight: FontWeight.w700),
         filled: true,
-        fillColor: const Color(0xFF151522),
+        fillColor: fillColor,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: neonColor, width: 2)),
         errorStyle: GoogleFonts.nunito(color: const Color(0xFFFF6B6B), fontWeight: FontWeight.bold),
@@ -205,13 +215,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     
-    // NOTA: Recuerda actualizar tu NeonDbService para que acepte el parámetro _avatarSeleccionado
     dynamic resultado = await NeonDbService.registrarUsuario(
       _nombreController.text.trim(), 
       _emailController.text.trim(), 
       _passController.text.trim(), 
       _gradoSeleccionado,
-      _avatarSeleccionado // <-- NUEVO PARÁMETRO
+      _avatarSeleccionado 
     );
     
     if (!mounted) return;

@@ -104,28 +104,36 @@ class _TestScreenState extends State<TestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // --- DETECTOR DE MODO OSCURO ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
+    final textSecondaryColor = isDarkMode ? Colors.white54 : Colors.black54;
+    final timerBgColor = isDarkMode ? const Color(0xFF222232) : Colors.grey.shade300;
+    
     String currentEmoji = Pregunta.subjectEmojis[widget.subject] ?? '🎮';
 
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF151522), 
-        body: Center(
+      return Scaffold(
+        backgroundColor: bgColor, 
+        body: const Center(
           child: CircularProgressIndicator(color: Color(0xFF48CAE4), strokeWidth: 6)
         )
       );
     }
 
     if (_preguntas.isEmpty || _currentIndex >= _preguntas.length) {
-      return _buildFinalScreen();
+      return _buildFinalScreen(isDarkMode);
     }
 
     final preguntaActual = _preguntas[_currentIndex];
     Color colorReloj = _tiempoRestante > 5 ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF151522),
+      backgroundColor: bgColor,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildFloatingDock(),
+      floatingActionButton: _buildFloatingDock(isDarkMode),
       body: SafeArea(
         child: Column(
           children: [
@@ -136,7 +144,7 @@ class _TestScreenState extends State<TestScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF222232),
+                      color: cardColor,
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFFF6B6B), width: 1.5),
                     ),
@@ -149,7 +157,7 @@ class _TestScreenState extends State<TestScreen> {
                   Expanded(
                     child: Text(
                       "$currentEmoji Misión Activa", 
-                      style: GoogleFonts.fredoka(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)
+                      style: GoogleFonts.fredoka(color: textColor, fontSize: 22, fontWeight: FontWeight.bold)
                     ),
                   ),
                 ],
@@ -164,7 +172,7 @@ class _TestScreenState extends State<TestScreen> {
                 children: [
                   Text(
                     "Pregunta ${_currentIndex + 1} / ${_preguntas.length}",
-                    style: GoogleFonts.nunito(color: Colors.white54, fontWeight: FontWeight.w700, fontSize: 16),
+                    style: GoogleFonts.nunito(color: textSecondaryColor, fontWeight: FontWeight.w700, fontSize: 16),
                   ),
                   AnimatedScale(
                     scale: _scoreScale,
@@ -210,7 +218,7 @@ class _TestScreenState extends State<TestScreen> {
                         child: AnimatedContainer(
                           duration: const Duration(seconds: 1),
                           alignment: Alignment.centerLeft,
-                          decoration: const BoxDecoration(color: Color(0xFF222232)),
+                          decoration: BoxDecoration(color: timerBgColor),
                           child: FractionallySizedBox(
                             widthFactor: _tiempoRestante / _tiempoMaximo,
                             child: Container(
@@ -243,7 +251,7 @@ class _TestScreenState extends State<TestScreen> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // MUESTRA ALERTA SI SE ACABÓ EL TIEMPO (CON ANIMACIÓN)
+                    // MUESTRA ALERTA SI SE ACABÓ EL TIEMPO
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 400),
                       child: (_answered && _selectedAnswer == -1)
@@ -252,7 +260,7 @@ class _TestScreenState extends State<TestScreen> {
                             margin: const EdgeInsets.only(bottom: 15),
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B6B).withOpacity(0.2),
+                              color: const Color(0xFFFF6B6B).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(15),
                               border: Border.all(color: const Color(0xFFFF6B6B)),
                             ),
@@ -274,7 +282,7 @@ class _TestScreenState extends State<TestScreen> {
                       padding: const EdgeInsets.all(30),
                       margin: const EdgeInsets.only(bottom: 30),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF222232),
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(35),
                         border: Border.all(color: const Color(0xFF9D4EDD).withOpacity(0.5), width: 2),
                         boxShadow: [
@@ -284,7 +292,7 @@ class _TestScreenState extends State<TestScreen> {
                       child: Text(
                         preguntaActual.text,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.fredoka(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600, height: 1.3),
+                        style: GoogleFonts.fredoka(color: textColor, fontSize: 24, fontWeight: FontWeight.w600, height: 1.3),
                       ),
                     ),
 
@@ -300,7 +308,7 @@ class _TestScreenState extends State<TestScreen> {
                       ),
                       itemCount: preguntaActual.options.length,
                       itemBuilder: (context, index) {
-                        return _buildOptionButton(preguntaActual, index);
+                        return _buildOptionButton(preguntaActual, index, isDarkMode);
                       },
                     ),
                   ],
@@ -314,15 +322,15 @@ class _TestScreenState extends State<TestScreen> {
   }
 
   // --- DOCK FLOTANTE ---
-  Widget _buildFloatingDock() {
+  Widget _buildFloatingDock(bool isDarkMode) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF222232).withOpacity(0.95),
+        color: isDarkMode ? const Color(0xFF222232).withOpacity(0.95) : Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(35),
         border: Border.all(color: const Color(0xFF48CAE4).withOpacity(0.3), width: 2),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDarkMode ? 0.5 : 0.1), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -350,13 +358,13 @@ class _TestScreenState extends State<TestScreen> {
   }
 
   // --- BOTONES DE OPCIÓN ---
-  Widget _buildOptionButton(Pregunta pregunta, int index) {
-    Color cardColor = const Color(0xFF222232);
-    Color textColor = Colors.white;
-    Color borderColor = const Color(0xFF333344);
+  Widget _buildOptionButton(Pregunta pregunta, int index, bool isDarkMode) {
+    Color cardColor = isDarkMode ? const Color(0xFF1A1A2A) : const Color(0xFFF0F2F5);
+    Color textColor = isDarkMode ? Colors.white38 : Colors.black54;
+    Color borderColor = isDarkMode ? const Color(0xFF333344) : Colors.grey.shade300;
     double elevate = 0.0;
     Color shadowColor = Colors.transparent;
-    double scale = 1.0; // Controla si se infla o se hunde
+    double scale = 1.0; 
 
     if (_answered) {
       if (index == pregunta.correctOption) {
@@ -365,17 +373,14 @@ class _TestScreenState extends State<TestScreen> {
         borderColor = const Color(0xFF4ECDC4);
         shadowColor = const Color(0xFF4ECDC4);
         elevate = 15.0;
-        scale = 1.05; // Crece hacia adelante (Pop)
+        scale = 1.05; 
       } else if (index == _selectedAnswer) {
         cardColor = const Color(0xFFFF6B6B);
         textColor = Colors.white;
         borderColor = const Color(0xFFFF6B6B);
         shadowColor = const Color(0xFFFF6B6B);
         elevate = 0.0; 
-        scale = 0.95; // Se hunde al equivocarse
-      } else {
-        cardColor = const Color(0xFF1A1A2A);
-        textColor = Colors.white38;
+        scale = 0.95; 
       }
     }
 
@@ -392,7 +397,6 @@ class _TestScreenState extends State<TestScreen> {
             color: cardColor,
             borderRadius: BorderRadius.circular(25),
             border: Border.all(color: borderColor, width: 2),
-            // SOLUCIÓN AL ERROR ROJO: La sombra siempre existe, solo se apaga su color
             boxShadow: [
               BoxShadow(
                 color: shadowColor == Colors.transparent ? Colors.transparent : shadowColor.withOpacity(0.5), 
@@ -404,7 +408,6 @@ class _TestScreenState extends State<TestScreen> {
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              // Añadido FittedBox para evitar que textos muy largos rompan el cuadro
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
@@ -431,14 +434,16 @@ class _TestScreenState extends State<TestScreen> {
   }
 
   void _mostrarDialogoBase(String titulo, String mensaje, Color colorNeon) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF222232),
+          backgroundColor: isDarkMode ? const Color(0xFF222232) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30), side: BorderSide(color: colorNeon.withOpacity(0.5), width: 2)),
           title: Text(titulo, textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: colorNeon, fontWeight: FontWeight.bold)),
-          content: Text(mensaje, textAlign: TextAlign.center, style: GoogleFonts.nunito(color: Colors.white, fontSize: 16)),
+          content: Text(mensaje, textAlign: TextAlign.center, style: GoogleFonts.nunito(color: isDarkMode ? Colors.white : Colors.black87, fontSize: 16)),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             ElevatedButton(
@@ -452,22 +457,27 @@ class _TestScreenState extends State<TestScreen> {
     );
   }
 
-  Widget _buildFinalScreen() {
+  Widget _buildFinalScreen(bool isDarkMode) {
+    final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final titleColor = isDarkMode ? const Color(0xFF48CAE4) : const Color(0xFF0096C7);
+    final subtitleColor = isDarkMode ? Colors.white70 : Colors.black87;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF151522),
+      backgroundColor: bgColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(color: const Color(0xFF222232), shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFD93D), width: 3), boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.4), blurRadius: 40, spreadRadius: 5)]),
+              decoration: BoxDecoration(color: cardColor, shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFD93D), width: 3), boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.4), blurRadius: 40, spreadRadius: 5)]),
               child: const Text("🏆", style: TextStyle(fontSize: 90)),
             ),
             const SizedBox(height: 40),
-            Text("¡Misión Cumplida!", style: GoogleFonts.fredoka(color: const Color(0xFF48CAE4), fontSize: 36, fontWeight: FontWeight.w900)),
+            Text("¡Misión Cumplida!", style: GoogleFonts.fredoka(color: titleColor, fontSize: 36, fontWeight: FontWeight.w900)),
             const SizedBox(height: 10),
-            Text("¡Eres genial!", style: GoogleFonts.nunito(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w700)),
+            Text("¡Eres genial!", style: GoogleFonts.nunito(color: subtitleColor, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 30),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
