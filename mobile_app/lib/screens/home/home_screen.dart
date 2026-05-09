@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../main.dart'; // Importante para acceder a themeNotifier
 import '../game/test_screen.dart';
 import '../auth/login_screen.dart';
 
@@ -14,8 +15,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _userName = 'Estudiante';
   String _userId = '';
-  // Se reemplaza la inicial por la ruta del avatar por defecto
   String _userAvatar = 'assets/avatars/avatar1.png';
+  
+  // Variable de estado para el tema
+  bool _isDarkMode = true;
 
   @override
   void initState() {
@@ -28,8 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _userName = prefs.getString('userName') ?? 'Estudiante';
       _userId = prefs.getString('userId') ?? '0';
-      // Obtenemos la ruta del avatar guardada (o ponemos uno por defecto)
       _userAvatar = prefs.getString('userAvatar') ?? 'assets/avatars/avatar1.png';
+      _isDarkMode = prefs.getBool('isDarkMode') ?? true;
     });
   }
 
@@ -41,12 +44,35 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // --- FUNCIÓN PARA CAMBIAR EL TEMA GLOBALMENTE ---
+  void _toggleTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+
+    // Cambiamos la variable global de main.dart
+    themeNotifier.value = _isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    
+    // Guardamos la preferencia en el celular
+    await prefs.setBool('isDarkMode', _isDarkMode);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // --- PALETA DE COLORES DINÁMICA ---
+    final bgColor = _isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final cardColor = _isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final primaryTextColor = _isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
+    final secondaryTextColor = _isDarkMode ? Colors.white54 : Colors.black54;
+    final borderColor = _isDarkMode ? const Color(0xFF333344) : Colors.grey.shade300;
+    final titleNeonColor = _isDarkMode ? const Color(0xFF48CAE4) : const Color(0xFF0096C7);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF151522),
+      backgroundColor: bgColor,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildFloatingDock(),
+      floatingActionButton: _buildFloatingDock(cardColor, borderColor),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,13 +87,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         "¡Hola,",
-                        style: GoogleFonts.nunito(color: Colors.white54, fontSize: 16, fontWeight: FontWeight.w700),
+                        style: GoogleFonts.nunito(color: secondaryTextColor, fontSize: 16, fontWeight: FontWeight.w700),
                       ),
                       Row(
                         children: [
                           Text(
                             "$_userName! ",
-                            style: GoogleFonts.fredoka(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                            style: GoogleFonts.fredoka(color: primaryTextColor, fontSize: 26, fontWeight: FontWeight.bold),
                           ),
                           const Text("👋", style: TextStyle(fontSize: 22)),
                         ],
@@ -75,10 +101,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const Spacer(),
+
+                  // --- BOTÓN DE MODO CLARO/OSCURO ---
+                  Container(
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _isDarkMode ? const Color(0xFFFFD93D).withOpacity(0.5) : const Color(0xFF5E60CE).withOpacity(0.5), 
+                        width: 1.5
+                      ),
+                    ),
+                    child: IconButton(
+                      onPressed: _toggleTheme, 
+                      icon: Icon(
+                        _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded, 
+                        color: _isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE), 
+                        size: 22
+                      )
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
                   // Botón de salir
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF222232),
+                      color: cardColor,
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.5), width: 1.5),
                     ),
@@ -88,18 +136,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
+
                   // --- AVATAR SELECCIONADO ---
                   Container(
                     width: 55, height: 55,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF9D4EDD), width: 2), // Borde morado para que combine
+                      border: Border.all(color: const Color(0xFF9D4EDD), width: 2),
                       boxShadow: [
                         BoxShadow(color: const Color(0xFF9D4EDD).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 4))
                       ]
                     ),
                     child: CircleAvatar(
-                      backgroundColor: const Color(0xFF222232),
+                      backgroundColor: cardColor,
                       backgroundImage: AssetImage(_userAvatar),
                     ),
                   ),
@@ -112,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Text(
                 "¿Qué misión haremos hoy?",
-                style: GoogleFonts.fredoka(color: const Color(0xFF48CAE4), fontSize: 22, fontWeight: FontWeight.w600),
+                style: GoogleFonts.fredoka(color: titleNeonColor, fontSize: 22, fontWeight: FontWeight.w600),
               ),
             ),
 
@@ -126,14 +175,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 110),
                 physics: const BouncingScrollPhysics(), 
                 children: [
-                  _buildActivityCard(context, 'math', 'Matemáticas', '🔢', const Color(0xFFFF6B6B)), 
-                  _buildActivityCard(context, 'memory', 'Memoria', '🧠', const Color(0xFF4ECDC4)), 
-                  _buildActivityCard(context, 'logic', 'Lógica', '🧩', const Color(0xFFA0D468)),
-                  _buildActivityCard(context, 'grammar', 'Gramática', '✍️', const Color(0xFF9D4EDD)), 
-                  _buildActivityCard(context, 'english', 'Inglés', '🗣️', const Color(0xFF48CAE4)), 
-                  _buildActivityCard(context, 'geography', 'Geografía', '🌎', const Color(0xFFFF9F43)), 
-                  _buildActivityCard(context, 'art', 'Arte', '🎨', const Color(0xFFFF66C4)),
-                  _buildActivityCard(context, 'science', 'Ciencia', '🔬', const Color(0xFF5E60CE)),
+                  _buildActivityCard(context, 'math', 'Matemáticas', '🔢', const Color(0xFFFF6B6B), cardColor, primaryTextColor), 
+                  _buildActivityCard(context, 'memory', 'Memoria', '🧠', const Color(0xFF4ECDC4), cardColor, primaryTextColor), 
+                  _buildActivityCard(context, 'logic', 'Lógica', '🧩', const Color(0xFFA0D468), cardColor, primaryTextColor),
+                  _buildActivityCard(context, 'grammar', 'Gramática', '✍️', const Color(0xFF9D4EDD), cardColor, primaryTextColor), 
+                  _buildActivityCard(context, 'english', 'Inglés', '🗣️', const Color(0xFF48CAE4), cardColor, primaryTextColor), 
+                  _buildActivityCard(context, 'geography', 'Geografía', '🌎', const Color(0xFFFF9F43), cardColor, primaryTextColor), 
+                  _buildActivityCard(context, 'art', 'Arte', '🎨', const Color(0xFFFF66C4), cardColor, primaryTextColor),
+                  _buildActivityCard(context, 'science', 'Ciencia', '🔬', const Color(0xFF5E60CE), cardColor, primaryTextColor),
                 ],
               ),
             ),
@@ -143,17 +192,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET DEL DOCK INFERIOR (Sin cambios) ---
-  Widget _buildFloatingDock() {
+  // --- WIDGET DEL DOCK INFERIOR ---
+  Widget _buildFloatingDock(Color cardColor, Color borderColor) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2E),
+        color: cardColor,
         borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: const Color(0xFF333344), width: 2), 
+        border: Border.all(color: borderColor, width: 2), 
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.6), blurRadius: 20, offset: const Offset(0, 10))
+          BoxShadow(color: Colors.black.withOpacity(_isDarkMode ? 0.6 : 0.1), blurRadius: 20, offset: const Offset(0, 10))
         ],
       ),
       child: Row(
@@ -204,11 +253,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _mostrarModal(String titulo, String mensaje, Color colorNeon) {
+    final modalBgColor = _isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final modalTextColor = _isDarkMode ? Colors.white70 : Colors.black87;
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF222232),
+          backgroundColor: modalBgColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30), 
             side: BorderSide(color: colorNeon.withOpacity(0.5), width: 2)
@@ -233,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 mensaje, 
                 textAlign: TextAlign.center, 
-                style: GoogleFonts.nunito(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w600)
+                style: GoogleFonts.nunito(color: modalTextColor, fontSize: 18, fontWeight: FontWeight.w600)
               ),
             ],
           ),
@@ -255,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActivityCard(BuildContext context, String subjectKey, String title, String emoji, Color accentColor) {
+  Widget _buildActivityCard(BuildContext context, String subjectKey, String title, String emoji, Color accentColor, Color cardColor, Color textColor) {
     return InkWell(
       borderRadius: BorderRadius.circular(25),
       onTap: () {
@@ -266,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF222232),
+          color: cardColor,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(color: accentColor.withOpacity(0.4), width: 1.5),
           boxShadow: [
@@ -296,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                  style: GoogleFonts.fredoka(color: textColor, fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ),
             ),

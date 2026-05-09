@@ -2,16 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
-import 'screens/onboarding/splash_screen.dart'; // Importamos el Splash
+import 'screens/onboarding/splash_screen.dart';
 import 'services/neon_db_service.dart';
+
+// --- NOTIFICADOR GLOBAL DE TEMA ---
+// Esta variable la podrá ver cualquier pantalla de tu app
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
 
 void main() async {
   // Preparamos el motor de Flutter
   WidgetsFlutterBinding.ensureInitialized(); 
   
-  // Revisamos si hay una sesión guardada en el celular
+  // Revisamos si hay una sesión guardada y el tema preferido
   final prefs = await SharedPreferences.getInstance();
   final bool yaInicioSesion = prefs.getBool('sesion_iniciada') ?? false;
+  final bool esModoOscuro = prefs.getBool('isDarkMode') ?? true; // Por defecto oscuro
+
+  // Configuramos el notificador antes de arrancar la app
+  themeNotifier.value = esModoOscuro ? ThemeMode.dark : ThemeMode.light;
 
   // Arrancamos la app
   runApp(EduplayApp(iniciarDirecto: yaInicioSesion));
@@ -24,17 +32,36 @@ class EduplayApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'EduPlay 2.0',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      // En lugar de ir directo a Home/Login, vamos al Splash Screen primero.
-      // Le decimos al Splash a qué pantalla ir cuando termine de cargar.
-      home: SplashScreen(
-        destino: iniciarDirecto ? const HomeScreen() : const LoginScreen(),
-      ), 
+    // ValueListenableBuilder "escucha" los cambios en themeNotifier
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, ThemeMode currentMode, __) {
+        return MaterialApp(
+          title: 'EduPlay 2.0',
+          debugShowCheckedModeBanner: false,
+          
+          // --- CONFIGURACIÓN GLOBAL MODO CLARO ---
+          theme: ThemeData(
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: const Color(0xFFF4F6F9),
+            primaryColor: const Color(0xFF0096C7),
+          ),
+          
+          // --- CONFIGURACIÓN GLOBAL MODO OSCURO ---
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: const Color(0xFF151522),
+            primaryColor: const Color(0xFF48CAE4),
+          ),
+          
+          // Le decimos a Flutter que use el modo del notificador
+          themeMode: currentMode,
+          
+          home: SplashScreen(
+            destino: iniciarDirecto ? const HomeScreen() : const LoginScreen(),
+          ), 
+        );
+      },
     );
   }
 }
