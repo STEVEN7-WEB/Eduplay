@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../main.dart'; 
+import '../../main.dart'; // Importante para acceder a themeNotifier
 import '../game/test_screen.dart';
 import '../auth/login_screen.dart';
+import '../profile/profile_settings_screen.dart'; // <--- IMPORTACIÓN DEL NUEVO PERFIL
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Paleta dinámica con énfasis en el neón para modo oscuro
+    // --- PALETA DE COLORES DINÁMICA ---
     final bgColor = _isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
     final cardColor = _isDarkMode ? const Color(0xFF222232) : Colors.white;
     final primaryTextColor = _isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
@@ -61,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final borderColor = _isDarkMode ? const Color(0xFF333344) : Colors.grey.shade300;
     final titleNeonColor = _isDarkMode ? const Color(0xFF48CAE4) : const Color(0xFF0096C7);
 
-    // Lista de misiones para generar la grilla dinámicamente
+    // Lista de misiones
     final misiones = [
       {'key': 'math', 'title': 'Matemáticas', 'emoji': '🔢', 'color': const Color(0xFFFF6B6B)},
       {'key': 'memory', 'title': 'Memoria', 'emoji': '🧠', 'color': const Color(0xFF4ECDC4)},
@@ -77,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: bgColor,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: TweenAnimationBuilder(
-        // Animación de entrada para el Dock flotante (Sube desde abajo)
         tween: Tween<double>(begin: 50, end: 0),
         duration: const Duration(milliseconds: 800),
         curve: Curves.easeOutCubic,
@@ -124,6 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const Spacer(),
+
+                    // Botones superiores
                     _buildTopIcon(
                       icon: _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                       color: _isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE),
@@ -138,19 +140,33 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: _cerrarSesion,
                     ),
                     const SizedBox(width: 12),
-                    // Avatar con leve resplandor
-                    Container(
-                      width: 55, height: 55,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF9D4EDD), width: 2),
-                        boxShadow: [
-                          BoxShadow(color: const Color(0xFF9D4EDD).withOpacity(_isDarkMode ? 0.6 : 0.2), blurRadius: 15, offset: const Offset(0, 4))
-                        ]
-                      ),
-                      child: CircleAvatar(
-                        backgroundColor: cardColor,
-                        backgroundImage: AssetImage(_userAvatar),
+
+                    // --- AVATAR INTERACTIVO QUE LLEVA AL PERFIL ---
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ProfileSettingsScreen()),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        width: 55, height: 55,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF9D4EDD), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF9D4EDD).withOpacity(_isDarkMode ? 0.6 : 0.2), 
+                              blurRadius: 15, 
+                              offset: const Offset(0, 4)
+                            )
+                          ]
+                        ),
+                        child: CircleAvatar(
+                          backgroundColor: cardColor,
+                          backgroundImage: AssetImage(_userAvatar),
+                        ),
                       ),
                     ),
                   ],
@@ -167,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // --- GRILLA DE ACTIVIDADES CON ANIMACIÓN ESCALONADA ---
+            // --- GRILLA DE ACTIVIDADES ---
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 110),
@@ -182,15 +198,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, index) {
                   final mision = misiones[index];
                   return TweenAnimationBuilder(
-                    // Retraso dinámico basado en el índice para efecto cascada
                     tween: Tween<double>(begin: 0, end: 1),
                     duration: Duration(milliseconds: 400 + (index * 100)),
                     curve: Curves.easeOutBack,
                     builder: (context, scaleValue, child) {
-                      return Transform.scale(
-                        scale: scaleValue,
-                        child: child,
-                      );
+                      return Transform.scale(scale: scaleValue, child: child);
                     },
                     child: _BouncingActivityCard(
                       subjectKey: mision['key'] as String,
@@ -211,7 +223,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Refactor de los botones superiores
   Widget _buildTopIcon({required IconData icon, required Color color, required Color cardColor, required VoidCallback onTap}) {
     return Container(
       decoration: BoxDecoration(
@@ -219,10 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
         shape: BoxShape.circle,
         border: Border.all(color: color.withOpacity(0.5), width: 1.5),
       ),
-      child: IconButton(
-        onPressed: onTap, 
-        icon: Icon(icon, color: color, size: 22)
-      ),
+      child: IconButton(onPressed: onTap, icon: Icon(icon, color: color, size: 22)),
     );
   }
 
@@ -278,12 +286,62 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _mostrarModal(String titulo, String mensaje, Color colorNeon) {
-    // ... Tu código actual de _mostrarModal se mantiene exactamente igual ...
-    // (Lo omito para no saturar, pero mantén el que ya tenías)
+    final modalBgColor = _isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final modalTextColor = _isDarkMode ? Colors.white70 : Colors.black87;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: modalBgColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30), 
+            side: BorderSide(color: colorNeon.withOpacity(0.5), width: 2)
+          ),
+          title: Text(
+            titulo, 
+            textAlign: TextAlign.center, 
+            style: GoogleFonts.fredoka(color: colorNeon, fontSize: 24, fontWeight: FontWeight.bold)
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colorNeon.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.auto_awesome_rounded, size: 50, color: colorNeon),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                mensaje, 
+                textAlign: TextAlign.center, 
+                style: GoogleFonts.nunito(color: modalTextColor, fontSize: 18, fontWeight: FontWeight.w600)
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorNeon, 
+                foregroundColor: const Color(0xFF151522), 
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: Text("¡Genial!", style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18)),
+            )
+          ],
+        );
+      }
+    );
   }
 }
 
-// --- NUEVO WIDGET: TARJETA CON EFECTO REBOTE ---
+// --- WIDGET PARA LAS TARJETAS REBOTANTES ---
 class _BouncingActivityCard extends StatefulWidget {
   final String subjectKey;
   final String title;
@@ -310,13 +368,10 @@ class _BouncingActivityCard extends StatefulWidget {
 class _BouncingActivityCardState extends State<_BouncingActivityCard> with SingleTickerProviderStateMixin {
   double _scale = 1.0;
 
-  void _onTapDown(TapDownDetails details) {
-    setState(() => _scale = 0.93); // Se encoge ligeramente al presionar
-  }
+  void _onTapDown(TapDownDetails details) => setState(() => _scale = 0.93);
 
-  void _onTapUp(TapUpDetails details) {
-    setState(() => _scale = 1.0); // Vuelve a su tamaño
-    // Navegamos con un ligero retraso para permitir que termine la animación visual
+  void _onTapUp(TapDownDetails) {
+    setState(() => _scale = 1.0);
     Future.delayed(const Duration(milliseconds: 150), () {
       if (mounted) {
         Navigator.push(
@@ -327,9 +382,7 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
     });
   }
 
-  void _onTapCancel() {
-    setState(() => _scale = 1.0);
-  }
+  void _onTapCancel() => setState(() => _scale = 1.0);
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +392,7 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
       onTapCancel: _onTapCancel,
       child: AnimatedScale(
         scale: _scale,
-        duration: const Duration(milliseconds: 100), // Velocidad del rebote
+        duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
         child: Container(
           decoration: BoxDecoration(
@@ -348,7 +401,6 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
             border: Border.all(color: widget.accentColor.withOpacity(0.4), width: 1.5),
             boxShadow: [
               BoxShadow(
-                // Mayor intensidad de resplandor en modo oscuro
                 color: widget.accentColor.withOpacity(widget.isDarkMode ? 0.25 : 0.08),
                 blurRadius: widget.isDarkMode ? 20 : 15, 
                 offset: const Offset(0, 5)
@@ -360,10 +412,7 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: widget.accentColor.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: widget.accentColor.withOpacity(0.15), shape: BoxShape.circle),
                 child: Text(widget.emoji, style: const TextStyle(fontSize: 35)),
               ),
               const SizedBox(height: 15),
