@@ -70,7 +70,7 @@ class NeonDbService {
     }
   }
 
-  /// LOGIN POR NOMBRE Y PIN
+  /// LOGIN POR NOMBRE Y PIN (PARA ALUMNOS)
   static Future<bool> loginPorNombre(String nombre, String pin) async {
     try {
       final connection = await _conectar();
@@ -101,6 +101,7 @@ class NeonDbService {
             await prefs.setInt('grado_usuario', grado);
             await prefs.setString('userName', userName);
             await prefs.setString('userAvatar', userAvatar); 
+            await prefs.setString('userRole', 'student');
             
             return true; // Login exitoso
           }
@@ -110,6 +111,50 @@ class NeonDbService {
       return false;
     } catch (e) {
       print('Error en loginPorNombre directo: $e');
+      return false;
+    }
+  }
+
+  /// LOGIN POR CORREO (PARA PADRES)
+  static Future<bool> loginPorCorreo(String email, String password) async {
+    try {
+      final connection = await _conectar();
+      
+      final result = await connection.execute(
+        Sql.named('SELECT id, grade, name, password, avatar, role FROM users WHERE LOWER(email) = LOWER(@email)'),
+        parameters: {'email': email},
+      );
+      await connection.close();
+
+      if (result.isNotEmpty) {
+        final String passHasheadoIntento = hp(password);
+
+        for (final row in result) {
+          final dbPassword = row[3].toString();
+
+          if (dbPassword == passHasheadoIntento) {
+            final int userId = row[0] as int;
+            final int grado = row[1] != null ? row[1] as int : 1; 
+            final String userName = row[2].toString();
+            final String userAvatar = row[4] != null ? row[4].toString() : 'assets/avatars/avatar1.png';
+
+            // Guardamos todo en memoria
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('sesion_iniciada', true);
+            await prefs.setInt('id_usuario', userId);
+            await prefs.setInt('grado_usuario', grado);
+            await prefs.setString('userName', userName);
+            await prefs.setString('userAvatar', userAvatar); 
+            await prefs.setString('userRole', 'parent'); // Marcamos que es un padre
+            
+            return true; // Login exitoso
+          }
+        }
+        print("Se encontró el correo, pero la contraseña no coincide.");
+      }
+      return false;
+    } catch (e) {
+      print('Error en loginPorCorreo directo: $e');
       return false;
     }
   }

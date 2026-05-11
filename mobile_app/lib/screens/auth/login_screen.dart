@@ -6,6 +6,7 @@ import '../../services/neon_db_service.dart';
 import '../../main.dart'; // ¡Importante para cambiar el tema global!
 import '../home/home_screen.dart';
 import 'register_screen.dart';
+import 'parent_dashboard_screen.dart'; // Importamos la nueva pantalla de padres
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,35 +16,29 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nombreController = TextEditingController();
+  final TextEditingController _identificadorController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+  
   bool _isLoading = false;
+  bool _isParentMode = false; // Variable mágica para detectar modo padre/alumno
 
   @override
   void dispose() {
-    _nombreController.dispose();
+    _identificadorController.dispose();
     _passController.dispose();
     super.dispose();
   }
 
-  // --- FUNCIÓN PARA CAMBIAR EL TEMA DESDE EL LOGIN ---
   void _toggleTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    
-    // Detectamos en qué modo estamos actualmente
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final newMode = !isDarkMode; // Lo invertimos
-
-    // Cambiamos la variable global de main.dart
+    final newMode = !isDarkMode; 
     themeNotifier.value = newMode ? ThemeMode.dark : ThemeMode.light;
-    
-    // Guardamos la preferencia en el celular para que siempre inicie así
     await prefs.setBool('isDarkMode', newMode);
   }
 
   @override
   Widget build(BuildContext context) {
-    // --- DETECTOR DE MODO OSCURO ---
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
     final textColor = isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
@@ -52,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      // Añadimos un AppBar invisible solo para poner el botón a la derecha
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -87,7 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // LOGO CIRCULAR NEÓN
                   Container(
                     height: 120, width: 120,
                     decoration: BoxDecoration(
@@ -112,11 +105,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 30),
                   Text(
-                    "¡HOLA!",
+                    _isParentMode ? "¡HOLA, TUTOR!" : "¡HOLA!",
                     style: GoogleFonts.fredoka(color: textColor, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: 2),
                   ),
                   Text(
-                    "¡Listo para otra misión!",
+                    _isParentMode ? "Accede al panel de control" : "¡Listo para otra misión!",
                     style: GoogleFonts.nunito(color: subtitleColor, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 30),
@@ -124,10 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                      );
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen()));
                     },
                     child: Text(
                       "¿Eres nuevo? ¡Crea tu perfil aquí! ✨",
@@ -162,9 +152,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Column(
         children: [
-          _buildField(_nombreController, "Tu Nombre", Icons.face_retouching_natural_rounded, const Color(0xFF4ECDC4), false, isDarkMode),
+          // Campo 1: Identificador
+          _buildIdentificadorField(isDarkMode),
           const SizedBox(height: 15),
-          _buildField(_passController, "PIN Secreto", Icons.lock_rounded, const Color(0xFFFF6B6B), true, isDarkMode),
+          // Campo 2: PIN o Contraseña dependiendo del modo
+          _buildPasswordField(isDarkMode),
           const SizedBox(height: 30),
           SizedBox(
             width: double.infinity,
@@ -187,45 +179,63 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController controller, String label, IconData icon, Color neonColor, bool isPass, bool isDarkMode) {
+  Widget _buildIdentificadorField(bool isDarkMode) {
     final fillColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final hintColor = isDarkMode ? Colors.white38 : Colors.black38;
+    final neonColor = const Color(0xFF4ECDC4);
 
     return TextFormField(
-      controller: controller,
-      obscureText: isPass,
-      keyboardType: isPass ? TextInputType.number : TextInputType.name,
-      inputFormatters: isPass ? [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(4),
-      ] : [],
+      controller: _identificadorController,
+      keyboardType: TextInputType.emailAddress,
       style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.w700, fontSize: 18),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) return '¡Falta este dato!';
-        if (isPass && value.length < 4) return 'El PIN necesita 4 números';
-        return null;
+      onChanged: (value) {
+        // Detecta arroba
+        setState(() {
+          _isParentMode = value.contains('@');
+        });
       },
+      validator: (value) => (value == null || value.trim().isEmpty) ? '¡Falta este dato!' : null,
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: neonColor, size: 28),
-        hintText: label,
+        prefixIcon: Icon(Icons.person_outline_rounded, color: neonColor, size: 28),
+        hintText: "Usuario o Correo",
         hintStyle: GoogleFonts.nunito(color: hintColor, fontWeight: FontWeight.w700),
         filled: true,
         fillColor: fillColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20), 
-          borderSide: BorderSide(color: neonColor.withOpacity(0.3), width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20), 
-          borderSide: const BorderSide(color: Colors.transparent, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20), 
-          borderSide: BorderSide(color: neonColor, width: 2),
-        ),
-        errorStyle: GoogleFonts.nunito(color: const Color(0xFFFF6B6B), fontWeight: FontWeight.bold),
-        counterText: "", 
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: neonColor, width: 2)),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(bool isDarkMode) {
+    final fillColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final hintColor = isDarkMode ? Colors.white38 : Colors.black38;
+    final neonColor = const Color(0xFFFF6B6B);
+
+    return TextFormField(
+      controller: _passController,
+      obscureText: true,
+      keyboardType: _isParentMode ? TextInputType.text : TextInputType.number,
+      inputFormatters: _isParentMode ? [] : [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(4),
+      ],
+      style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.w700, fontSize: 18),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) return '¡Falta este dato!';
+        if (!_isParentMode && value.length < 4) return 'El PIN necesita 4 números';
+        return null;
+      },
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.lock_rounded, color: neonColor, size: 28),
+        hintText: _isParentMode ? "Contraseña del Tutor" : "PIN Secreto",
+        hintStyle: GoogleFonts.nunito(color: hintColor, fontWeight: FontWeight.w700),
+        filled: true,
+        fillColor: fillColor,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: neonColor, width: 2)),
       ),
     );
   }
@@ -234,17 +244,26 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     
-    bool exito = await NeonDbService.loginPorNombre(_nombreController.text.trim(), _passController.text.trim());
+    bool exito;
+    if (_isParentMode) {
+      exito = await NeonDbService.loginPorCorreo(_identificadorController.text.trim(), _passController.text.trim());
+    } else {
+      exito = await NeonDbService.loginPorNombre(_identificadorController.text.trim(), _passController.text.trim());
+    }
     
     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (exito) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+      if (_isParentMode) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentDashboardScreen()));
+      } else {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Nombre o PIN incorrectos ❌", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+          content: Text("Datos incorrectos ❌", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
           backgroundColor: const Color(0xFFFF6B6B),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

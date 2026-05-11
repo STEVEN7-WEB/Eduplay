@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+// Importaciones de tus servicios y pantallas
 import '../../services/neon_db_service.dart';
+import '../../services/email_service.dart'; // Asegúrate de haber creado este archivo
 import '../home/home_screen.dart';
+import 'verification_screen.dart'; // Asegúrate de haber creado este archivo
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -38,7 +42,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // --- DETECTOR DE MODO OSCURO ---
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
     final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
@@ -124,9 +127,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildField(_nombreController, "Tu Nombre", Icons.person_rounded, const Color(0xFFFFD93D), false, isDarkMode),
+                      // Banner de Verificación
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF48CAE4).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: const Color(0xFF48CAE4).withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.mark_email_read_rounded, color: Color(0xFF48CAE4), size: 30),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Text(
+                                "Enviaremos un correo de verificación y reportes de progreso al tutor.",
+                                style: GoogleFonts.nunito(color: textColor, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      _buildField(_nombreController, "Nombre del Explorador", Icons.person_rounded, const Color(0xFFFFD93D), false, isDarkMode),
                       const SizedBox(height: 15),
-                      _buildField(_emailController, "Correo", Icons.email_rounded, const Color(0xFF48CAE4), false, isDarkMode),
+                      _buildField(_emailController, "Correo del Padre/Tutor", Icons.email_rounded, const Color(0xFF48CAE4), false, isDarkMode),
                       const SizedBox(height: 15),
                       _buildField(_passController, "PIN de 4 números", Icons.lock_rounded, const Color(0xFFFF6B6B), true, isDarkMode),
                       const SizedBox(height: 15),
@@ -185,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextFormField(
       controller: controller,
       obscureText: isPass,
-      keyboardType: isPass ? TextInputType.number : (label == "Correo" ? TextInputType.emailAddress : TextInputType.name),
+      keyboardType: isPass ? TextInputType.number : (label.contains("Correo") ? TextInputType.emailAddress : TextInputType.name),
       inputFormatters: isPass ? [
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(4),
@@ -194,7 +220,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       validator: (value) {
         if (value == null || value.trim().isEmpty) return '¡Falta este dato!';
         if (isPass && value.length < 4) return 'El PIN necesita 4 números';
-        if (label == "Correo" && !value.contains("@")) return 'Correo no válido';
+        if (label.contains("Correo") && !value.contains("@")) return 'Correo no válido';
         return null;
       },
       decoration: InputDecoration(
@@ -213,27 +239,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _registrar() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
     
-    dynamic resultado = await NeonDbService.registrarUsuario(
-      _nombreController.text.trim(), 
-      _emailController.text.trim(), 
-      _passController.text.trim(), 
-      _gradoSeleccionado,
-      _avatarSeleccionado 
-    );
+    // 1. Mostrar estado de carga y generar código
+    setState(() => _isLoading = true);
+    String codigoGenerado = EmailService.generarCodigo();
+    
+    // 2. Enviar el correo
+    bool correoEnviado = await EmailService.enviarCodigo(_emailController.text.trim(), codigoGenerado);
     
     if (!mounted) return;
+
+    if (!correoEnviado) {
+      setState(() => _isLoading = false);
+      _mostrarAlerta("Error de conexión 🔌", "No pudimos enviar el correo de verificación. Revisa tus credenciales o intenta más tarde.", const Color(0xFFFF6B6B), Colors.white);
+      return;
+    }
+
+    // Ocultamos la carga temporalmente mientras abrimos la otra pantalla
     setState(() => _isLoading = false);
 
-    if (resultado == true) {
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
-    } else if (resultado is String && resultado == 'duplicate_name') {
-      _mostrarAlerta("¡Ese nombre ya existe! 🧐", "Agrega una inicial o número divertido (ej. ${_nombreController.text.trim()}123).", const Color(0xFFFFD93D), Colors.black87);
-    } else if (resultado is String && resultado == 'duplicate_email') {
-      _mostrarAlerta("¡Ups! Correo en uso 📧", "Ya hay una cuenta con este correo.", const Color(0xFFFF6B6B), Colors.white);
-    } else {
-      _mostrarAlerta("Error de conexión 🔌", "Revisa tu internet y vuelve a intentar.", const Color(0xFFFF6B6B), Colors.white);
+    // 3. Abrir la pantalla de verificación y esperar resultado
+    final verificado = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VerificationScreen(
+          correoPadre: _emailController.text.trim(),
+          codigoReal: codigoGenerado,
+        ),
+      ),
+    );
+
+    // 4. Si el usuario ingresó el código correcto y regresó "true"
+    if (verificado == true) {
+      setState(() => _isLoading = true); // Volvemos a mostrar que está cargando para guardar en BD
+      
+      dynamic resultado = await NeonDbService.registrarUsuario(
+        _nombreController.text.trim(), 
+        _emailController.text.trim(), 
+        _passController.text.trim(), 
+        _gradoSeleccionado,
+        _avatarSeleccionado 
+      );
+      
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (resultado == true) {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
+      } else if (resultado is String && resultado == 'duplicate_name') {
+        _mostrarAlerta("¡Ese nombre ya existe! 🧐", "Agrega una inicial o número divertido (ej. ${_nombreController.text.trim()}123).", const Color(0xFFFFD93D), Colors.black87);
+      } else if (resultado is String && resultado == 'duplicate_email') {
+        _mostrarAlerta("¡Ups! Correo en uso 📧", "Ya hay una cuenta verificada con este correo.", const Color(0xFFFF6B6B), Colors.white);
+      } else {
+        _mostrarAlerta("Error de conexión 🔌", "Revisa tu internet y vuelve a intentar.", const Color(0xFFFF6B6B), Colors.white);
+      }
     }
   }
 
