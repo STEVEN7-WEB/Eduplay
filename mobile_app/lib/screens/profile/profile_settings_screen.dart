@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Asegúrate de colocar la ruta correcta hacia tu servicio de DB
-// import 'ruta_hacia_tu_archivo/neon_db_service.dart'; 
+
+// Importamos el servicio de DB y la nueva pantalla basándonos en tu estructura
+import '../../services/neon_db_service.dart'; 
+import 'change_name_screen.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
@@ -155,10 +157,26 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   const SizedBox(height: 25),
 
                   // --- LISTA DE OPCIONES / CONFIGURACIÓN ---
-                  _buildSettingItem(Icons.person_outline_rounded, "Cambiar nombre", "Edita cómo te llamamos", isDark),
-                  _buildSettingItem(Icons.notifications_none_rounded, "Notificaciones", "Alertas de nuevas misiones", isDark),
-                  _buildSettingItem(Icons.security_rounded, "Privacidad", "Configuración de cuenta", isDark),
-                  _buildSettingItem(Icons.help_outline_rounded, "Ayuda", "Soporte técnico de App Tec", isDark),
+                  _buildSettingItem(Icons.person_outline_rounded, "Cambiar nombre", "Edita cómo te llamamos", isDark, () async {
+                    // Navegamos a la nueva pantalla y esperamos un posible nuevo nombre
+                    final nuevoNombre = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChangeNameScreen(currentName: _name),
+                      ),
+                    );
+
+                    // Si regresamos con datos, actualizamos el estado
+                    if (nuevoNombre != null && nuevoNombre.toString().isNotEmpty) {
+                      setState(() {
+                        _name = nuevoNombre;
+                      });
+                    }
+                  }),
+
+                  _buildSettingItem(Icons.notifications_none_rounded, "Notificaciones", "Alertas de nuevas misiones", isDark, () {}),
+                  _buildSettingItem(Icons.security_rounded, "Privacidad", "Configuración de cuenta", isDark, () {}),
+                  _buildSettingItem(Icons.help_outline_rounded, "Ayuda", "Soporte técnico de App Tec", isDark, () {}),
                   
                   const SizedBox(height: 40),
                   
@@ -239,7 +257,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
-  Widget _buildSettingItem(IconData icon, String title, String subtitle, bool isDark) {
+  // Modificado para recibir la función onTap
+  Widget _buildSettingItem(IconData icon, String title, String subtitle, bool isDark, VoidCallback onTap) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(10),
@@ -264,9 +283,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         )
       ),
       trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: isDark ? Colors.white54 : Colors.grey),
-      onTap: () {
-        // Lógica para abrir cada configuración en el futuro
-      },
+      onTap: onTap, 
     );
   }
 }

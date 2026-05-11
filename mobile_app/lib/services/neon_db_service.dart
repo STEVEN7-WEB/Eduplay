@@ -114,7 +114,7 @@ class NeonDbService {
     }
   }
 
-  /// OBTENER PERFIL DE USUARIO (NUEVO MÉTODO)
+  /// OBTENER PERFIL DE USUARIO 
   static Future<Map<String, dynamic>?> obtenerPerfilUsuario(int userId) async {
     try {
       final connection = await _conectar();
@@ -175,6 +175,44 @@ class NeonDbService {
     } catch (e) {
       print('❌ Error al jalar preguntas de Neon: $e');
       return [];
+    }
+  }
+
+  /// ACTUALIZAR NOMBRE DE USUARIO
+  static Future<bool> actualizarNombreUsuario(int userId, String nuevoNombre) async {
+    try {
+      final connection = await _conectar();
+
+      // 1. Verificar que el nuevo nombre no esté ocupado por otro usuario
+      final nameCheck = await connection.execute(
+        Sql.named('SELECT id FROM users WHERE LOWER(name) = LOWER(@nombre) AND id != @id'),
+        parameters: {'nombre': nuevoNombre, 'id': userId},
+      );
+
+      if (nameCheck.isNotEmpty) {
+        await connection.close();
+        print('El nombre ya está en uso por otra persona.');
+        return false; 
+      }
+
+      // 2. Actualizar el nombre en la base de datos
+      await connection.execute(
+        Sql.named('UPDATE users SET name = @nuevoNombre WHERE id = @id'),
+        parameters: {
+          'nuevoNombre': nuevoNombre, 
+          'id': userId
+        },
+      );
+      await connection.close();
+
+      // 3. Actualizar el nombre en SharedPreferences para que la app lo sepa
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', nuevoNombre);
+
+      return true; // Se actualizó con éxito
+    } catch (e) {
+      print('❌ Error al actualizar el nombre en Neon: $e');
+      return false;
     }
   }
 
