@@ -23,7 +23,6 @@ class NeonDbService {
   }
 
   /// REGISTRO DIRECTO A NEON
-  // Añadimos "String avatar" como parámetro
   static Future<dynamic> registrarUsuario(String nombre, String email, String password, int grado, String avatar) async {
     try {
       final connection = await _conectar();
@@ -76,7 +75,6 @@ class NeonDbService {
     try {
       final connection = await _conectar();
       
-      // Agregamos "avatar" a la consulta SELECT (posición 4)
       final result = await connection.execute(
         Sql.named('SELECT id, grade, name, password, avatar FROM users WHERE LOWER(name) = LOWER(@nombre)'),
         parameters: {'nombre': nombre},
@@ -102,7 +100,7 @@ class NeonDbService {
             await prefs.setInt('id_usuario', userId);
             await prefs.setInt('grado_usuario', grado);
             await prefs.setString('userName', userName);
-            await prefs.setString('userAvatar', userAvatar); // Guardamos la ruta del avatar para usarlo en HomeScreen
+            await prefs.setString('userAvatar', userAvatar); 
             
             return true; // Login exitoso
           }
@@ -113,6 +111,40 @@ class NeonDbService {
     } catch (e) {
       print('Error en loginPorNombre directo: $e');
       return false;
+    }
+  }
+
+  /// OBTENER PERFIL DE USUARIO (NUEVO MÉTODO)
+  static Future<Map<String, dynamic>?> obtenerPerfilUsuario(int userId) async {
+    try {
+      final connection = await _conectar();
+      
+      // Consultamos estrictamente los datos que existen en tu BD
+      final result = await connection.execute(
+        Sql.named('''
+          SELECT name, grade, avatar, estrellas, role
+          FROM users 
+          WHERE id = @id
+        '''),
+        parameters: {'id': userId},
+      );
+      
+      await connection.close();
+
+      if (result.isNotEmpty) {
+        final row = result.first;
+        return {
+          'name': row[0].toString(),
+          'grade': row[1] as int,
+          'avatar': row[2] != null ? row[2].toString() : 'assets/avatars/avatar1.png',
+          'estrellas': row[3] as int,
+          'role': row[4].toString(),
+        };
+      }
+      return null;
+    } catch (e) {
+      print('❌ Error al obtener el perfil de Neon: $e');
+      return null;
     }
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:shared_preferences/shared_preferences.dart'; // Descomenta si vas a usar SharedPreferences aquí
+import 'package:shared_preferences/shared_preferences.dart';
+// Asegúrate de colocar la ruta correcta hacia tu servicio de DB
+// import 'ruta_hacia_tu_archivo/neon_db_service.dart'; 
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
@@ -10,12 +12,59 @@ class ProfileSettingsScreen extends StatefulWidget {
 }
 
 class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
-  // Variables de ejemplo para el perfil
-  final String _name = "Steven";
-  final int _age = 10;
+  // Variables dinámicas para el perfil
+  String _name = "Cargando...";
+  int _age = 0;
+  int _estrellas = 0;
+  String _level = "Cargando...";
+  String _avatarPath = 'assets/avatars/avatar1.png';
+  
+  // Variables estáticas (no están en la base de datos actual)
   final String _featuredSubject = "Matemáticas";
-  final int _missionsDone = 42;
-  final String _level = "Explorador Galáctico";
+  
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosDePerfil();
+  }
+
+  Future<void> _cargarDatosDePerfil() async {
+    final prefs = await SharedPreferences.getInstance();
+    final int? userId = prefs.getInt('id_usuario');
+
+    if (userId != null) {
+      // Llamamos a la base de datos para extraer los datos reales
+      final perfilData = await NeonDbService.obtenerPerfilUsuario(userId);
+
+      if (perfilData != null) {
+        setState(() {
+          _name = perfilData['name'];
+          _estrellas = perfilData['estrellas'];
+          _avatarPath = perfilData['avatar'];
+          
+          // Cálculo de la edad: Grado + 5 (Ajusta el 5 si tus grados funcionan distinto)
+          int grado = perfilData['grade'];
+          _age = grado + 5; 
+
+          // Definición del Nivel/Rol
+          String role = perfilData['role'];
+          if (role == 'admin') {
+            _level = "Administrador";
+          } else {
+            _level = "Estudiante (Grado $grado)";
+          }
+
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false); // Fallback si retorna nulo
+      }
+    } else {
+      setState(() => _isLoading = false); // Fallback si no hay usuario en sesión
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,81 +87,86 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(25),
-        child: Column(
-          children: [
-            // --- HEADER DE PERFIL ---
-            Center(
-              child: Stack(
-                alignment: Alignment.bottomRight,
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF48CAE4)))
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(25),
+              child: Column(
                 children: [
-                  Container(
-                    width: 120, height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: accentColor, width: 4),
-                      boxShadow: [
-                        BoxShadow(color: accentColor.withOpacity(isDark ? 0.3 : 0.1), blurRadius: 20)
-                      ]
-                    ),
-                    child: const CircleAvatar(
-                      backgroundImage: AssetImage('assets/avatars/avatar1.png'), // Asegúrate de que la ruta exista
-                      backgroundColor: Colors.transparent,
+                  // --- HEADER DE PERFIL ---
+                  Center(
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        Container(
+                          width: 120, height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: accentColor, width: 4),
+                            boxShadow: [
+                              BoxShadow(color: accentColor.withOpacity(isDark ? 0.3 : 0.1), blurRadius: 20)
+                            ]
+                          ),
+                          child: CircleAvatar(
+                            // Cargamos el avatar que viene de la base de datos
+                            backgroundImage: AssetImage(_avatarPath), 
+                            backgroundColor: Colors.transparent,
+                          ),
+                        ),
+                        // Botón flotante para editar avatar (sin funcionalidad actual)
+                        CircleAvatar(
+                          backgroundColor: accentColor,
+                          radius: 18,
+                          child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                        )
+                      ],
                     ),
                   ),
-                  // Botón para cambiar avatar
-                  CircleAvatar(
-                    backgroundColor: accentColor,
-                    radius: 18,
-                    child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
-                  )
+                  const SizedBox(height: 15),
+                  Text(
+                    _name, 
+                    style: GoogleFonts.fredoka(
+                      fontSize: 28, 
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black
+                    )
+                  ),
+                  Text(_level, style: GoogleFonts.nunito(color: accentColor, fontWeight: FontWeight.w700, fontSize: 16)),
+                  
+                  const SizedBox(height: 30),
+
+                  // --- SECCIÓN DE ESTADÍSTICAS ---
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Tarjeta para Edad
+                      _buildStatCard("Edad aprox.", "$_age años", Icons.cake_rounded, Colors.orange, isDark),
+                      // Tarjeta para Estrellas
+                      _buildStatCard("Estrellas", "$_estrellas", Icons.star_rounded, Colors.amber, isDark),
+                    ],
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // --- APARTADO DE MATERIA DESTACADA ---
+                  _buildFeaturedSubjectCard(_featuredSubject, isDark),
+
+                  const SizedBox(height: 25),
+
+                  // --- LISTA DE OPCIONES / CONFIGURACIÓN ---
+                  _buildSettingItem(Icons.person_outline_rounded, "Cambiar nombre", "Edita cómo te llamamos", isDark),
+                  _buildSettingItem(Icons.notifications_none_rounded, "Notificaciones", "Alertas de nuevas misiones", isDark),
+                  _buildSettingItem(Icons.security_rounded, "Privacidad", "Configuración de cuenta", isDark),
+                  _buildSettingItem(Icons.help_outline_rounded, "Ayuda", "Soporte técnico de App Tec", isDark),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Versión de la app
+                  Text("D.A.E.A Studio - v1.0.2", style: GoogleFonts.nunito(color: Colors.grey, fontSize: 12)),
                 ],
               ),
             ),
-            const SizedBox(height: 15),
-            Text(
-              _name, 
-              style: GoogleFonts.fredoka(
-                fontSize: 28, 
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black
-              )
-            ),
-            Text(_level, style: GoogleFonts.nunito(color: accentColor, fontWeight: FontWeight.w700, fontSize: 16)),
-            
-            const SizedBox(height: 30),
-
-            // --- SECCIÓN DE ESTADÍSTICAS ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildStatCard("Edad", "$_age años", Icons.cake_rounded, Colors.orange, isDark),
-                _buildStatCard("Misiones", "$_missionsDone", Icons.auto_awesome_rounded, Colors.purpleAccent, isDark),
-              ],
-            ),
-
-            const SizedBox(height: 25),
-
-            // --- APARTADO DE MATERIA DESTACADA ---
-            _buildFeaturedSubjectCard(_featuredSubject, isDark),
-
-            const SizedBox(height: 25),
-
-            // --- LISTA DE OPCIONES / CONFIGURACIÓN ---
-            _buildSettingItem(Icons.person_outline_rounded, "Cambiar nombre", "Edita cómo te llamamos", isDark),
-            _buildSettingItem(Icons.notifications_none_rounded, "Notificaciones", "Alertas de nuevas misiones", isDark),
-            _buildSettingItem(Icons.security_rounded, "Privacidad", "Configuración de cuenta", isDark),
-            _buildSettingItem(Icons.help_outline_rounded, "Ayuda", "Soporte técnico de App Tec", isDark),
-            
-            const SizedBox(height: 40),
-            
-            // Versión de la app
-            Text("D.A.E.A Studio - v1.0.2", style: GoogleFonts.nunito(color: Colors.grey, fontSize: 12)),
-          ],
-        ),
-      ),
     );
   }
 
