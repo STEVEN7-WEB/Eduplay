@@ -12,8 +12,8 @@ class EmailService {
   // Envía el correo al padre
   static Future<bool> enviarCodigo(String correoPadre, String codigo) async {
     // REEMPLAZA ESTO CON TUS DATOS REALES
-    String username = 'ss1699122@gmail.com'; 
-    String password = 'jhdmhypawwdrvsmu'; 
+    String username = 'daea.studio@gmail.com'; 
+    String password = 'edsajvvximsymyib'; 
 
     final smtpServer = gmail(username, password);
 
