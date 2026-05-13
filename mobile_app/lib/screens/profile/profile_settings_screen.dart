@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Importamos el servicio de DB y la nueva pantalla basándonos en tu estructura
 import '../../services/neon_db_service.dart'; 
 import 'change_name_screen.dart';
 
@@ -21,8 +20,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   String _level = "Cargando...";
   String _avatarPath = 'assets/avatars/avatar1.png';
   
-  // Variables estáticas (no están en la base de datos actual)
-  final String _featuredSubject = "Matemáticas";
+  // Variables dinámicas
+  String _featuredSubject = "Aún por definir";
   
   bool _isLoading = true;
 
@@ -37,7 +36,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final int? userId = prefs.getInt('id_usuario');
 
     if (userId != null) {
-      // Llamamos a la base de datos para extraer los datos reales
       final perfilData = await NeonDbService.obtenerPerfilUsuario(userId);
 
       if (perfilData != null) {
@@ -46,11 +44,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           _estrellas = perfilData['estrellas'];
           _avatarPath = perfilData['avatar'];
           
-          // Cálculo de la edad: Grado + 5 (Ajusta el 5 si tus grados funcionan distinto)
           int grado = perfilData['grade'];
           _age = grado + 5; 
 
-          // Definición del Nivel/Rol
           String role = perfilData['role'];
           if (role == 'admin') {
             _level = "Administrador";
@@ -61,17 +57,43 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           _isLoading = false;
         });
       } else {
-        setState(() => _isLoading = false); // Fallback si retorna nulo
+        setState(() => _isLoading = false); 
       }
     } else {
-      setState(() => _isLoading = false); // Fallback si no hay usuario en sesión
+      setState(() => _isLoading = false); 
     }
+  }
+
+  // --- FUNCIÓN PARA MOSTRAR SELECTOR DE AVATAR ---
+  void _mostrarSelectorDeAvatar() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF222232) : Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Elige tu Avatar", style: GoogleFonts.fredoka(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              Text(
+                "Aquí podrás agregar tu cuadrícula de avatares pronto.", 
+                style: GoogleFonts.nunito(color: Colors.grey)
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
+        );
+      }
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color accentColor = const Color(0xFF48CAE4); // Cian Neón
+    final Color accentColor = const Color(0xFF48CAE4); 
     final Color bgColor = isDark ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
 
     return Scaffold(
@@ -111,16 +133,20 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                             ]
                           ),
                           child: CircleAvatar(
-                            // Cargamos el avatar que viene de la base de datos
                             backgroundImage: AssetImage(_avatarPath), 
                             backgroundColor: Colors.transparent,
                           ),
                         ),
-                        // Botón flotante para editar avatar (sin funcionalidad actual)
-                        CircleAvatar(
-                          backgroundColor: accentColor,
-                          radius: 18,
-                          child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                        // Botón flotante para editar avatar
+                        GestureDetector(
+                          onTap: () {
+                            _mostrarSelectorDeAvatar();
+                          },
+                          child: CircleAvatar(
+                            backgroundColor: accentColor,
+                            radius: 18,
+                            child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                          ),
                         )
                       ],
                     ),
@@ -142,9 +168,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Tarjeta para Edad
                       _buildStatCard("Edad aprox.", "$_age años", Icons.cake_rounded, Colors.orange, isDark),
-                      // Tarjeta para Estrellas
                       _buildStatCard("Estrellas", "$_estrellas", Icons.star_rounded, Colors.amber, isDark),
                     ],
                   ),
@@ -158,7 +182,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
                   // --- LISTA DE OPCIONES / CONFIGURACIÓN ---
                   _buildSettingItem(Icons.person_outline_rounded, "Cambiar nombre", "Edita cómo te llamamos", isDark, () async {
-                    // Navegamos a la nueva pantalla y esperamos un posible nuevo nombre
                     final nuevoNombre = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -166,7 +189,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       ),
                     );
 
-                    // Si regresamos con datos, actualizamos el estado
                     if (nuevoNombre != null && nuevoNombre.toString().isNotEmpty) {
                       setState(() {
                         _name = nuevoNombre;
@@ -257,7 +279,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
-  // Modificado para recibir la función onTap
   Widget _buildSettingItem(IconData icon, String title, String subtitle, bool isDark, VoidCallback onTap) {
     return ListTile(
       leading: Container(
