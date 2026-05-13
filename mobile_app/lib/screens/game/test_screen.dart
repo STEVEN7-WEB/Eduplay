@@ -23,6 +23,9 @@ class _TestScreenState extends State<TestScreen> {
   bool _answered = false; 
   
   double _scoreScale = 1.0;
+  
+  // --- VARIABLES PARA ALEATORIEDAD ---
+  List<int> _shuffledIndices = [];
 
   // --- VARIABLES DEL TEMPORIZADOR ---
   Timer? _timer;
@@ -41,6 +44,13 @@ class _TestScreenState extends State<TestScreen> {
     super.dispose();
   }
 
+  void _mezclarOpciones() {
+    if (_preguntas.isNotEmpty && _currentIndex < _preguntas.length) {
+      _shuffledIndices = List.generate(_preguntas[_currentIndex].options.length, (i) => i);
+      _shuffledIndices.shuffle();
+    }
+  }
+
   void _loadQuestions() async {
     final prefs = await SharedPreferences.getInstance();
     final int gradoActual = prefs.getInt('grado_usuario') ?? 1;
@@ -50,6 +60,7 @@ class _TestScreenState extends State<TestScreen> {
     setState(() {
       _preguntas = rawPreguntas.map((p) => Pregunta.fromDatabase(p)).toList();
       _isLoading = false;
+      _mezclarOpciones();
     });
 
     _iniciarTemporizador();
@@ -93,6 +104,7 @@ class _TestScreenState extends State<TestScreen> {
           _currentIndex++;
           _selectedAnswer = null;
           _answered = false;
+          _mezclarOpciones();
         });
         
         if (_currentIndex < _preguntas.length) {
@@ -296,7 +308,7 @@ class _TestScreenState extends State<TestScreen> {
                       ),
                     ),
 
-                    // OPCIONES
+                    // OPCIONES (CON ORDEN ALEATORIO)
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -308,7 +320,8 @@ class _TestScreenState extends State<TestScreen> {
                       ),
                       itemCount: preguntaActual.options.length,
                       itemBuilder: (context, index) {
-                        return _buildOptionButton(preguntaActual, index, isDarkMode);
+                        int originalIndex = _shuffledIndices.isEmpty ? index : _shuffledIndices[index];
+                        return _buildOptionButton(preguntaActual, originalIndex, isDarkMode);
                       },
                     ),
                   ],
