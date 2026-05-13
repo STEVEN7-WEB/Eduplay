@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../main.dart'; // Importante para acceder a themeNotifier
+import '../../main.dart'; 
 import '../game/test_screen.dart';
 import '../auth/login_screen.dart';
-import '../profile/profile_settings_screen.dart'; // <--- IMPORTACIÓN DEL NUEVO PERFIL
+import '../profile/profile_settings_screen.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +18,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userId = '';
   String _userAvatar = 'assets/avatars/avatar1.png';
   bool _isDarkMode = true;
+  
+  // Variables dinámicas para el dock flotante
+  int _misionesCompletadas = 0;
+  String _materiaFuerte = "Aún por descubrir";
 
   @override
   void initState() {
@@ -32,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _userId = prefs.getString('userId') ?? '0';
       _userAvatar = prefs.getString('userAvatar') ?? 'assets/avatars/avatar1.png';
       _isDarkMode = prefs.getBool('isDarkMode') ?? true;
+      
+      // NOTA: Aquí podrás cargar _misionesCompletadas y _materiaFuerte desde tu BD
     });
   }
 
@@ -254,10 +260,16 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildDockAction(Icons.emoji_events_rounded, "Logros", const Color(0xFFFFD93D), () {
-            _mostrarModal("Tus Logros 🏆", "¡Sigue así, $_userName! Has completado 5 misiones esta semana.", const Color(0xFFFFD93D));
+            _mostrarModal("Tus Logros 🏆", "¡Sigue así, $_userName! Has completado $_misionesCompletadas misiones.", const Color(0xFFFFD93D));
           }),
           _buildDockAction(Icons.trending_up_rounded, "Avance", const Color(0xFF4ECDC4), () {
-            _mostrarModal("Tu Avance 📈", "Tu materia más fuerte es Matemáticas. ¡Tu cerebro se está haciendo poderoso!", const Color(0xFF4ECDC4));
+            _mostrarModal(
+              "Tu Avance 📈", 
+              _materiaFuerte == "Aún por descubrir" 
+                  ? "¡Juega un poco más para descubrir tu materia más fuerte!" 
+                  : "Tu materia más fuerte es $_materiaFuerte. ¡Tu cerebro se está haciendo poderoso!", 
+              const Color(0xFF4ECDC4)
+            );
           }),
           _buildDockAction(Icons.stars_rounded, "Metas", const Color(0xFF9D4EDD), () {
             _mostrarModal("Nuevas Metas 🚀", "Meta del día: Completa 1 misión de Ciencia para ganar una insignia.", const Color(0xFF9D4EDD));
@@ -370,7 +382,7 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
 
   void _onTapDown(TapDownDetails details) => setState(() => _scale = 0.93);
 
-  void _onTapUp(TapDownDetails) {
+  void _onTapUp(TapDownDetails details) {
     setState(() => _scale = 1.0);
     Future.delayed(const Duration(milliseconds: 150), () {
       if (mounted) {
