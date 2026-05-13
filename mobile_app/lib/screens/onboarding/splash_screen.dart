@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:math'; // <-- Importamos math para la aleatoriedad
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:video_player/video_player.dart'; // Importamos el paquete de video
+import 'package:video_player/video_player.dart'; 
 
 class SplashScreen extends StatefulWidget {
   final Widget destino; 
@@ -25,10 +26,11 @@ class _SplashScreenState extends State<SplashScreen> {
   
   int _indiceConsejoActual = 0;
   Timer? _timerConsejos;
+  final Random _random = Random(); // <-- Generador de números aleatorios
 
   // --- ESTADOS Y CONTROLADORES ---
   VideoPlayerController? _videoController;
-  bool _mostrarGif = false; // Controla si mostramos el video o el GIF
+  bool _mostrarGif = false; 
   bool _tieneInternet = true;
   bool _verificando = true;
 
@@ -67,14 +69,22 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void _iniciarFaseGif() {
     setState(() {
-      _mostrarGif = true; // Cambiamos el estado para mostrar el GIF
+      _mostrarGif = true; 
+      // Elegimos el primer consejo al azar
+      _indiceConsejoActual = _random.nextInt(_consejos.length); 
     });
 
     // 3. Iniciamos el rotador de consejos (Cambia cada 3.5 segundos)
     _timerConsejos = Timer.periodic(const Duration(milliseconds: 3500), (timer) {
       if (mounted) {
         setState(() {
-          _indiceConsejoActual = (_indiceConsejoActual + 1) % _consejos.length;
+          int nuevoIndice;
+          // Buscamos un nuevo consejo aleatorio que NO sea igual al actual
+          do {
+            nuevoIndice = _random.nextInt(_consejos.length);
+          } while (nuevoIndice == _indiceConsejoActual && _consejos.length > 1);
+          
+          _indiceConsejoActual = nuevoIndice;
         });
       }
     });
@@ -152,7 +162,7 @@ class _SplashScreenState extends State<SplashScreen> {
       key: const ValueKey("PantallaGif"), // Clave para que AnimatedSwitcher sepa que cambió
       fit: StackFit.expand,
       children: [
-        // 1. El GIF de Fondo (CON EL NOMBRE CORREGIDO)
+        // 1. El GIF de Fondo
         Image.asset(
           'assets/fondo_aventura.gif', 
           fit: BoxFit.cover,
