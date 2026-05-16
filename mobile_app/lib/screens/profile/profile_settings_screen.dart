@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notifications_screen.dart';
+import 'help_screen.dart';
 
 import '../../services/neon_db_service.dart'; 
-import 'change_name_screen.dart';
+import 'change_name_screen.dart'; 
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
@@ -13,76 +15,171 @@ class ProfileSettingsScreen extends StatefulWidget {
 }
 
 class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
-  // Variables dinámicas para el perfil
-  String _name = "Cargando...";
+  // Sin valores quemados
+  String _name = "";
   int _age = 0;
   int _estrellas = 0;
-  String _level = "Cargando...";
-  String _avatarPath = 'assets/avatars/avatar1.png';
+  String _level = "";
+  String _avatarPath = ''; 
+  String _featuredSubject = "";
   
-  // Variables dinámicas
-  String _featuredSubject = "Aún por definir";
-  
-  bool _isLoading = true;
+  bool _isLoading = true; 
+  bool _isUpdatingAvatar = false; 
+
+  final List<String> _misAvataresDisponibles = [
+    'assets/avatars/avatar1.png', 
+    'assets/avatars/avatar2.png',
+    'assets/avatars/avatar3.png', 
+    'assets/avatars/avatar4.png', 
+    'assets/avatars/avatar5.png',
+    'assets/avatars/avatar6.png',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _cargarDatosDePerfil();
+    _cargarDatosDesdeBD();
   }
 
-  Future<void> _cargarDatosDePerfil() async {
+  Future<void> _cargarDatosDesdeBD() async {
     final prefs = await SharedPreferences.getInstance();
     final int? userId = prefs.getInt('id_usuario');
 
     if (userId != null) {
       final perfilData = await NeonDbService.obtenerPerfilUsuario(userId);
 
-      if (perfilData != null) {
+      if (mounted && perfilData != null) {
         setState(() {
-          _name = perfilData['name'];
-          _estrellas = perfilData['estrellas'];
-          _avatarPath = perfilData['avatar'];
+          _name = perfilData['name'] ?? 'Usuario';
+          _estrellas = perfilData['estrellas'] ?? 0;
+          _avatarPath = perfilData['avatar'] ?? 'assets/avatars/avatar1.png';
           
-          int grado = perfilData['grade'];
+          String? materiaDb = perfilData['materia_fuerte'];
+          if (materiaDb != null && materiaDb.isNotEmpty) {
+            _featuredSubject = materiaDb;
+          } else {
+            _featuredSubject = "Aún no has empezado";
+          }
+          
+          int grado = perfilData['grade'] ?? 1;
           _age = grado + 5; 
 
-          String role = perfilData['role'];
+          String role = perfilData['role'] ?? 'student';
           if (role == 'admin') {
-            _level = "Administrador";
+            _level = "Administrador del Sistema";
           } else {
-            _level = "Estudiante (Grado $grado)";
+            _level = "Explorador (Grado $gradoº)";
           }
 
           _isLoading = false;
         });
-      } else {
+      } else if (mounted) {
         setState(() => _isLoading = false); 
       }
     } else {
-      setState(() => _isLoading = false); 
+      if (mounted) setState(() => _isLoading = false); 
     }
   }
 
-  // --- FUNCIÓN PARA MOSTRAR SELECTOR DE AVATAR ---
-  void _mostrarSelectorDeAvatar() {
+  Future<void> _confirmarYGuardarAvatar(String nuevoPathElegido) async {
+    Navigator.pop(context);
+    setState(() => _isUpdatingAvatar = true);
+
+    final prefs = await SharedPreferences.getInstance();
+    final int? userId = prefs.getInt('id_usuario');
+
+    if (userId != null) {
+      bool exito = await NeonDbService.actualizarAvatarUsuario(userId, nuevoPathElegido);
+
+      if (!mounted) return;
+
+      if (exito) {
+        setState(() {
+          _avatarPath = nuevoPathElegido;
+          _isUpdatingAvatar = false;
+        });
+        _mostrarFeedbackVisual("¡Avatar actualizado espacialmente!", const Color(0xFF4ECDC4));
+      } else {
+        setState(() => _isUpdatingAvatar = false);
+        _mostrarFeedbackVisual("Error de conexión 🔌 No se guardó.", const Color(0xFFFF6B6B));
+      }
+    } else {
+       setState(() => _isUpdatingAvatar = false);
+    }
+  }
+
+  void _mostrarSelectorDeAvatarModal() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color accentColor = const Color(0xFF48CAE4);
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF222232) : Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      isScrollControlled: true, 
+      backgroundColor: isDark ? const Color(0xFF222232) : Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
+        return Container(
+          padding: const EdgeInsets.all(25),
+          height: MediaQuery.of(context).size.height * 0.55,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Elige tu Avatar", style: GoogleFonts.fredoka(fontSize: 22, fontWeight: FontWeight.bold)),
+              Container(
+                width: 50, height: 5,
+                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
+              ),
               const SizedBox(height: 20),
               Text(
-                "Aquí podrás agregar tu cuadrícula de avatares pronto.", 
-                style: GoogleFonts.nunito(color: Colors.grey)
+                "Elige tu nuevo aspecto", 
+                style: GoogleFonts.fredoka(
+                  fontSize: 24, 
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black
+                )
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 5),
+              Text(
+                "Toca un avatar para seleccionarlo", 
+                style: GoogleFonts.nunito(color: Colors.grey, fontSize: 16)
+              ),
+              const SizedBox(height: 25),
+              Expanded(
+                child: GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _misAvataresDisponibles.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3, 
+                    mainAxisSpacing: 15, 
+                    crossAxisSpacing: 15, 
+                    childAspectRatio: 1, 
+                  ),
+                  itemBuilder: (context, index) {
+                    final String pathOpcion = _misAvataresDisponibles[index];
+                    final bool esElActual = (_avatarPath == pathOpcion);
+
+                    return GestureDetector(
+                      onTap: () => _confirmarYGuardarAvatar(pathOpcion),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: esElActual ? accentColor : Colors.transparent,
+                            width: esElActual ? 4 : 0,
+                          ),
+                          boxShadow: esElActual ? [
+                            BoxShadow(color: accentColor.withOpacity(0.5), blurRadius: 12, offset: const Offset(0, 4))
+                          ] : [],
+                        ),
+                        child: CircleAvatar(
+                          backgroundImage: AssetImage(pathOpcion),
+                          backgroundColor: isDark ? const Color(0xFF151522) : Colors.grey.shade100,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
             ],
           ),
         );
@@ -90,10 +187,22 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
+  void _mostrarFeedbackVisual(String mensaje, Color colorBg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje, textAlign: TextAlign.center, style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: colorBg,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        duration: const Duration(seconds: 2),
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color accentColor = const Color(0xFF48CAE4); 
+    final Color accentColor = const Color(0xFF48CAE4);
     final Color bgColor = isDark ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
 
     return Scaffold(
@@ -103,7 +212,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
         title: Text(
-          "Mi Perfil", 
+          "Mi Perfil Espacial", 
           style: GoogleFonts.fredoka(
             fontWeight: FontWeight.bold, 
             color: isDark ? Colors.white : Colors.black
@@ -111,41 +220,38 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF48CAE4)))
+      body: (_isLoading || _isUpdatingAvatar)
+          ? Center(child: CircularProgressIndicator(color: accentColor))
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(25),
               child: Column(
                 children: [
-                  // --- HEADER DE PERFIL ---
                   Center(
                     child: Stack(
                       alignment: Alignment.bottomRight,
                       children: [
                         Container(
-                          width: 120, height: 120,
+                          width: 135, height: 135, 
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(color: accentColor, width: 4),
                             boxShadow: [
-                              BoxShadow(color: accentColor.withOpacity(isDark ? 0.3 : 0.1), blurRadius: 20)
+                              BoxShadow(color: accentColor.withOpacity(isDark ? 0.3 : 0.1), blurRadius: 25)
                             ]
                           ),
                           child: CircleAvatar(
+                            // _avatarPath ya está cargado 100% de la BD
                             backgroundImage: AssetImage(_avatarPath), 
                             backgroundColor: Colors.transparent,
                           ),
                         ),
-                        // Botón flotante para editar avatar
                         GestureDetector(
-                          onTap: () {
-                            _mostrarSelectorDeAvatar();
-                          },
+                          onTap: _mostrarSelectorDeAvatarModal, 
                           child: CircleAvatar(
                             backgroundColor: accentColor,
-                            radius: 18,
-                            child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                            radius: 22, 
+                            child: const Icon(Icons.photo_camera_rounded, color: Colors.white, size: 22),
                           ),
                         )
                       ],
@@ -155,33 +261,30 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   Text(
                     _name, 
                     style: GoogleFonts.fredoka(
-                      fontSize: 28, 
+                      fontSize: 30, 
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black
                     )
                   ),
-                  Text(_level, style: GoogleFonts.nunito(color: accentColor, fontWeight: FontWeight.w700, fontSize: 16)),
+                  Text(_level, style: GoogleFonts.nunito(color: accentColor, fontWeight: FontWeight.w800, fontSize: 17)),
                   
                   const SizedBox(height: 30),
 
-                  // --- SECCIÓN DE ESTADÍSTICAS ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatCard("Edad aprox.", "$_age años", Icons.cake_rounded, Colors.orange, isDark),
+                      _buildStatCard("Edad est.", "$_age años", Icons.cake_rounded, Colors.orange, isDark),
                       _buildStatCard("Estrellas", "$_estrellas", Icons.star_rounded, Colors.amber, isDark),
                     ],
                   ),
 
                   const SizedBox(height: 25),
 
-                  // --- APARTADO DE MATERIA DESTACADA ---
                   _buildFeaturedSubjectCard(_featuredSubject, isDark),
 
                   const SizedBox(height: 25),
 
-                  // --- LISTA DE OPCIONES / CONFIGURACIÓN ---
-                  _buildSettingItem(Icons.person_outline_rounded, "Cambiar nombre", "Edita cómo te llamamos", isDark, () async {
+                  _buildSettingItem(Icons.person_outline_rounded, "Cambiar nombre", "Edita tu nombre de explorador", isDark, () async {
                     final nuevoNombre = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -195,14 +298,23 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       });
                     }
                   }),
-
-                  _buildSettingItem(Icons.notifications_none_rounded, "Notificaciones", "Alertas de nuevas misiones", isDark, () {}),
-                  _buildSettingItem(Icons.security_rounded, "Privacidad", "Configuración de cuenta", isDark, () {}),
-                  _buildSettingItem(Icons.help_outline_rounded, "Ayuda", "Soporte técnico de App Tec", isDark, () {}),
+_buildSettingItem(Icons.notifications_none_rounded, "Notificaciones", "Alertas de nuevas misiones", isDark, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>  NotificationsScreen()),
+                    );
+                  }),
                   
+                  // Se eliminó el botón de Privacidad
+                  
+                  _buildSettingItem(Icons.help_outline_rounded, "Ayuda", "Soporte técnico de App Tec", isDark, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HelpScreen()),
+                    );
+                  }),
                   const SizedBox(height: 40),
                   
-                  // Versión de la app
                   Text("D.A.E.A Studio - v1.0.2", style: GoogleFonts.nunito(color: Colors.grey, fontSize: 12)),
                 ],
               ),
@@ -212,33 +324,33 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color, bool isDark) {
     return Container(
-      width: 140,
-      padding: const EdgeInsets.all(15),
+      width: 145,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF222232) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: color.withOpacity(0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: color.withOpacity(isDark ? 0.1 : 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 5),
           )
         ]
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
+          Icon(icon, color: color, size: 30),
           const SizedBox(height: 8),
           Text(
             value, 
             style: GoogleFonts.fredoka(
-              fontSize: 18, 
+              fontSize: 20, 
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black
             )
           ),
-          Text(label, style: GoogleFonts.nunito(color: Colors.grey, fontSize: 13)),
+          Text(label, style: GoogleFonts.nunito(color: Colors.grey, fontSize: 14)),
         ],
       ),
     );
@@ -247,32 +359,36 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   Widget _buildFeaturedSubjectCard(String subject, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark ? [const Color(0xFF48CAE4).withOpacity(0.2), const Color(0xFF5E60CE).withOpacity(0.2)]
+          colors: isDark ? [const Color(0xFF48CAE4).withOpacity(0.2), const Color(0xFF5E60CE).withOpacity(0.15)]
                          : [Colors.cyan.shade50, Colors.indigo.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(color: const Color(0xFF48CAE4).withOpacity(0.5), width: 1.5),
       ),
       child: Row(
         children: [
-          const Icon(Icons.stars_rounded, color: Color(0xFF48CAE4), size: 40),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Materia Destacada", 
-                style: GoogleFonts.nunito(
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 14,
-                  color: isDark ? Colors.white70 : Colors.black54
-                )
-              ),
-              Text(subject, style: GoogleFonts.fredoka(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF48CAE4))),
-            ],
+          const Icon(Icons.rocket_launch_rounded, color: Color(0xFF48CAE4), size: 45),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Materia Destacada", 
+                  style: GoogleFonts.nunito(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 15,
+                    color: isDark ? Colors.white70 : Colors.black54
+                  )
+                ),
+                Text(subject, style: GoogleFonts.fredoka(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF48CAE4))),
+              ],
+            ),
           ),
         ],
       ),
@@ -281,25 +397,27 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
   Widget _buildSettingItem(IconData icon, String title, String subtitle, bool isDark, VoidCallback onTap) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       leading: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF222232) : Colors.grey.shade100,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: isDark ? Colors.white70 : Colors.grey.shade700),
+        child: Icon(icon, color: isDark ? Colors.white70 : Colors.grey.shade700, size: 22),
       ),
       title: Text(
         title, 
         style: GoogleFonts.fredoka(
           fontWeight: FontWeight.w600,
+          fontSize: 17,
           color: isDark ? Colors.white : Colors.black87
         )
       ),
       subtitle: Text(
         subtitle, 
         style: GoogleFonts.nunito(
-          fontSize: 12,
+          fontSize: 13,
           color: isDark ? Colors.white54 : Colors.black54
         )
       ),

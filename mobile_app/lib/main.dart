@@ -4,6 +4,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/onboarding/splash_screen.dart';
 import 'services/neon_db_service.dart';
+import 'services/notification_service.dart'; // Importa tu servicio
 
 // --- NOTIFICADOR GLOBAL DE TEMA ---
 // Esta variable la podrá ver cualquier pantalla de tu app
@@ -11,8 +12,9 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
 
 void main() async {
   // Preparamos el motor de Flutter
-  WidgetsFlutterBinding.ensureInitialized(); 
-  
+  WidgetsFlutterBinding.ensureInitialized();
+  // Servicio de notificaciones: inicializamos y pedimos permisos 
+  await NotificationService.inicializar();
   // Revisamos si hay una sesión guardada y el tema preferido
   final prefs = await SharedPreferences.getInstance();
   final bool yaInicioSesion = prefs.getBool('sesion_iniciada') ?? false;

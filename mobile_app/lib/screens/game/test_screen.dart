@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/pregunta_model.dart';
 import '../../services/neon_db_service.dart';
+import '../profile/achievements_screen.dart'; 
 
 class TestScreen extends StatefulWidget {
   final String subject;
@@ -21,13 +22,16 @@ class _TestScreenState extends State<TestScreen> {
   int _score = 0;
   int? _selectedAnswer; 
   bool _answered = false; 
+  bool _resultadoGuardado = false; 
+  bool _evaluandoResultado = false; // <-- Nuevo: Para la transición al final
   
+  // Textos dinámicos para el final del examen
+  String _mensajeFinalTitulo = "¡Misión Cumplida!";
+  String _mensajeFinalSubtitulo = "Evaluando tus resultados...";
+
   double _scoreScale = 1.0;
   
-  // --- VARIABLES PARA ALEATORIEDAD ---
   List<int> _shuffledIndices = [];
-
-  // --- VARIABLES DEL TEMPORIZADOR ---
   Timer? _timer;
   final int _tiempoMaximo = 15;
   int _tiempoRestante = 15;
@@ -35,7 +39,7 @@ class _TestScreenState extends State<TestScreen> {
   @override
   void initState() {
     super.initState();
-    _loadQuestions();
+    _loadQuestionsFromDB();
   }
 
   @override
@@ -51,19 +55,26 @@ class _TestScreenState extends State<TestScreen> {
     }
   }
 
-  void _loadQuestions() async {
+  void _loadQuestionsFromDB() async {
     final prefs = await SharedPreferences.getInstance();
-    final int gradoActual = prefs.getInt('grado_usuario') ?? 1;
+    final int gradoActual = prefs.getInt('grado_usuario') ?? 1; 
 
-    final rawPreguntas = await NeonDbService.obtenerPreguntasPorMateria(widget.subject, gradoActual);
+    // Obtenemos todas las preguntas de la materia y grado
+    List<dynamic> rawPreguntas = await NeonDbService.obtenerPreguntasPorMateria(widget.subject, gradoActual);
     
+    // --- NUEVO: Mezclamos y tomamos solo 10 al azar ---
+    rawPreguntas.shuffle();
+    final seleccionadas = rawPreguntas.take(10).toList();
+
     setState(() {
-      _preguntas = rawPreguntas.map((p) => Pregunta.fromDatabase(p)).toList();
+      _preguntas = seleccionadas.map((p) => Pregunta.fromDatabase(p)).toList();
       _isLoading = false;
       _mezclarOpciones();
     });
 
-    _iniciarTemporizador();
+    if (_preguntas.isNotEmpty) {
+      _iniciarTemporizador();
+    }
   }
 
   void _iniciarTemporizador() {
@@ -104,19 +115,56 @@ class _TestScreenState extends State<TestScreen> {
           _currentIndex++;
           _selectedAnswer = null;
           _answered = false;
-          _mezclarOpciones();
         });
         
         if (_currentIndex < _preguntas.length) {
+          _mezclarOpciones();
           _iniciarTemporizador();
+        } else {
+          // --- EXAMEN FINALIZADO: Evaluamos si es nuevo récord ---
+          setState(() => _evaluandoResultado = true);
+          _guardarResultadoEnDB().then((_) {
+            if (mounted) {
+              setState(() => _evaluandoResultado = false);
+            }
+          });
         }
       }
     });
   }
 
+  Future<void> _guardarResultadoEnDB() async {
+    if (_resultadoGuardado) return; 
+
+    final prefs = await SharedPreferences.getInstance();
+    final int? userId = prefs.getInt('id_usuario');
+
+    if (userId != null) {
+      // Consultamos el puntaje máximo anterior (Asegúrate de tener esta función en tu BD)
+      int puntajeAnterior = await NeonDbService.obtenerMejorPuntajeMateria(userId, widget.subject);
+
+      if (_score > puntajeAnterior) {
+        _mensajeFinalTitulo = "¡Nuevo Récord! 🌟";
+        _mensajeFinalSubtitulo = "¡Bravo! Estudiar sí está dando frutos, sigue así.";
+        
+        // Guardamos el nuevo récord en la BD
+        await NeonDbService.guardarProgresoExamen(
+          userId: userId,
+          materia: widget.subject,
+          estrellasGanadas: _score,
+        );
+      } else {
+        _mensajeFinalTitulo = "Buen intento 👍";
+        _mensajeFinalSubtitulo = "Ups, antes habías sacado mejor calificación pero no te rindas.";
+        // No guardamos nada en la BD para proteger su récord anterior
+      }
+    }
+    
+    _resultadoGuardado = true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // --- DETECTOR DE MODO OSCURO ---
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
     final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
@@ -135,7 +183,16 @@ class _TestScreenState extends State<TestScreen> {
       );
     }
 
+    // --- PANTALLA DE CARGA FINAL O DE RESULTADOS ---
     if (_preguntas.isEmpty || _currentIndex >= _preguntas.length) {
+      if (_evaluandoResultado) {
+        return Scaffold(
+          backgroundColor: bgColor, 
+          body: const Center(
+            child: CircularProgressIndicator(color: Color(0xFF9D4EDD), strokeWidth: 6)
+          )
+        );
+      }
       return _buildFinalScreen(isDarkMode);
     }
 
@@ -149,7 +206,6 @@ class _TestScreenState extends State<TestScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // --- BARRA SUPERIOR ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               child: Row(
@@ -161,7 +217,10 @@ class _TestScreenState extends State<TestScreen> {
                       border: Border.all(color: const Color(0xFFFF6B6B), width: 1.5),
                     ),
                     child: IconButton(
-                      onPressed: () => Navigator.pop(context), 
+                      onPressed: () {
+                         _timer?.cancel();
+                         Navigator.pop(context);
+                      }, 
                       icon: const Icon(Icons.close_rounded, color: Color(0xFFFF6B6B), size: 24)
                     ),
                   ),
@@ -176,7 +235,6 @@ class _TestScreenState extends State<TestScreen> {
               ),
             ),
             
-            // --- MARCADOR Y RELOJ ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
               child: Row(
@@ -207,7 +265,6 @@ class _TestScreenState extends State<TestScreen> {
               ),
             ),
 
-            // --- BARRA DE TIEMPO ANIMADA ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
@@ -256,14 +313,12 @@ class _TestScreenState extends State<TestScreen> {
               ),
             ),
 
-            // --- ÁREA DE JUEGO ---
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 100),
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // MUESTRA ALERTA SI SE ACABÓ EL TIEMPO
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 400),
                       child: (_answered && _selectedAnswer == -1)
@@ -288,7 +343,6 @@ class _TestScreenState extends State<TestScreen> {
                         : const SizedBox.shrink(key: ValueKey("notimeout")),
                     ),
 
-                    // TARJETA DE PREGUNTA
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(30),
@@ -308,7 +362,6 @@ class _TestScreenState extends State<TestScreen> {
                       ),
                     ),
 
-                    // OPCIONES (CON ORDEN ALEATORIO)
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -334,7 +387,6 @@ class _TestScreenState extends State<TestScreen> {
     );
   }
 
-  // --- DOCK FLOTANTE ---
   Widget _buildFloatingDock(bool isDarkMode) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
@@ -370,7 +422,6 @@ class _TestScreenState extends State<TestScreen> {
     );
   }
 
-  // --- BOTONES DE OPCIÓN ---
   Widget _buildOptionButton(Pregunta pregunta, int index, bool isDarkMode) {
     Color cardColor = isDarkMode ? const Color(0xFF1A1A2A) : const Color(0xFFF0F2F5);
     Color textColor = isDarkMode ? Colors.white38 : Colors.black54;
@@ -436,8 +487,18 @@ class _TestScreenState extends State<TestScreen> {
     );
   }
 
-  void _mostrarModalLogros() {
-    _mostrarDialogoBase("Tus Logros 🏆", "Has desbloqueado el nivel 'Explorador Espacial'. ¡Sigue sumando estrellas!", const Color(0xFFFFD93D));
+  void _mostrarModalLogros() async {
+    final prefs = await SharedPreferences.getInstance();
+    final int? userId = prefs.getInt('id_usuario');
+
+    if (userId != null && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AchievementsScreen(userId: userId),
+        ),
+      );
+    }
   }
   void _mostrarModalPista() {
     _mostrarDialogoBase("Pista de la Misión 💡", "Lee la pregunta cuidadosamente. ¡Tú puedes lograrlo!", const Color(0xFF4ECDC4));
@@ -479,31 +540,35 @@ class _TestScreenState extends State<TestScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(color: cardColor, shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFD93D), width: 3), boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.4), blurRadius: 40, spreadRadius: 5)]),
-              child: const Text("🏆", style: TextStyle(fontSize: 90)),
-            ),
-            const SizedBox(height: 40),
-            Text("¡Misión Cumplida!", style: GoogleFonts.fredoka(color: titleColor, fontSize: 36, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 10),
-            Text("¡Eres genial!", style: GoogleFonts.nunito(color: subtitleColor, fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 30),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              decoration: BoxDecoration(color: const Color(0xFFFFD93D), borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 5))]),
-              child: Text("Ganaste ⭐ $_score puntos", style: GoogleFonts.fredoka(color: const Color(0xFF151522), fontWeight: FontWeight.w900, fontSize: 24)),
-            ),
-            const SizedBox(height: 50),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF9D4EDD), padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15), elevation: 8, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
-              onPressed: () => Navigator.pop(context), 
-              child: Text("Volver a la Base", style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold))
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(30),
+                decoration: BoxDecoration(color: cardColor, shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFD93D), width: 3), boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.4), blurRadius: 40, spreadRadius: 5)]),
+                child: const Text("🏆", style: TextStyle(fontSize: 90)),
+              ),
+              const SizedBox(height: 40),
+              // Aquí usamos las variables dinámicas de éxito o fracaso
+              Text(_mensajeFinalTitulo, textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: titleColor, fontSize: 32, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 15),
+              Text(_mensajeFinalSubtitulo, textAlign: TextAlign.center, style: GoogleFonts.nunito(color: subtitleColor, fontSize: 18, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 30),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                decoration: BoxDecoration(color: const Color(0xFFFFD93D), borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 5))]),
+                child: Text("Lograste ⭐ $_score puntos", style: GoogleFonts.fredoka(color: const Color(0xFF151522), fontWeight: FontWeight.w900, fontSize: 24)),
+              ),
+              const SizedBox(height: 50),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF9D4EDD), padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15), elevation: 8, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
+                onPressed: () => Navigator.pop(context), 
+                child: Text("Volver a la Base", style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold))
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -14,11 +14,12 @@ dependencies:
   cupertino_icons: ^1.0.6
   postgres: ^3.4.3
   shared_preferences: ^2.2.2
-  http: ^1.2.0
+  http: ^1.6.0
   crypto: ^3.0.7
   # Agregado para reproducir AppTec.mp4
   video_player: ^2.8.6 
   mailer: ^7.1.0
+  flutter_local_notifications: ^21.0.0
 
 dev_dependencies:
   flutter_test:
@@ -39,4 +40,4 @@ flutter:
     - assets/avatars/
     # Agregados para el SplashScreen
     - assets/AppTec.mp4
-    - assets/fondo_aventura.gif  # <-- Nombre actualizado
+    - assets/Carga.mp4  # <-- Nombre actualizado

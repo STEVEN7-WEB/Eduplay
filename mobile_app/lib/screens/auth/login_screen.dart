@@ -1,12 +1,15 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/neon_db_service.dart';
-import '../../main.dart'; // ¡Importante para cambiar el tema global!
+import '../../main.dart'; 
 import '../home/home_screen.dart';
 import 'register_screen.dart';
-import 'parent_dashboard_screen.dart'; // Importamos la nueva pantalla de padres
+import 'parent_dashboard_screen.dart'; 
+import 'admin_dashboard.dart';
+import 'recovery_screen.dart'; 
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,18 +17,37 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _identificadorController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   
   bool _isLoading = false;
-  bool _isParentMode = false; // Variable mágica para detectar modo padre/alumno
+  bool _isParentOrAdminMode = false;
+
+  // Controlador para las animaciones continuas (el logo flotante y el botón)
+  late AnimationController _pulseController;
+  late Animation<double> _floatAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    // Configuramos la animación de "respiración" o flotación
+    _pulseController = AnimationController(
+      vsync: this, 
+      duration: const Duration(seconds: 2)
+    )..repeat(reverse: true); // Se repite infinitamente yendo y viniendo
+
+    _floatAnimation = Tween<double>(begin: -8.0, end: 8.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine)
+    );
+  }
 
   @override
   void dispose() {
     _identificadorController.dispose();
     _passController.dispose();
+    _pulseController.dispose(); // No olvides matar el controlador de animación
     super.dispose();
   }
 
@@ -40,202 +62,285 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final bgColor = isDarkMode ? const Color(0xFF0D0D1A) : const Color(0xFFF4F6F9);
     final textColor = isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
     final subtitleColor = isDarkMode ? const Color(0xFF48CAE4) : const Color(0xFF0096C7);
     final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 20, top: 10),
-            decoration: BoxDecoration(
-              color: cardColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDarkMode ? const Color(0xFFFFD93D).withOpacity(0.5) : const Color(0xFF5E60CE).withOpacity(0.5), 
-                width: 1.5
-              ),
-            ),
-            child: IconButton(
-              onPressed: _toggleTheme, 
-              icon: Icon(
-                isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded, 
-                color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE), 
-                size: 22
-              )
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: Stack(
+        children: [
+          // --- FONDOS CON LUCES DIFUMINADAS (ANIMADOS) ---
+          AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              return Stack(
                 children: [
-                  Container(
-                    height: 120, width: 120,
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF9D4EDD).withOpacity(0.4),
-                          blurRadius: 25, spreadRadius: 2,
-                        )
-                      ],
-                      border: Border.all(color: const Color(0xFF9D4EDD), width: 3),
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/app_icon.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => 
-                          const Icon(Icons.rocket_launch_rounded, size: 60, color: Color(0xFF9D4EDD)),
+                  Positioned(
+                    top: -100 + (_floatAnimation.value * 2), // El neón también se mueve un poco
+                    left: -100,
+                    child: Container(
+                      width: 350, height: 350,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: const Color(0xFF9D4EDD).withOpacity(isDarkMode ? 0.3 : 0.15), blurRadius: 150)]
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  Text(
-                    _isParentMode ? "¡HOLA, TUTOR!" : "¡HOLA!",
-                    style: GoogleFonts.fredoka(color: textColor, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: 2),
-                  ),
-                  Text(
-                    _isParentMode ? "Accede al panel de control" : "¡Listo para otra misión!",
-                    style: GoogleFonts.nunito(color: subtitleColor, fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 30),
-                  _buildLoginBox(isDarkMode),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen()));
-                    },
-                    child: Text(
-                      "¿Eres nuevo? ¡Crea tu perfil aquí! ✨",
-                      style: GoogleFonts.nunito(
-                        color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFFE8B900), 
-                        fontWeight: FontWeight.w800, fontSize: 16
+                  Positioned(
+                    bottom: -100 - (_floatAnimation.value * 2), 
+                    right: -50,
+                    child: Container(
+                      width: 300, height: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: const Color(0xFF48CAE4).withOpacity(isDarkMode ? 0.25 : 0.15), blurRadius: 150)]
                       ),
                     ),
                   ),
                 ],
-              ),
+              );
+            },
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                // --- BOTÓN TEMA ---
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 20, top: 10),
+                    decoration: BoxDecoration(
+                      color: cardColor.withOpacity(0.8),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: isDarkMode ? const Color(0xFFFFD93D).withOpacity(0.5) : const Color(0xFF5E60CE).withOpacity(0.5), width: 1.5),
+                    ),
+                    child: IconButton(
+                      onPressed: _toggleTheme, 
+                      icon: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, anim) => RotationTransition(turns: anim, child: child),
+                        child: Icon(
+                          isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded, 
+                          key: ValueKey(isDarkMode), // Clave para la animación
+                          color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE), 
+                          size: 22
+                        ),
+                      )
+                    ),
+                  ),
+                ),
+
+                // --- CONTENIDO PRINCIPAL ---
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // --- LOGO ANIMADO (FLOTANDO) ---
+                            AnimatedBuilder(
+                              animation: _floatAnimation,
+                              builder: (context, child) {
+                                return Transform.translate(
+                                  offset: Offset(0, _floatAnimation.value),
+                                  child: Container(
+                                    height: 130, width: 130,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      boxShadow: [BoxShadow(color: const Color(0xFF9D4EDD).withOpacity(0.4), blurRadius: 25, spreadRadius: 2)],
+                                      border: Border.all(color: const Color(0xFF9D4EDD), width: 3),
+                                    ),
+                                    child: ClipOval(
+                                      child: Image.asset(
+                                        'assets/images/app_icon.png',
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.rocket_launch_rounded, size: 60, color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 25),
+                            
+                            // Textos de bienvenida
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                _isParentOrAdminMode ? "¡ACCESO ESPECIAL!" : "¡HOLA!",
+                                key: ValueKey(_isParentOrAdminMode),
+                                style: GoogleFonts.fredoka(color: textColor, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 1),
+                              ),
+                            ),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                _isParentOrAdminMode ? "Ingresa al panel de control" : "¡Listo para otra misión!",
+                                key: ValueKey(_isParentOrAdminMode),
+                                style: GoogleFonts.nunito(color: subtitleColor, fontSize: 18, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            const SizedBox(height: 35),
+                            
+                            // Caja de Login
+                            _buildGlassLoginBox(isDarkMode, cardColor),
+                            const SizedBox(height: 15),
+                            
+                            // --- BOTONES INFERIORES ---
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const RecoveryScreen()));
+                              },
+                              child: Text(
+                                "¿Olvidaste tu contraseña o PIN? 🤔",
+                                style: GoogleFonts.nunito(color: isDarkMode ? Colors.white54 : Colors.black54, fontWeight: FontWeight.bold, fontSize: 15),
+                              ),
+                            ),
+                            
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen()));
+                              },
+                              child: Text(
+                                "¿Eres nuevo? ¡Crea tu perfil aquí! ✨",
+                                style: GoogleFonts.nunito(
+                                  color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFFE8B900), 
+                                  fontWeight: FontWeight.w900, fontSize: 17
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassLoginBox(bool isDarkMode, Color baseCardColor) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(35),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(25),
+          decoration: BoxDecoration(
+            color: baseCardColor.withOpacity(isDarkMode ? 0.6 : 0.8),
+            borderRadius: BorderRadius.circular(35),
+            border: Border.all(color: Colors.white.withOpacity(isDarkMode ? 0.1 : 0.5), width: 1.5),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05), blurRadius: 20, offset: const Offset(0, 10))],
+          ),
+          child: Column(
+            children: [
+              _buildIdentificadorField(isDarkMode),
+              const SizedBox(height: 15),
+              _buildPasswordField(isDarkMode),
+              const SizedBox(height: 30),
+              
+              // --- BOTÓN ENTRAR ANIMADO ---
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  return Container(
+                    width: double.infinity,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF9D4EDD).withOpacity(0.4 + (_pulseController.value * 0.4)), // El brillo pulsa
+                          blurRadius: 15 + (_pulseController.value * 10),
+                          spreadRadius: 1,
+                        )
+                      ]
+                    ),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF9D4EDD),
+                        elevation: 0, // Quitamos la elevación por defecto para usar nuestra sombra
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                      ),
+                      onPressed: _isLoading ? null : _login,
+                      child: _isLoading 
+                        ? const SizedBox(height: 25, width: 25, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                        : Text("ENTRAR 🚀", style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
+                    ),
+                  );
+                }
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLoginBox(bool isDarkMode) {
-    final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
-    final borderColor = isDarkMode ? const Color(0xFF333344) : Colors.grey.shade300;
-
-    return Container(
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: borderColor, width: 2),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05), blurRadius: 20, offset: const Offset(0, 10))
-        ],
-      ),
-      child: Column(
-        children: [
-          // Campo 1: Identificador
-          _buildIdentificadorField(isDarkMode),
-          const SizedBox(height: 15),
-          // Campo 2: PIN o Contraseña dependiendo del modo
-          _buildPasswordField(isDarkMode),
-          const SizedBox(height: 30),
-          SizedBox(
-            width: double.infinity,
-            height: 60,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9D4EDD),
-                elevation: 8,
-                shadowColor: const Color(0xFF9D4EDD).withOpacity(0.6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-              ),
-              onPressed: _isLoading ? null : _login,
-              child: _isLoading 
-                ? const SizedBox(height: 25, width: 25, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                : Text("ENTRAR 🚀", style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildIdentificadorField(bool isDarkMode) {
-    final fillColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final fillColor = isDarkMode ? const Color(0xFF151522).withOpacity(0.8) : const Color(0xFFF4F6F9);
     final textColor = isDarkMode ? Colors.white : Colors.black87;
-    final hintColor = isDarkMode ? Colors.white38 : Colors.black38;
-    final neonColor = const Color(0xFF4ECDC4);
+    final hintColor = isDarkMode ? Colors.white54 : Colors.black38;
+    const neonColor = Color(0xFF4ECDC4);
 
     return TextFormField(
       controller: _identificadorController,
       keyboardType: TextInputType.emailAddress,
       style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.w700, fontSize: 18),
       onChanged: (value) {
-        // Detecta arroba
-        setState(() {
-          _isParentMode = value.contains('@');
-        });
+        setState(() => _isParentOrAdminMode = value.contains('@'));
       },
       validator: (value) => (value == null || value.trim().isEmpty) ? '¡Falta este dato!' : null,
       decoration: InputDecoration(
-        prefixIcon: Icon(Icons.person_outline_rounded, color: neonColor, size: 28),
+        prefixIcon: const Icon(Icons.person_outline_rounded, color: neonColor, size: 28),
         hintText: "Usuario o Correo",
         hintStyle: GoogleFonts.nunito(color: hintColor, fontWeight: FontWeight.w700),
         filled: true,
         fillColor: fillColor,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: neonColor, width: 2)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: neonColor, width: 2)),
       ),
     );
   }
 
   Widget _buildPasswordField(bool isDarkMode) {
-    final fillColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
+    final fillColor = isDarkMode ? const Color(0xFF151522).withOpacity(0.8) : const Color(0xFFF4F6F9);
     final textColor = isDarkMode ? Colors.white : Colors.black87;
-    final hintColor = isDarkMode ? Colors.white38 : Colors.black38;
-    final neonColor = const Color(0xFFFF6B6B);
+    final hintColor = isDarkMode ? Colors.white54 : Colors.black38;
+    const neonColor = Color(0xFFFF6B6B);
 
     return TextFormField(
       controller: _passController,
       obscureText: true,
-      keyboardType: _isParentMode ? TextInputType.text : TextInputType.number,
-      inputFormatters: _isParentMode ? [] : [
+      keyboardType: _isParentOrAdminMode ? TextInputType.text : TextInputType.number,
+      inputFormatters: _isParentOrAdminMode ? [] : [
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(4),
       ],
       style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.w700, fontSize: 18),
       validator: (value) {
         if (value == null || value.trim().isEmpty) return '¡Falta este dato!';
-        if (!_isParentMode && value.length < 4) return 'El PIN necesita 4 números';
+        if (!_isParentOrAdminMode && value.length < 4) return 'El PIN necesita 4 números';
         return null;
       },
       decoration: InputDecoration(
-        prefixIcon: Icon(Icons.lock_rounded, color: neonColor, size: 28),
-        hintText: _isParentMode ? "Contraseña del Tutor" : "PIN Secreto",
+        prefixIcon: const Icon(Icons.lock_rounded, color: neonColor, size: 28),
+        hintText: _isParentOrAdminMode ? "Contraseña" : "PIN Secreto",
         hintStyle: GoogleFonts.nunito(color: hintColor, fontWeight: FontWeight.w700),
         filled: true,
         fillColor: fillColor,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: neonColor, width: 2)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: neonColor, width: 2)),
       ),
     );
   }
@@ -245,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     
     bool exito;
-    if (_isParentMode) {
+    if (_isParentOrAdminMode) {
       exito = await NeonDbService.loginPorCorreo(_identificadorController.text.trim(), _passController.text.trim());
     } else {
       exito = await NeonDbService.loginPorNombre(_identificadorController.text.trim(), _passController.text.trim());
@@ -255,20 +360,21 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (exito) {
-      if (_isParentMode) {
+      final prefs = await SharedPreferences.getInstance();
+      final userRole = prefs.getString('userRole') ?? 'student';
+
+      if (userRole == 'admin') {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AdminDashboardScreen()));
+      } else if (userRole == 'parent') {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ParentDashboardScreen()));
       } else {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Datos incorrectos ❌", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        )
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Datos incorrectos ❌", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: const Color(0xFFFF6B6B), behavior: SnackBarBehavior.floating,
+      ));
     }
   }
 }

@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 // Importaciones de tus servicios y pantallas
 import '../../services/neon_db_service.dart';
 import '../../services/email_service.dart'; // Asegúrate de haber creado este archivo
-import '../home/home_screen.dart';
+import '../home/home_screen.dart'; // Asegúrate de haber creado este archivo
 import 'verification_screen.dart'; // Asegúrate de haber creado este archivo
 
 class RegisterScreen extends StatefulWidget {
@@ -22,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   int _gradoSeleccionado = 1; 
   bool _isLoading = false;
 
+  // --- LISTA DE AVATARES DISPONIBLES (Misma que en Perfil) ---
   final List<String> _avatars = [
     'assets/avatars/avatar1.png', 
     'assets/avatars/avatar2.png',
@@ -30,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'assets/avatars/avatar5.png',
     'assets/avatars/avatar6.png',
   ];
+  // Valor por defecto inicial
   String _avatarSeleccionado = 'assets/avatars/avatar1.png';
 
   @override
@@ -79,7 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text("¡Únete a la tripulación espacial!", style: GoogleFonts.nunito(color: subtitleColor, fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 25),
 
-                // --- SELECTOR DE AVATARES ---
+                // --- SELECTOR DE AVATARES (Horizontal ListView) ---
                 Text("Elige tu Avatar", style: GoogleFonts.fredoka(color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFFD4A000), fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 15),
                 SizedBox(
@@ -127,7 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Banner de Verificación
+                      // Banner de Verificación Informativo
                       Container(
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 20),
@@ -157,6 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _buildField(_passController, "PIN de 4 números", Icons.lock_rounded, const Color(0xFFFF6B6B), true, isDarkMode),
                       const SizedBox(height: 15),
                       
+                      // Dropdown de Grado Escolar
                       DropdownButtonFormField<int>(
                         value: _gradoSeleccionado,
                         dropdownColor: cardColor,
@@ -175,12 +178,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
 
                       const SizedBox(height: 30),
+                      // Botón de Registrar
                       SizedBox(
                         width: double.infinity,
                         height: 60,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4ECDC4),
+                            backgroundColor: const Color(0xFF4ECDC4), // Color Neón Menta
                             elevation: 8,
                             shadowColor: const Color(0xFF4ECDC4).withOpacity(0.5),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
@@ -237,14 +241,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  /// LÓGICA DE REGISTRO
   void _registrar() async {
     if (!_formKey.currentState!.validate()) return;
     
-    // 1. Mostrar estado de carga y generar código
+    // 1. Mostrar estado de carga local y generar código de verificación
     setState(() => _isLoading = true);
     String codigoGenerado = EmailService.generarCodigo();
     
-    // 2. Enviar el correo
+    // 2. Enviar el correo al tutor
     bool correoEnviado = await EmailService.enviarCodigo(_emailController.text.trim(), codigoGenerado);
     
     if (!mounted) return;
@@ -269,22 +274,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
 
-    // 4. Si el usuario ingresó el código correcto y regresó "true"
+    // 4. Si el usuario ingresó el código correcto y regresó "true" desde VerificationScreen
     if (verificado == true) {
+      if (!mounted) return;
       setState(() => _isLoading = true); // Volvemos a mostrar que está cargando para guardar en BD
       
+      // Llamamos al servicio de Neon pasándole el avatar seleccionado
       dynamic resultado = await NeonDbService.registrarUsuario(
         _nombreController.text.trim(), 
         _emailController.text.trim(), 
         _passController.text.trim(), 
         _gradoSeleccionado,
-        _avatarSeleccionado 
+        _avatarSeleccionado // Pasamos la ruta elegida (ej. 'assets/avatars/avatar3.png')
       );
       
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       if (resultado == true) {
+        // Registro y Login exitosos, vamos al Home
         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
       } else if (resultado is String && resultado == 'duplicate_name') {
         _mostrarAlerta("¡Ese nombre ya existe! 🧐", "Agrega una inicial o número divertido (ej. ${_nombreController.text.trim()}123).", const Color(0xFFFFD93D), Colors.black87);
@@ -293,6 +301,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else {
         _mostrarAlerta("Error de conexión 🔌", "Revisa tu internet y vuelve a intentar.", const Color(0xFFFF6B6B), Colors.white);
       }
+    } else {
+      // El usuario canceló la verificación o el código fue incorrecto
+      // No hacemos nada, la carga ya se quitó.
     }
   }
 

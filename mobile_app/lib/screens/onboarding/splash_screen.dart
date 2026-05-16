@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:math'; // <-- Importamos math para la aleatoriedad
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart'; 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart'; 
 
@@ -26,13 +26,14 @@ class _SplashScreenState extends State<SplashScreen> {
   
   int _indiceConsejoActual = 0;
   Timer? _timerConsejos;
-  final Random _random = Random(); // <-- Generador de números aleatorios
+  final Random _random = Random();
 
   // --- ESTADOS Y CONTROLADORES ---
-  VideoPlayerController? _videoController;
-  bool _mostrarGif = false; 
-  bool _tieneInternet = true;
-  bool _verificando = true;
+  VideoPlayerController? _introVideoController; 
+  VideoPlayerController? _backgroundVideoController; 
+  bool _mostrarFaseCarga = false; 
+  bool _tieneInternet = true; 
+  bool _verificandoInternet = true; 
 
   @override
   void initState() {
@@ -42,75 +43,108 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void dispose() {
-    _videoController?.dispose();
+    _introVideoController?.dispose();
+    _backgroundVideoController?.dispose();
     _timerConsejos?.cancel();
     super.dispose();
   }
 
   // --- LÓGICA DE LA SECUENCIA ---
   Future<void> _iniciarSecuencia() async {
-    // 1. Inicializamos y reproducimos el Video
-    _videoController = VideoPlayerController.asset('assets/AppTec.mp4')
+    // Limpiamos el controlador anterior por si venimos del botón "Reintentar"
+    _introVideoController?.dispose();
+    
+    _introVideoController = VideoPlayerController.asset('assets/AppTec.mp4')
       ..initialize().then((_) {
-        setState(() {}); // Actualiza la UI cuando el video está listo
-        _videoController!.play();
+        if (mounted) {
+          setState(() {
+            _mostrarFaseCarga = false; // Nos aseguramos de volver a la vista 1
+            _verificandoInternet = true; 
+          }); 
+          _introVideoController!.play();
+        }
       });
 
-    // 2. Escuchamos cuándo termina el video
-    _videoController!.addListener(() {
-      if (_videoController!.value.position >= _videoController!.value.duration) {
-        if (!_mostrarGif) {
-          // El video terminó, pasamos a la fase del GIF
-          _iniciarFaseGif();
+    _introVideoController!.addListener(() {
+      final value = _introVideoController!.value;
+      if (value.isInitialized && value.duration > Duration.zero) {
+        if (value.position >= value.duration - const Duration(milliseconds: 100)) {
+          if (!_mostrarFaseCarga) {
+            _iniciarFaseCarga();
+          }
         }
       }
     });
   }
 
-  void _iniciarFaseGif() {
+  void _iniciarFaseCarga() {
+    // Limpiamos el fondo anterior para evitar fugas de memoria
+    _backgroundVideoController?.dispose();
+
+    _backgroundVideoController = VideoPlayerController.asset('assets/Carga.mp4')
+      ..initialize().then((_) {
+        _backgroundVideoController!.setLooping(true);
+        _backgroundVideoController!.play();
+        if (mounted) setState(() {}); 
+      });
+
     setState(() {
-      _mostrarGif = true; 
-      // Elegimos el primer consejo al azar
+      _mostrarFaseCarga = true; 
       _indiceConsejoActual = _random.nextInt(_consejos.length); 
     });
 
-    // 3. Iniciamos el rotador de consejos (Cambia cada 3.5 segundos)
-    _timerConsejos = Timer.periodic(const Duration(milliseconds: 3500), (timer) {
+    // Reiniciamos el timer de los consejos
+    _timerConsejos?.cancel();
+    _timerConsejos = Timer.periodic(const Duration(milliseconds: 4000), (timer) {
       if (mounted) {
         setState(() {
           int nuevoIndice;
-          // Buscamos un nuevo consejo aleatorio que NO sea igual al actual
           do {
             nuevoIndice = _random.nextInt(_consejos.length);
           } while (nuevoIndice == _indiceConsejoActual && _consejos.length > 1);
-          
           _indiceConsejoActual = nuevoIndice;
         });
       }
     });
 
-    // 4. Verificamos internet y procedemos al destino
-    _verificarYContinuar();
+    _verificarInternetYContinuar();
   }
 
-  Future<void> _verificarYContinuar() async {
-    final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
-    
-    if (connectivityResult.contains(ConnectivityResult.none)) {
-      setState(() {
-        _tieneInternet = false;
-        _verificando = false;
-      });
-      // Detenemos los consejos si no hay internet para que lean el error
-      _timerConsejos?.cancel(); 
-      return;
+  Future<void> _verificarInternetYContinuar() async {
+    try {
+      final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
+      
+      if (connectivityResult.contains(ConnectivityResult.none)) {
+        if (mounted) {
+          setState(() {
+            _tieneInternet = false;
+            _verificandoInternet = false;
+          });
+          _timerConsejos?.cancel(); // Detenemos los consejos para mostrar el error
+        }
+        return; // Detenemos la secuencia
+      } else {
+        if (mounted) {
+          setState(() {
+            _tieneInternet = true;
+            _verificandoInternet = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error verificando conexión: $e");
+      if (mounted) {
+        setState(() {
+          _tieneInternet = true;
+          _verificandoInternet = false;
+        });
+      }
     }
 
-    // Le damos tiempo al usuario de ver el GIF y leer un par de consejos (ej. 7 segundos)
-    await Future.delayed(const Duration(seconds: 7));
+    // Esperamos 12 segundos para que se lean bien los consejos
+    await Future.delayed(const Duration(seconds: 12));
 
-    if (mounted) {
-      // 5. Navegamos a la siguiente pantalla (Login o Juego)
+    if (mounted && _tieneInternet) {
       Navigator.pushReplacement(
         context, 
         PageRouteBuilder(
@@ -127,97 +161,97 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Fondo negro ideal para la transición del video
+      backgroundColor: Colors.black, 
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 800), // Fundido suave entre el Video y el GIF
-        child: _mostrarGif 
-            ? _construirPantallaGifYConsejos() 
-            : _construirReproductorVideo(),
+        duration: const Duration(milliseconds: 800),
+        child: _mostrarFaseCarga 
+            ? _construirPantallaCargaConVideoFondo() 
+            : _construirReproductorVideoIntro(),
       ),
     );
   }
 
-  // --- VISTA 1: EL VIDEO ---
-  Widget _construirReproductorVideo() {
-    if (_videoController != null && _videoController!.value.isInitialized) {
+  // --- VISTA 1: EL VIDEO DE INTRO ---
+  Widget _construirReproductorVideoIntro() {
+    if (_introVideoController != null && _introVideoController!.value.isInitialized) {
       return SizedBox.expand(
+        key: const ValueKey("IntroVideo"), 
         child: FittedBox(
-          fit: BoxFit.contain, // Mantiene la proporción del video
+          fit: BoxFit.contain, 
           child: SizedBox(
-            width: _videoController!.value.size.width,
-            height: _videoController!.value.size.height,
-            child: VideoPlayer(_videoController!),
+            width: _introVideoController!.value.size.width,
+            height: _introVideoController!.value.size.height,
+            child: VideoPlayer(_introVideoController!),
           ),
         ),
       );
     } else {
-      // Pantalla negra de carga rápida antes de que el video inicie
-      return const Center(child: SizedBox.shrink()); 
+      return const Center(key: ValueKey("IntroLoading"), child: SizedBox.shrink()); 
     }
   }
 
-  // --- VISTA 2: EL GIF Y LOS CONSEJOS ---
-  Widget _construirPantallaGifYConsejos() {
+  // --- VISTA 2: EL VIDEO DE FONDO Y LOS CONSEJOS / ERROR ---
+  Widget _construirPantallaCargaConVideoFondo() {
     return Stack(
-      key: const ValueKey("PantallaGif"), // Clave para que AnimatedSwitcher sepa que cambió
+      key: const ValueKey("PantallaCargaConVideo"), 
       fit: StackFit.expand,
       children: [
-        // 1. El GIF de Fondo
-        Image.asset(
-          'assets/fondo_aventura.gif', 
-          fit: BoxFit.cover,
-        ),
+        if (_backgroundVideoController != null && _backgroundVideoController!.value.isInitialized)
+          SizedBox.expand(
+            child: FittedBox(
+              fit: BoxFit.cover, 
+              child: SizedBox(
+                width: _backgroundVideoController!.value.size.width,
+                height: _backgroundVideoController!.value.size.height,
+                child: VideoPlayer(_backgroundVideoController!),
+              ),
+            ),
+          )
+        else
+          Container(color: Colors.black),
         
-        // 2. Capa oscura semitransparente para que el texto resalte
-        Container(
-          color: Colors.black.withOpacity(0.4),
-        ),
+        Container(color: Colors.black.withOpacity(0.5)),
 
-        // 3. El cuadro de Consejos / Error de Red
         Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.end, // Lo empujamos hacia abajo
+              mainAxisAlignment: MainAxisAlignment.end, 
               children: [
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6), // Efecto cristal oscuro
+                    color: Colors.black.withOpacity(0.6), 
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white.withOpacity(0.2)),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_verificando || _tieneInternet) ...[
+                      if (_tieneInternet || _verificandoInternet) ...[
                         Text(
                           "💡 Sabías que...",
                           style: GoogleFonts.fredoka(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFFFFD93D)),
                         ),
                         const SizedBox(height: 16),
-                        // AnimatedSwitcher para hacer un fundido cuando cambia el texto del consejo
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 500),
                           child: Text(
                             _consejos[_indiceConsejoActual],
-                            key: ValueKey<int>(_indiceConsejoActual), // Importante para la animación
+                            key: ValueKey<int>(_indiceConsejoActual),
                             textAlign: TextAlign.center,
                             style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // Pequeño indicador de carga
-                        const CircularProgressIndicator(
-                          color: Color(0xFF48CAE4),
-                          strokeWidth: 3,
-                        ),
-                      ] else ...[
+                        const CircularProgressIndicator(color: Color(0xFF48CAE4), strokeWidth: 3),
+                      ] 
+                      else ...[
                         const Icon(Icons.wifi_off_rounded, size: 60, color: Color(0xFFFF6B6B)),
                         const SizedBox(height: 15),
-                        Text("¡Ups! Sin internet", style: GoogleFonts.fredoka(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFFFF6B6B))),
+                        Text("¡Sin Internet!", style: GoogleFonts.fredoka(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFFFF6B6B))),
                         const SizedBox(height: 8),
-                        Text("Revisa tu conexión para seguir jugando y aprendiendo.", textAlign: TextAlign.center, style: GoogleFonts.nunito(fontSize: 16, color: Colors.white70)),
+                        Text("Revisa tu conexión para seguir jugando y aprendiendo.", textAlign: TextAlign.center, style: GoogleFonts.nunito(fontSize: 16, color: Colors.white)),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
@@ -226,9 +260,10 @@ class _SplashScreenState extends State<SplashScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           ),
                           onPressed: () {
-                            setState(() { _verificando = true; _tieneInternet = true; });
-                            // Si recupera el internet, reanudamos la fase del GIF y consejos
-                            _iniciarFaseGif(); 
+                            // REINICIO COMPLETO
+                            _timerConsejos?.cancel();
+                            _backgroundVideoController?.pause();
+                            _iniciarSecuencia(); 
                           },
                           icon: const Icon(Icons.refresh_rounded, color: Colors.black),
                           label: Text("Reintentar", style: GoogleFonts.fredoka(fontSize: 18, color: Colors.black)),
@@ -237,7 +272,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 50), // Espacio desde abajo
+                const SizedBox(height: 50), 
               ],
             ),
           ),
