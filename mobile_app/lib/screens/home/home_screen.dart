@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   int _misionesCompletadas = 0;
   String _materiaFuerte = "";
+  int _puntosTotales = 0; 
   
   bool _isLoading = true;
 
@@ -62,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           if (perfilData != null) {
             _userName = perfilData['name'] ?? 'Estudiante'; 
             _userAvatar = perfilData['avatar'] ?? 'assets/avatars/avatar1.png'; 
+            _puntosTotales = perfilData['estrellas'] ?? 0;
           }
           if (resumen != null) {
             _misionesCompletadas = resumen['total_misiones'] ?? 0;
@@ -112,6 +114,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       {'key': 'art', 'title': 'Arte', 'emoji': '🎨', 'color': const Color(0xFFFF66C4)},
       {'key': 'science', 'title': 'Ciencia', 'emoji': '🔬', 'color': const Color(0xFF5E60CE)},
     ];
+
+    // Condición de bloqueo: Si tiene 10 o más estrellas en total.
+    // (Puedes ajustar la lógica si en el futuro quieres que sean 10 diarias, etc.)
+    final bool misionesBloqueadas = _puntosTotales >= 10;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -200,7 +206,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Text("Elige tu destino espacial ✨", style: GoogleFonts.fredoka(color: titleNeonColor, fontSize: 22, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    misionesBloqueadas ? "¡Misiones completadas! 🏆" : "Elige tu destino espacial ✨", 
+                    style: GoogleFonts.fredoka(color: titleNeonColor, fontSize: 22, fontWeight: FontWeight.w600)
+                  ),
                 ),
                 Expanded(
                   child: GridView.builder(
@@ -216,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         animation: _mainAnimController,
                         builder: (context, child) {
                           final delay = index * 0.5;
-                          final floatOffset = math.sin((_mainAnimController.value * math.pi * 2) + delay) * 6.0;
+                          final floatOffset = misionesBloqueadas ? 0.0 : math.sin((_mainAnimController.value * math.pi * 2) + delay) * 6.0;
                           return Transform.translate(
                             offset: Offset(0, floatOffset),
                             child: TweenAnimationBuilder(
@@ -225,9 +234,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               curve: Curves.easeOutBack,
                               builder: (context, scaleValue, child) => Transform.scale(scale: scaleValue, child: child),
                               child: _BouncingActivityCard(
-                                subjectKey: mision['key'] as String, title: mision['title'] as String,
-                                emoji: mision['emoji'] as String, accentColor: mision['color'] as Color,
-                                cardColor: cardColor, textColor: primaryTextColor, isDarkMode: _isDarkMode,
+                                subjectKey: mision['key'] as String, 
+                                title: mision['title'] as String,
+                                emoji: mision['emoji'] as String, 
+                                accentColor: mision['color'] as Color,
+                                cardColor: cardColor, 
+                                textColor: primaryTextColor, 
+                                isDarkMode: _isDarkMode,
+                                isLocked: misionesBloqueadas, // Se pasa el estado de bloqueo a la tarjeta
                               ),
                             ),
                           );
@@ -340,21 +354,61 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 }
 
 class _BouncingActivityCard extends StatefulWidget {
-  final String subjectKey; final String title; final String emoji; final Color accentColor; final Color cardColor; final Color textColor; final bool isDarkMode;
-  const _BouncingActivityCard({required this.subjectKey, required this.title, required this.emoji, required this.accentColor, required this.cardColor, required this.textColor, required this.isDarkMode});
+  final String subjectKey; 
+  final String title; 
+  final String emoji; 
+  final Color accentColor; 
+  final Color cardColor; 
+  final Color textColor; 
+  final bool isDarkMode;
+  final bool isLocked; // <-- Nueva variable para controlar el bloqueo
+
+  const _BouncingActivityCard({
+    required this.subjectKey, 
+    required this.title, 
+    required this.emoji, 
+    required this.accentColor, 
+    required this.cardColor, 
+    required this.textColor, 
+    required this.isDarkMode,
+    required this.isLocked,
+  });
+
   @override
   State<_BouncingActivityCard> createState() => _BouncingActivityCardState();
 }
 
 class _BouncingActivityCardState extends State<_BouncingActivityCard> with SingleTickerProviderStateMixin {
   double _scale = 1.0;
-  void _onTapDown(TapDownDetails details) => setState(() => _scale = 0.90);
+
+  void _onTapDown(TapDownDetails details) {
+    if (!widget.isLocked) setState(() => _scale = 0.90);
+  }
+
   void _onTapUp(TapUpDetails details) {
     setState(() => _scale = 1.0);
+    
+    // Si está bloqueado, mostramos una alerta y cancelamos la navegación
+    if (widget.isLocked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("¡Límite alcanzado! Has recolectado 10 estrellas. 🌟", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
+          backgroundColor: const Color(0xFFFF6B6B),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          duration: const Duration(seconds: 2),
+        )
+      );
+      return;
+    }
+
     Future.delayed(const Duration(milliseconds: 150), () {
-      if (mounted) { Navigator.push(context, MaterialPageRoute(builder: (context) => TestScreen(subject: widget.subjectKey))); }
+      if (mounted) { 
+        Navigator.push(context, MaterialPageRoute(builder: (context) => TestScreen(subject: widget.subjectKey))); 
+      }
     });
   }
+
   void _onTapCancel() => setState(() => _scale = 1.0);
 
   @override
@@ -363,27 +417,48 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
       onTapDown: _onTapDown, onTapUp: _onTapUp, onTapCancel: _onTapCancel,
       child: AnimatedScale(
         scale: _scale, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [widget.cardColor.withOpacity(widget.isDarkMode ? 0.8 : 1.0), widget.accentColor.withOpacity(widget.isDarkMode ? 0.2 : 0.1)]),
-            borderRadius: BorderRadius.circular(40), border: Border.all(color: widget.accentColor.withOpacity(0.5), width: 2),
-            boxShadow: [BoxShadow(color: widget.accentColor.withOpacity(widget.isDarkMode ? 0.3 : 0.15), blurRadius: 20, offset: const Offset(0, 5))],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Opacity(
+              // Si está bloqueado, hacemos la tarjeta semitransparente
+              opacity: widget.isLocked ? 0.4 : 1.0, 
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [widget.cardColor.withOpacity(widget.isDarkMode ? 0.8 : 1.0), widget.accentColor.withOpacity(widget.isDarkMode ? 0.2 : 0.1)]),
+                  borderRadius: BorderRadius.circular(40), border: Border.all(color: widget.accentColor.withOpacity(0.5), width: 2),
+                  boxShadow: [BoxShadow(color: widget.accentColor.withOpacity(widget.isDarkMode ? 0.3 : 0.15), blurRadius: 20, offset: const Offset(0, 5))],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: widget.accentColor.withOpacity(0.15), shape: BoxShape.circle, boxShadow: [BoxShadow(color: widget.accentColor.withOpacity(0.3), blurRadius: 15)]),
+                      child: Text(widget.emoji, style: const TextStyle(fontSize: 32)),
+                    ),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: FittedBox(fit: BoxFit.scaleDown, child: Text(widget.title, textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: widget.textColor, fontWeight: FontWeight.bold, fontSize: 17))),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // Icono de candado superpuesto si está bloqueado
+            if (widget.isLocked)
               Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: widget.accentColor.withOpacity(0.15), shape: BoxShape.circle, boxShadow: [BoxShadow(color: widget.accentColor.withOpacity(0.3), blurRadius: 15)]),
-                child: Text(widget.emoji, style: const TextStyle(fontSize: 32)),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: widget.isDarkMode ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)]
+                ),
+                child: Icon(Icons.lock_rounded, color: widget.isDarkMode ? Colors.white : Colors.grey.shade800, size: 35),
               ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: FittedBox(fit: BoxFit.scaleDown, child: Text(widget.title, textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: widget.textColor, fontWeight: FontWeight.bold, fontSize: 17))),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );
