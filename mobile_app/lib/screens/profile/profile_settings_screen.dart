@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../auth/login_screen.dart';
 import 'notifications_screen.dart';
 import 'help_screen.dart';
 import '../../services/neon_db/user_db_service.dart'; 
+import '../../services/neon_db/auth_db_service.dart'; 
 import 'change_name_screen.dart'; 
 
 class ProfileSettingsScreen extends StatefulWidget {
@@ -18,6 +20,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   int _estrellas = 0;
   String _avatarPath = ''; 
   String _role = "";
+  int _grade = 1; // Guardamos el grado del usuario
   
   bool _isLoading = true; 
   bool _isUpdatingAvatar = false; 
@@ -46,6 +49,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           _estrellas = perfilData['estrellas'] ?? 0;
           _avatarPath = perfilData['avatar'] ?? 'assets/avatars/avatar1.png';
           _role = perfilData['role'] ?? 'student';
+          _grade = perfilData['grade'] ?? 1; // Obtenemos el grado para usarlo como Nivel
           _isLoading = false;
         });
       } else if (mounted) {
@@ -145,14 +149,53 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
-  int _calcularNivel(int puntos) => (puntos / 300).floor() + 1;
-  int _puntosSiguienteNivel(int nivelActual) => nivelActual * 300;
+  // Cuadro de diálogo de seguridad antes de eliminar
+  void _mostrarDialogoEliminarCuenta() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF222232) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("¿Eliminar cuenta?", style: GoogleFonts.fredoka(color: const Color(0xFFFF6B6B), fontWeight: FontWeight.bold)),
+          content: Text("Esta acción borrará todo tu progreso de forma permanente y no se puede deshacer. ¿Estás completamente seguro?", style: GoogleFonts.nunito()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancelar", style: GoogleFonts.nunito(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B6B), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+              onPressed: () async {
+                Navigator.pop(context); // Cierra el diálogo
+                setState(() => _isLoading = true);
+
+                final prefs = await SharedPreferences.getInstance();
+                final userId = prefs.getInt('id_usuario');
+
+                if (userId != null) {
+                  // Conectado al nuevo servicio
+                  await UserDbService.eliminarCuenta(userId);
+                }
+                
+                await AuthDbService.cerrarSesion();
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginScreen()), (route) => false);
+                }
+              },
+              child: Text("Sí, Eliminar", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          ],
+        );
+      }
+    );
+  }
   
   String _obtenerRango(int nivel) {
     if (_role == 'admin') return "Administrador Galáctico";
-    if (nivel < 5) return "Recluta Espacial";
-    if (nivel < 10) return "Explorador Estelar";
-    if (nivel < 20) return "Comandante Galáctico";
+    if (nivel < 3) return "Recluta Espacial";
+    if (nivel < 5) return "Explorador Estelar";
+    if (nivel < 6) return "Comandante Galáctico";
     return "Maestro del Universo";
   }
 
@@ -166,9 +209,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       return Scaffold(backgroundColor: bgColor, body: const Center(child: CircularProgressIndicator(color: Color(0xFF9D4EDD))));
     }
 
-    int nivel = _calcularNivel(_estrellas);
-    int metaXP = _puntosSiguienteNivel(nivel);
-    double progresoXP = _estrellas / metaXP;
+    // --- LÓGICA DE NIVEL Y XP AJUSTADA A TUS PETICIONES ---
+    int nivel = _grade; // El nivel mostrado ahora es exactamente el Grado
+    int metaXP = 80;    // Máximo de XP configurado a 80
+    // Evitamos que la barra visual sobrepase el 100% si el usuario junta más de 80 estrellas
+    double progresoXP = (_estrellas / metaXP).clamp(0.0, 1.0);
     String rango = _obtenerRango(nivel);
 
     return Scaffold(
@@ -176,9 +221,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent, elevation: 0,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
-        actions: [
-          IconButton(icon: Icon(Icons.settings, color: isDark ? Colors.white54 : Colors.black54), onPressed: () {})
-        ],
+        // Se quitó el actions: [] con el botón de ajustes
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -214,17 +257,21 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 15),
+
+            // Muestra el nombre en grande
+            Text(_name, style: GoogleFonts.fredoka(fontSize: 34, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+            const SizedBox(height: 5),
             
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.star_rounded, color: Color(0xFFFFD93D), size: 28),
                 const SizedBox(width: 8),
-                Text(rango, style: GoogleFonts.fredoka(fontSize: 26, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                Text(rango, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF48CAE4))),
               ],
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 35),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -242,7 +289,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 800), curve: Curves.easeOutCubic,
-                  height: 12, width: MediaQuery.of(context).size.width * 0.85 * progresoXP.clamp(0.0, 1.0),
+                  height: 12, width: MediaQuery.of(context).size.width * 0.85 * progresoXP,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFD93D), borderRadius: BorderRadius.circular(10),
                     boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.5), blurRadius: 10)]
@@ -264,8 +311,35 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             _buildSettingItem(Icons.help_outline_rounded, "Ayuda", "Soporte técnico de App Tec", isDark, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpScreen()));
             }),
-            const SizedBox(height: 40),
+
+            const SizedBox(height: 15),
+
+            // --- BOTÓN ROJO DE ELIMINAR CUENTA ---
+            GestureDetector(
+              onTap: _mostrarDialogoEliminarCuenta,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 15),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2A1515) : const Color(0xFFFFF0F0),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.5))
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  leading: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: const Color(0xFFFF6B6B).withOpacity(0.15), shape: BoxShape.circle),
+                    child: const Icon(Icons.delete_forever_rounded, color: Color(0xFFFF6B6B), size: 24),
+                  ),
+                  title: Text("Eliminar cuenta", style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 18, color: const Color(0xFFFF6B6B))),
+                  subtitle: Text("Borrar todos los datos", style: GoogleFonts.nunito(fontSize: 14, color: isDark ? Colors.white54 : Colors.black54)),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
             Text("D.A.E.A Studio - v1.0.2", style: GoogleFonts.nunito(color: Colors.grey, fontSize: 12)),
+            const SizedBox(height: 30),
           ],
         ),
       ),

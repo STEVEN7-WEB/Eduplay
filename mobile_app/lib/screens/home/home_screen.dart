@@ -25,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   int _misionesCompletadas = 0;
   String _materiaFuerte = "";
-  int _puntosTotales = 0; 
   
   bool _isLoading = true;
 
@@ -63,7 +62,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           if (perfilData != null) {
             _userName = perfilData['name'] ?? 'Estudiante'; 
             _userAvatar = perfilData['avatar'] ?? 'assets/avatars/avatar1.png'; 
-            _puntosTotales = perfilData['estrellas'] ?? 0;
           }
           if (resumen != null) {
             _misionesCompletadas = resumen['total_misiones'] ?? 0;
@@ -91,14 +89,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     await prefs.setBool('isDarkMode', _isDarkMode);
   }
 
-  int _calcularNivel(int puntos) {
-    return (puntos / 300).floor() + 1;
-  }
-
-  int _puntosSiguienteNivel(int nivelActual) {
-    return nivelActual * 300;
-  }
-
   @override
   Widget build(BuildContext context) {
     final bgColor = _isDarkMode ? const Color(0xFF0D0D1A) : const Color(0xFFF4F6F9);
@@ -111,10 +101,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (_isLoading) {
       return Scaffold(backgroundColor: bgColor, body: Center(child: CircularProgressIndicator(color: titleNeonColor)));
     }
-
-    int nivel = _calcularNivel(_puntosTotales);
-    int metaXP = _puntosSiguienteNivel(nivel);
-    double progresoXP = _puntosTotales / metaXP; 
 
     final misiones = [
       {'key': 'math', 'title': 'Matemáticas', 'emoji': '🔢', 'color': const Color(0xFFFF6B6B)},
@@ -166,85 +152,48 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   builder: (context, value, child) => Opacity(opacity: value, child: child),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Row(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Text("¡Misión iniciada,", style: GoogleFonts.nunito(color: secondaryTextColor, fontSize: 16, fontWeight: FontWeight.w800)),
+                            Row(
                               children: [
-                                Text("¡Misión iniciada,", style: GoogleFonts.nunito(color: secondaryTextColor, fontSize: 16, fontWeight: FontWeight.w800)),
-                                Row(
-                                  children: [
-                                    Text("$_userName! ", style: GoogleFonts.fredoka(color: primaryTextColor, fontSize: 26, fontWeight: FontWeight.bold)),
-                                    const Text("🚀", style: TextStyle(fontSize: 22)),
-                                  ],
-                                ),
+                                Text("$_userName! ", style: GoogleFonts.fredoka(color: primaryTextColor, fontSize: 26, fontWeight: FontWeight.bold)),
+                                const Text("🚀", style: TextStyle(fontSize: 22)),
                               ],
                             ),
-                            const Spacer(),
-                            _buildTopIcon(
-                              icon: _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                              color: _isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE),
-                              cardColor: cardColor,
-                              onTap: _toggleTheme,
-                            ),
-                            const SizedBox(width: 12),
-                            AnimatedBuilder(
-                              animation: _mainAnimController,
-                              builder: (context, child) {
-                                return InkWell(
-                                  onTap: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileSettingsScreen())).then((_) => _cargarDatosDesdeBD()); 
-                                  },
-                                  borderRadius: BorderRadius.circular(30),
-                                  child: Container(
-                                    width: 55, height: 55,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFF9D4EDD), width: 2),
-                                      boxShadow: [BoxShadow(color: const Color(0xFF9D4EDD).withOpacity((_isDarkMode ? 0.6 : 0.3) * _mainAnimController.value), blurRadius: 15, spreadRadius: 2)]
-                                    ),
-                                    child: CircleAvatar(backgroundColor: cardColor, backgroundImage: AssetImage(_userAvatar)),
-                                  ),
-                                );
-                              }
-                            ),
                           ],
                         ),
-                        const SizedBox(height: 25),
-                        
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("XP ${_puntosTotales.toString()}", style: GoogleFonts.nunito(color: primaryTextColor, fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text("Nivel $nivel", style: GoogleFonts.nunito(color: secondaryTextColor, fontWeight: FontWeight.w700, fontSize: 14)),
-                          ],
+                        const Spacer(),
+                        _buildTopIcon(
+                          icon: _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                          color: _isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE),
+                          cardColor: cardColor,
+                          onTap: _toggleTheme,
                         ),
-                        const SizedBox(height: 8),
-                        Stack(
-                          children: [
-                            Container(
-                              height: 10,
-                              width: double.infinity,
-                              decoration: BoxDecoration(color: _isDarkMode ? const Color(0xFF151522) : Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
-                            ),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 800),
-                              curve: Curves.easeOutCubic,
-                              height: 10,
-                              width: MediaQuery.of(context).size.width * 0.9 * progresoXP.clamp(0.0, 1.0),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFD93D),
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: [BoxShadow(color: const Color(0xFFFFD93D).withOpacity(0.5), blurRadius: 10)]
+                        const SizedBox(width: 12),
+                        AnimatedBuilder(
+                          animation: _mainAnimController,
+                          builder: (context, child) {
+                            return InkWell(
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileSettingsScreen())).then((_) => _cargarDatosDesdeBD()); 
+                              },
+                              borderRadius: BorderRadius.circular(30),
+                              child: Container(
+                                width: 55, height: 55,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFF9D4EDD), width: 2),
+                                  boxShadow: [BoxShadow(color: const Color(0xFF9D4EDD).withOpacity((_isDarkMode ? 0.6 : 0.3) * _mainAnimController.value), blurRadius: 15, spreadRadius: 2)]
+                                ),
+                                child: CircleAvatar(backgroundColor: cardColor, backgroundImage: AssetImage(_userAvatar)),
                               ),
-                            ),
-                          ],
+                            );
+                          }
                         ),
-                        const SizedBox(height: 5),
-                        Text("Siguiente nivel: $metaXP XP", style: GoogleFonts.nunito(color: secondaryTextColor, fontSize: 12)),
                       ],
                     ),
                   ),
