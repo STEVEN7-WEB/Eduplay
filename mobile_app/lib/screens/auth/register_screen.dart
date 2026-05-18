@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // Importaciones de tus servicios y pantallas
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/auth_db_service.dart';
 import '../../services/email_service.dart'; // Asegúrate de haber creado este archivo
 import '../home/home_screen.dart'; // Asegúrate de haber creado este archivo
 import 'verification_screen.dart'; // Asegúrate de haber creado este archivo
@@ -280,7 +280,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _isLoading = true); // Volvemos a mostrar que está cargando para guardar en BD
       
       // Llamamos al servicio de Neon pasándole el avatar seleccionado
-      dynamic resultado = await NeonDbService.registrarUsuario(
+      dynamic resultado = await AuthDbService.registrarUsuario(
         _nombreController.text.trim(), 
         _emailController.text.trim(), 
         _passController.text.trim(), 

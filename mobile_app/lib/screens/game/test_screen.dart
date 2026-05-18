@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/pregunta_model.dart';
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/game_db_service.dart';
 import '../profile/achievements_screen.dart'; 
 
 class TestScreen extends StatefulWidget {
@@ -60,7 +60,7 @@ class _TestScreenState extends State<TestScreen> {
     final int gradoActual = prefs.getInt('grado_usuario') ?? 1; 
 
     // Obtenemos todas las preguntas de la materia y grado
-    List<dynamic> rawPreguntas = await NeonDbService.obtenerPreguntasPorMateria(widget.subject, gradoActual);
+    List<dynamic> rawPreguntas = await GameDbService.obtenerPreguntasPorMateria(widget.subject, gradoActual);
     
     // --- NUEVO: Mezclamos y tomamos solo 10 al azar ---
     rawPreguntas.shuffle();
@@ -141,14 +141,14 @@ class _TestScreenState extends State<TestScreen> {
 
     if (userId != null) {
       // Consultamos el puntaje máximo anterior (Asegúrate de tener esta función en tu BD)
-      int puntajeAnterior = await NeonDbService.obtenerMejorPuntajeMateria(userId, widget.subject);
+      int puntajeAnterior = await GameDbService.obtenerMejorPuntajeMateria(userId, widget.subject);
 
       if (_score > puntajeAnterior) {
         _mensajeFinalTitulo = "¡Nuevo Récord! 🌟";
         _mensajeFinalSubtitulo = "¡Bravo! Estudiar sí está dando frutos, sigue así.";
         
         // Guardamos el nuevo récord en la BD
-        await NeonDbService.guardarProgresoExamen(
+        await GameDbService.guardarProgresoExamen(
           userId: userId,
           materia: widget.subject,
           estrellasGanadas: _score,

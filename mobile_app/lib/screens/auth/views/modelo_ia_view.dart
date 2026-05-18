@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import '../../../services/neon_db_service.dart';
+import '../../../services/neon_db/game_db_service.dart';
 
 class ModeloIAView extends StatefulWidget {
   final bool isDarkMode;
@@ -89,7 +89,7 @@ class _ModeloIAViewState extends State<ModeloIAView> {
     final uId = int.tryParse(_idController.text);
     if (uId == null || _rangoObtenido == null) return;
 
-    bool exito = await NeonDbService.guardarResultadoKNN(
+    bool exito = await GameDbService.guardarResultadoKNN(
       userId: uId, rango: _rangoObtenido!, etiqueta: _resultadoIA,
     );
 

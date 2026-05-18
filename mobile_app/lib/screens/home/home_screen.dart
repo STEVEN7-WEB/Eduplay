@@ -7,7 +7,9 @@ import '../../main.dart';
 import '../game/test_screen.dart';
 import '../auth/login_screen.dart';
 import '../profile/profile_settings_screen.dart';
-import '../../services/neon_db_service.dart'; 
+
+// --- NUEVO IMPORT ---
+import '../../services/neon_db/user_db_service.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -61,11 +63,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (userIdInt != null) {
       _userId = userIdInt.toString();
       
-      // 1. Extraemos el Perfil Principal (name, avatar)
-      final perfilData = await NeonDbService.obtenerPerfilUsuario(userIdInt);
+      // 1. Extraemos el Perfil Principal (name, avatar) - AHORA USA UserDbService
+      final perfilData = await UserDbService.obtenerPerfilUsuario(userIdInt);
       
-      // 2. Extraemos el resumen (misiones, materia top)
-      final resumen = await NeonDbService.obtenerResumenActividad(userIdInt);
+      // 2. Extraemos el resumen (misiones, materia top) - AHORA USA UserDbService
+      final resumen = await UserDbService.obtenerResumenActividad(userIdInt);
 
       if (mounted) {
         setState(() {

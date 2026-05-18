@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/auth_db_service.dart';
 import '../../services/email_service.dart';
 
 class RecoveryScreen extends StatefulWidget {
@@ -45,7 +45,7 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
         return;
       }
       setState(() => _isProcessing = true);
-      String? correoHallado = await NeonDbService.obtenerCorreoDeUsuario(_usuarioCtrl.text.trim());
+      String? correoHallado = await AuthDbService.obtenerCorreoDeUsuario(_usuarioCtrl.text.trim());
       
       if (correoHallado != null) {
         _codigoGenerado = EmailService.generarCodigo();
@@ -76,7 +76,7 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
         return;
       }
       setState(() => _isProcessing = true);
-      bool guardado = await NeonDbService.actualizarPassword(_usuarioCtrl.text.trim(), _nuevaPassCtrl.text.trim());
+      bool guardado = await AuthDbService.actualizarPassword(_usuarioCtrl.text.trim(), _nuevaPassCtrl.text.trim());
       setState(() => _isProcessing = false);
       
       if (guardado) {

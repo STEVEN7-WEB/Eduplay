@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'notifications_screen.dart';
 import 'help_screen.dart';
 
-import '../../services/neon_db_service.dart'; 
+import '../../services/neon_db/user_db_service.dart'; 
 import 'change_name_screen.dart'; 
 
 class ProfileSettingsScreen extends StatefulWidget {
@@ -46,7 +46,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final int? userId = prefs.getInt('id_usuario');
 
     if (userId != null) {
-      final perfilData = await NeonDbService.obtenerPerfilUsuario(userId);
+      final perfilData = await UserDbService.obtenerPerfilUsuario(userId);
 
       if (mounted && perfilData != null) {
         setState(() {
@@ -89,7 +89,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final int? userId = prefs.getInt('id_usuario');
 
     if (userId != null) {
-      bool exito = await NeonDbService.actualizarAvatarUsuario(userId, nuevoPathElegido);
+      bool exito = await UserDbService.actualizarAvatarUsuario(userId, nuevoPathElegido);
 
       if (!mounted) return;
 

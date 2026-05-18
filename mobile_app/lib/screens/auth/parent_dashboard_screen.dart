@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart'; 
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/user_db_service.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -32,7 +32,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
     if (email.isNotEmpty) {
       // Usamos el correo para traer SOLO a los hijos de este papá/mamá
-      final estudiantesDb = await NeonDbService.obtenerEstudiantesDelPadre(email);
+      final estudiantesDb = await UserDbService.obtenerEstudiantesDelPadre(email);
       
       if (mounted) {
         setState(() {
@@ -74,7 +74,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             
             // Extrae estadísticas específicas de este niño desde DB
             Future<Map<String, dynamic>?> fetchStats() async {
-              return await NeonDbService.obtenerResumenActividad(studentId);
+              return await UserDbService.obtenerResumenActividad(studentId);
             }
 
             return FutureBuilder<Map<String, dynamic>?>(

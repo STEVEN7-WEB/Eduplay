@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/auth_db_service.dart';
 import '../../main.dart'; 
 import '../home/home_screen.dart';
 import 'register_screen.dart';
@@ -351,9 +351,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     
     bool exito;
     if (_isParentOrAdminMode) {
-      exito = await NeonDbService.loginPorCorreo(_identificadorController.text.trim(), _passController.text.trim());
+      exito = await AuthDbService.loginPorCorreo(_identificadorController.text.trim(), _passController.text.trim());
     } else {
-      exito = await NeonDbService.loginPorNombre(_identificadorController.text.trim(), _passController.text.trim());
+      exito = await AuthDbService.loginPorNombre(_identificadorController.text.trim(), _passController.text.trim());
     }
     
     if (!mounted) return;

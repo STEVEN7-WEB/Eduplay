@@ -11,7 +11,6 @@ class NotificationService {
       android: androidInitSettings,
     );
 
-    // LA SOLUCIÓN FINAL: El parámetro ahora se llama simplemente 'settings'
     await _notificationsPlugin.initialize(
       settings: initSettings,
     );
@@ -41,12 +40,40 @@ class NotificationService {
 
     const NotificationDetails detalles = NotificationDetails(android: androidDetails);
     
-    // Parámetros nombrados correctos para la versión 20.0.0+
     await _notificationsPlugin.show(
       id: id,
       title: titulo,
       body: cuerpo,
       notificationDetails: detalles,
     );
+  }
+
+  // --- NUEVO: Método para programar notificaciones repetitivas ---
+  static Future<void> programarNotificacionPeriodica() async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'eduplay_canal_periodico', 
+      'Recordatorios de Estudio', 
+      channelDescription: 'Recordatorios periódicos para entrar a la app',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/launcher_icon',
+      color: Color(0xFF48CAE4),
+    );
+
+    const NotificationDetails detalles = NotificationDetails(android: androidDetails);
+
+    await _notificationsPlugin.periodicallyShow(
+      1, // Un ID diferente al de la notificación instantánea
+      "¡Hora de aprender! 🚀",
+      "Entra a EduPlay 2.0 y descubre nuevas misiones divertidas.",
+      RepeatInterval.hourly, // Puedes cambiarlo a: .daily (diario), .weekly (semanal), etc.
+      detalles,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  // --- NUEVO: Método para cancelar las notificaciones ---
+  static Future<void> cancelarTodasLasNotificaciones() async {
+    await _notificationsPlugin.cancelAll();
   }
 }

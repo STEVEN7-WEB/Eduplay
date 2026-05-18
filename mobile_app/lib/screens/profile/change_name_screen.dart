@@ -46,8 +46,8 @@ class _ChangeNameScreenState extends State<ChangeNameScreen> {
     final int? userId = prefs.getInt('id_usuario');
 
     if (userId != null) {
-      // Llamamos a la función de NeonDbService para actualizar en la BD
-      bool exito = await NeonDbService.actualizarNombreUsuario(userId, nuevoNombre);
+      // Llamamos a la función de UserDbService para actualizar en la BD
+      bool exito = await UserDbService.actualizarNombreUsuario(userId, nuevoNombre);
 
       setState(() => _isLoading = false);
 

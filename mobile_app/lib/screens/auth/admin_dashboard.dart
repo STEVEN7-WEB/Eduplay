@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/admin_db_service.dart';
 
 // Importa las nuevas vistas
 import 'views/usuarios_view.dart';
@@ -19,7 +19,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _currentIndex = 0;
 
   void _cerrarSesion() async {
-    await NeonDbService.cerrarSesion();
+    await AdminDbService.cerrarSesion();
     if (mounted) {
       Navigator.pushAndRemoveUntil(
           context,

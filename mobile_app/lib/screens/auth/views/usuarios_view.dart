@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../services/neon_db_service.dart';
+import '../../../services/neon_db/admin_db_service.dart';
 
 class UsuariosView extends StatefulWidget {
   final bool isDarkMode;
@@ -22,7 +22,7 @@ class _UsuariosViewState extends State<UsuariosView> {
 
   Future<void> _cargarUsuarios() async {
     setState(() => _isLoading = true);
-    final data = await NeonDbService.obtenerTodosLosUsuarios();
+    final data = await AdminDbService.obtenerTodosLosUsuarios();
     setState(() {
       _usuarios = data;
       _isLoading = false;
@@ -49,7 +49,7 @@ class _UsuariosViewState extends State<UsuariosView> {
     );
 
     if (confirmar == true) {
-      bool exito = await NeonDbService.actualizarRolUsuario(id, nuevoRol);
+      bool exito = await AdminDbService.actualizarRolUsuario(id, nuevoRol);
       if (exito) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("✅ Rol actualizado a $nuevoRol"), backgroundColor: Colors.green));
         _cargarUsuarios();
@@ -111,7 +111,7 @@ class _UsuariosViewState extends State<UsuariosView> {
                     children: [
                       IconButton(icon: const Icon(Icons.manage_accounts_rounded, color: Colors.orangeAccent), onPressed: () => _cambiarRol(u['id'], u['role'])),
                       IconButton(icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent), onPressed: () async {
-                        await NeonDbService.eliminarUsuario(u['id']);
+                        await AdminDbService.eliminarUsuario(u['id']);
                         _cargarUsuarios();
                       }),
                     ],

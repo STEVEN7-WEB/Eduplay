@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../services/neon_db_service.dart';
+import '../../../services/neon_db/admin_db_service.dart';
 
 class PreguntasView extends StatefulWidget {
   final bool isDarkMode;
@@ -27,7 +27,7 @@ class _PreguntasViewState extends State<PreguntasView> {
 
   Future<void> _cargarPreguntas() async {
     setState(() => _isLoading = true);
-    final data = await NeonDbService.obtenerTodasLasPreguntas();
+    final data = await AdminDbService.obtenerTodasLasPreguntas();
     setState(() {
       _preguntas = data;
       _isLoading = false;
@@ -110,9 +110,9 @@ class _PreguntasViewState extends State<PreguntasView> {
             onPressed: () async {
               // Ahora guardamos usando la variable gradoSeleccionado de los botones
               if (esEdit) {
-                await NeonDbService.actualizarPregunta(item['id'], mat, gradoSeleccionado, tText.text, [tO1.text, tO2.text, tO3.text, tO4.text], resp);
+                await AdminDbService.actualizarPregunta(item['id'], mat, gradoSeleccionado, tText.text, [tO1.text, tO2.text, tO3.text, tO4.text], resp);
               } else {
-                await NeonDbService.crearPregunta(mat, gradoSeleccionado, tText.text, [tO1.text, tO2.text, tO3.text, tO4.text], resp);
+                await AdminDbService.crearPregunta(mat, gradoSeleccionado, tText.text, [tO1.text, tO2.text, tO3.text, tO4.text], resp);
               }
               Navigator.pop(ctx); 
               _cargarPreguntas();
@@ -180,7 +180,7 @@ class _PreguntasViewState extends State<PreguntasView> {
                   subtitle: Text("${p['materia'].toUpperCase()} | Grado: ${p['grado']}", style: const TextStyle(color: Colors.grey)),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     IconButton(icon: const Icon(Icons.edit_rounded, color: Colors.blueAccent), onPressed: () => _dialogo(item: p)),
-                    IconButton(icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent), onPressed: () async { await NeonDbService.eliminarPregunta(p['id']); _cargarPreguntas(); }),
+                    IconButton(icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent), onPressed: () async { await AdminDbService.eliminarPregunta(p['id']); _cargarPreguntas(); }),
                   ]),
                 )
               );

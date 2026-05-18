@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/game_db_service.dart';
 
 class AchievementsScreen extends StatelessWidget {
   final int userId;
@@ -32,7 +32,7 @@ class AchievementsScreen extends StatelessWidget {
             ),
           ),
           FutureBuilder<List<Map<String, dynamic>>>(
-            future: NeonDbService.obtenerLogrosUsuario(userId),
+            future: GameDbService.obtenerLogrosUsuario(userId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));

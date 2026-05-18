@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <-- IMPORTANTE AGREGAR ESTO
 import '../../services/notification_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key}); // <-- Aquí sí lleva const
+  const NotificationsScreen({super.key});
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -12,6 +13,27 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _pushEnabled = false;
   bool _emailEnabled = false;
+
+  // --- NUEVO: Cargar configuración al iniciar la pantalla ---
+  @override
+  void initState() {
+    super.initState();
+    _cargarPreferencias();
+  }
+
+  Future<void> _cargarPreferencias() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _pushEnabled = prefs.getBool('push_enabled') ?? false;
+      _emailEnabled = prefs.getBool('email_enabled') ?? false;
+    });
+  }
+
+  Future<void> _guardarPreferencia(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+  // -----------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -40,21 +62,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             Text("Ajustes de Alertas", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 16, color: accentColor)),
             const SizedBox(height: 15),
+            
+            // --- ACTUALIZADO: Switch de Notificaciones Push ---
             _buildSwitchTile("Notificaciones Push", "Recibe alertas de nuevas misiones en tu dispositivo", _pushEnabled, (val) async {
               setState(() => _pushEnabled = val);
+              await _guardarPreferencia('push_enabled', val); // Se guarda en memoria
+
               if (val) {
                 await NotificationService.pedirPermisos();
                 await NotificationService.mostrarNotificacionInstantanea(
                   id: 0,
                   titulo: "¡Notificaciones Activadas! 🚀",
-                  cuerpo: "D.A.E. Estudio te avisará de nuevas misiones.",
+                  cuerpo: "EduPlay 2.0 te avisará de nuevas misiones.",
                 );
+                // Activar notificaciones periódicas
+                await NotificationService.programarNotificacionPeriodica();
+              } else {
+                // Cancelar notificaciones si apaga el switch
+                await NotificationService.cancelarTodasLasNotificaciones();
               }
             }, cardColor, accentColor, isDark),
+            
             const SizedBox(height: 10),
-            _buildSwitchTile("Correos Electrónicos", "Resumen semanal de tu progreso", _emailEnabled, (val) {
+            
+            // --- ACTUALIZADO: Switch de Correos ---
+            _buildSwitchTile("Correos Electrónicos", "Resumen semanal de tu progreso", _emailEnabled, (val) async {
               setState(() => _emailEnabled = val);
+              await _guardarPreferencia('email_enabled', val); // Se guarda en memoria
             }, cardColor, accentColor, isDark),
+            
             const SizedBox(height: 35),
             Text("Historial Reciente", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 16, color: accentColor)),
             const SizedBox(height: 15),
