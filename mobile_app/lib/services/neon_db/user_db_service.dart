@@ -150,13 +150,42 @@ class UserDbService {
     }
   }
 
-  // --- NUEVA FUNCIÓN: ELIMINAR CUENTA (CRUD USUARIO) ---
+  // --- NUEVA FUNCIÓN: REINICIAR VIAJE Y DAR LOGRO ---
+  static Future<bool> reiniciarViaje(int userId) async {
+    try {
+      final connection = await DbCore.conectar();
+      
+      // 1. Quitamos las estrellas (las volvemos 0)
+      await connection.execute(
+        Sql.named('UPDATE users SET estrellas = 0 WHERE id = @id'),
+        parameters: {'id': userId},
+      );
+
+      // Opcional: Si quieres reiniciar también los puntajes de las materias
+      await connection.execute(
+        Sql.named('UPDATE scores SET points = 0 WHERE user_id = @id'),
+        parameters: {'id': userId},
+      );
+
+      // 2. Damos el logro especial
+      // IMPORTANTE: Cambia el '99' por el ID real del logro que tengas en tu base de datos
+      await connection.execute(
+        Sql.named('INSERT INTO user_logros (user_id, logro_id) VALUES (@userId, 99) ON CONFLICT DO NOTHING'),
+        parameters: {'userId': userId},
+      );
+      
+      await connection.close();
+      return true;
+    } catch (e) {
+      print('Error al reiniciar viaje: $e');
+      return false;
+    }
+  }
+
   static Future<bool> eliminarCuenta(int userId) async {
     try {
       final connection = await DbCore.conectar();
       
-      // Borramos al usuario usando su ID. (Las tablas relacionadas como scores o logs 
-      // deberían borrarse solas si tienes configurado CASCADE en NeonDB).
       await connection.execute(
         Sql.named('DELETE FROM users WHERE id = @id'),
         parameters: {'id': userId},

@@ -115,9 +115,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       {'key': 'science', 'title': 'Ciencia', 'emoji': '🔬', 'color': const Color(0xFF5E60CE)},
     ];
 
-    // Condición de bloqueo: Si tiene 10 o más estrellas en total.
-    // (Puedes ajustar la lógica si en el futuro quieres que sean 10 diarias, etc.)
-    final bool misionesBloqueadas = _puntosTotales >= 10;
+    // --- NUEVO: CONDICIÓN DE BLOQUEO (Límite de 80) ---
+    final bool misionesBloqueadas = _puntosTotales >= 80;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -241,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 cardColor: cardColor, 
                                 textColor: primaryTextColor, 
                                 isDarkMode: _isDarkMode,
-                                isLocked: misionesBloqueadas, // Se pasa el estado de bloqueo a la tarjeta
+                                isLocked: misionesBloqueadas, 
                               ),
                             ),
                           );
@@ -361,7 +360,7 @@ class _BouncingActivityCard extends StatefulWidget {
   final Color cardColor; 
   final Color textColor; 
   final bool isDarkMode;
-  final bool isLocked; // <-- Nueva variable para controlar el bloqueo
+  final bool isLocked; 
 
   const _BouncingActivityCard({
     required this.subjectKey, 
@@ -388,11 +387,10 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
   void _onTapUp(TapUpDetails details) {
     setState(() => _scale = 1.0);
     
-    // Si está bloqueado, mostramos una alerta y cancelamos la navegación
     if (widget.isLocked) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("¡Límite alcanzado! Has recolectado 10 estrellas. 🌟", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
+          content: Text("¡Límite alcanzado! Reinicia tu viaje en tu Perfil. 🌟", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
           backgroundColor: const Color(0xFFFF6B6B),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -421,7 +419,6 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
           alignment: Alignment.center,
           children: [
             Opacity(
-              // Si está bloqueado, hacemos la tarjeta semitransparente
               opacity: widget.isLocked ? 0.4 : 1.0, 
               child: Container(
                 decoration: BoxDecoration(
@@ -446,8 +443,6 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
                 ),
               ),
             ),
-            
-            // Icono de candado superpuesto si está bloqueado
             if (widget.isLocked)
               Container(
                 padding: const EdgeInsets.all(12),

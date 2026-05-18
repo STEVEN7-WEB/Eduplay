@@ -20,7 +20,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   int _estrellas = 0;
   String _avatarPath = ''; 
   String _role = "";
-  int _grade = 1; // Guardamos el grado del usuario
+  int _grade = 1; 
   
   bool _isLoading = true; 
   bool _isUpdatingAvatar = false; 
@@ -49,7 +49,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           _estrellas = perfilData['estrellas'] ?? 0;
           _avatarPath = perfilData['avatar'] ?? 'assets/avatars/avatar1.png';
           _role = perfilData['role'] ?? 'student';
-          _grade = perfilData['grade'] ?? 1; // Obtenemos el grado para usarlo como Nivel
+          _grade = perfilData['grade'] ?? 1; 
           _isLoading = false;
         });
       } else if (mounted) {
@@ -149,7 +149,57 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
-  // Cuadro de diálogo de seguridad antes de eliminar
+  // --- NUEVA LÓGICA DE REINICIAR VIAJE CON RESTRICCIÓN DE 80 XP ---
+  void _mostrarDialogoReiniciarViaje() {
+    // 1. Verificamos si tiene la XP necesaria (80 o más)
+    if (_estrellas < 80) {
+      int faltan = 80 - _estrellas;
+      _mostrarFeedbackVisual("¡Aún te faltan $faltan XP para reiniciar tu viaje! 🚀", const Color(0xFFFF9F43));
+      return; 
+    }
+
+    // 2. Si tiene 80 o más, mostramos el diálogo de confirmación
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF222232) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("¿Reiniciar viaje?", style: GoogleFonts.fredoka(color: const Color(0xFFFF9F43), fontWeight: FontWeight.bold)),
+          content: Text("Tus estrellas volverán a 0, pero conservarás tu nombre y avatar. ¡Obtendrás un trofeo especial! ¿Listo para volver a empezar?", style: GoogleFonts.nunito()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancelar", style: GoogleFonts.nunito(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF9F43), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+              onPressed: () async {
+                Navigator.pop(context);
+                setState(() => _isLoading = true);
+
+                final prefs = await SharedPreferences.getInstance();
+                final userId = prefs.getInt('id_usuario');
+
+                if (userId != null) {
+                  bool exito = await UserDbService.reiniciarViaje(userId);
+                  if (exito) {
+                    _mostrarFeedbackVisual("¡Viaje reiniciado! Nuevo logro desbloqueado 🏆", const Color(0xFFFF9F43));
+                    _cargarDatosDesdeBD();
+                  } else {
+                    _mostrarFeedbackVisual("Error de conexión al reiniciar.", const Color(0xFFFF6B6B));
+                    setState(() => _isLoading = false);
+                  }
+                }
+              },
+              child: Text("Sí, Reiniciar", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          ],
+        );
+      }
+    );
+  }
+
   void _mostrarDialogoEliminarCuenta() {
     showDialog(
       context: context,
@@ -167,14 +217,13 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B6B), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
               onPressed: () async {
-                Navigator.pop(context); // Cierra el diálogo
+                Navigator.pop(context); 
                 setState(() => _isLoading = true);
 
                 final prefs = await SharedPreferences.getInstance();
                 final userId = prefs.getInt('id_usuario');
 
                 if (userId != null) {
-                  // Conectado al nuevo servicio
                   await UserDbService.eliminarCuenta(userId);
                 }
                 
@@ -209,10 +258,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       return Scaffold(backgroundColor: bgColor, body: const Center(child: CircularProgressIndicator(color: Color(0xFF9D4EDD))));
     }
 
-    // --- LÓGICA DE NIVEL Y XP AJUSTADA A TUS PETICIONES ---
-    int nivel = _grade; // El nivel mostrado ahora es exactamente el Grado
-    int metaXP = 80;    // Máximo de XP configurado a 80
-    // Evitamos que la barra visual sobrepase el 100% si el usuario junta más de 80 estrellas
+    int nivel = _grade; 
+    int metaXP = 80;    
     double progresoXP = (_estrellas / metaXP).clamp(0.0, 1.0);
     String rango = _obtenerRango(nivel);
 
@@ -221,7 +268,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent, elevation: 0,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
-        // Se quitó el actions: [] con el botón de ajustes
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -259,7 +305,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             ),
             const SizedBox(height: 15),
 
-            // Muestra el nombre en grande
             Text(_name, style: GoogleFonts.fredoka(fontSize: 34, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
             const SizedBox(height: 5),
             
@@ -314,7 +359,28 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
             const SizedBox(height: 15),
 
-            // --- BOTÓN ROJO DE ELIMINAR CUENTA ---
+            GestureDetector(
+              onTap: _mostrarDialogoReiniciarViaje,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 15),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2A2015) : const Color(0xFFFFF7E6),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFF9F43).withOpacity(0.5))
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  leading: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: const Color(0xFFFF9F43).withOpacity(0.15), shape: BoxShape.circle),
+                    child: const Icon(Icons.restart_alt_rounded, color: Color(0xFFFF9F43), size: 24),
+                  ),
+                  title: Text("Reiniciar viaje", style: GoogleFonts.fredoka(fontWeight: FontWeight.w600, fontSize: 18, color: const Color(0xFFFF9F43))),
+                  subtitle: Text("Empieza de cero y gana un logro", style: GoogleFonts.nunito(fontSize: 14, color: isDark ? Colors.white54 : Colors.black54)),
+                ),
+              ),
+            ),
+
             GestureDetector(
               onTap: _mostrarDialogoEliminarCuenta,
               child: Container(
