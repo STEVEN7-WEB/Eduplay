@@ -93,6 +93,29 @@ class UserDbService {
     try {
       final connection = await DbCore.conectar();
       
+      // ======================================================================
+      // NUEVO: SISTEMA AUTOMÁTICO DE LIMPIEZA DE DUPLICADOS EN SCORES
+      // Borra las filas repetidas de la misma materia dejando únicamente la de mayor puntaje (id más alto en empate)
+      // ======================================================================
+      await connection.execute(
+        Sql.named('''
+          DELETE FROM scores 
+          WHERE user_id = @id AND id NOT IN (
+            SELECT s.id FROM (
+              SELECT id, ROW_NUMBER() OVER (
+                PARTITION BY LOWER(subject) 
+                ORDER BY points DESC, id DESC
+              ) as rn
+              FROM scores
+              WHERE user_id = @id
+            ) s
+            WHERE s.rn = 1
+          )
+        '''),
+        parameters: {'id': userId},
+      );
+      // ======================================================================
+
       final misionesResult = await connection.execute(
         Sql.named('SELECT COUNT(*) FROM scores WHERE user_id = @id'),
         parameters: {'id': userId},
@@ -116,11 +139,25 @@ class UserDbService {
         }
       }
 
+      // Mapeamos los puntajes individuales ya limpios para procesar los candados del Home
+      final puntajesMateriasResult = await connection.execute(
+        Sql.named('SELECT subject, points FROM scores WHERE user_id = @id'),
+        parameters: {'id': userId},
+      );
+
+      Map<String, int> mapaPuntajes = {};
+      for (final row in puntajesMateriasResult) {
+        final String materiaKey = row[0].toString().toLowerCase().trim();
+        final int puntos = row[1] as int;
+        mapaPuntajes[materiaKey] = puntos;
+      }
+
       await connection.close();
 
       return {
         'total_misiones': totalMisiones,
         'materia_top': materiaTop, 
+        'tabla_puntajes': mapaPuntajes, // Enviado con éxito al HomeScreen
       };
     } catch (e) {
       print('Error al obtener resumen de actividad: $e');
@@ -150,25 +187,20 @@ class UserDbService {
     }
   }
 
-  // --- NUEVA FUNCIÓN: REINICIAR VIAJE Y DAR LOGRO ---
   static Future<bool> reiniciarViaje(int userId) async {
     try {
       final connection = await DbCore.conectar();
       
-      // 1. Quitamos las estrellas (las volvemos 0)
       await connection.execute(
         Sql.named('UPDATE users SET estrellas = 0 WHERE id = @id'),
         parameters: {'id': userId},
       );
 
-      // Opcional: Si quieres reiniciar también los puntajes de las materias
       await connection.execute(
         Sql.named('UPDATE scores SET points = 0 WHERE user_id = @id'),
         parameters: {'id': userId},
       );
 
-      // 2. Damos el logro especial
-      // IMPORTANTE: Cambia el '99' por el ID real del logro que tengas en tu base de datos
       await connection.execute(
         Sql.named('INSERT INTO user_logros (user_id, logro_id) VALUES (@userId, 99) ON CONFLICT DO NOTHING'),
         parameters: {'userId': userId},

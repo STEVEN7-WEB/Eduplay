@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   int _misionesCompletadas = 0;
   String _materiaFuerte = "";
-  int _puntosTotales = 0; 
+  Map<String, int> _puntajesPorMateria = {}; 
   
   bool _isLoading = true;
 
@@ -63,11 +63,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           if (perfilData != null) {
             _userName = perfilData['name'] ?? 'Estudiante'; 
             _userAvatar = perfilData['avatar'] ?? 'assets/avatars/avatar1.png'; 
-            _puntosTotales = perfilData['estrellas'] ?? 0;
           }
           if (resumen != null) {
             _misionesCompletadas = resumen['total_misiones'] ?? 0;
             _materiaFuerte = resumen['materia_top'] ?? "";
+            _puntajesPorMateria = resumen['tabla_puntajes'] ?? {}; 
           }
           _isLoading = false;
         });
@@ -114,9 +114,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       {'key': 'art', 'title': 'Arte', 'emoji': '🎨', 'color': const Color(0xFFFF66C4)},
       {'key': 'science', 'title': 'Ciencia', 'emoji': '🔬', 'color': const Color(0xFF5E60CE)},
     ];
-
-    // --- NUEVO: CONDICIÓN DE BLOQUEO (Límite de 80) ---
-    final bool misionesBloqueadas = _puntosTotales >= 80;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -205,10 +202,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Text(
-                    misionesBloqueadas ? "¡Misiones completadas! 🏆" : "Elige tu destino espacial ✨", 
-                    style: GoogleFonts.fredoka(color: titleNeonColor, fontSize: 22, fontWeight: FontWeight.w600)
-                  ),
+                  child: Text("Elige tu destino espacial ✨", style: GoogleFonts.fredoka(color: titleNeonColor, fontSize: 22, fontWeight: FontWeight.w600)),
                 ),
                 Expanded(
                   child: GridView.builder(
@@ -220,11 +214,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     itemCount: misiones.length,
                     itemBuilder: (context, index) {
                       final mision = misiones[index];
+                      final String mKey = mision['key'] as String;
+                      
+                      int puntosMateria = _puntajesPorMateria[mKey] ?? 0;
+                      bool estaMisionBloqueada = puntosMateria >= 10;
+
                       return AnimatedBuilder(
                         animation: _mainAnimController,
                         builder: (context, child) {
                           final delay = index * 0.5;
-                          final floatOffset = misionesBloqueadas ? 0.0 : math.sin((_mainAnimController.value * math.pi * 2) + delay) * 6.0;
+                          final floatOffset = estaMisionBloqueada ? 0.0 : math.sin((_mainAnimController.value * math.pi * 2) + delay) * 6.0;
                           return Transform.translate(
                             offset: Offset(0, floatOffset),
                             child: TweenAnimationBuilder(
@@ -233,14 +232,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               curve: Curves.easeOutBack,
                               builder: (context, scaleValue, child) => Transform.scale(scale: scaleValue, child: child),
                               child: _BouncingActivityCard(
-                                subjectKey: mision['key'] as String, 
+                                subjectKey: mKey, 
                                 title: mision['title'] as String,
                                 emoji: mision['emoji'] as String, 
                                 accentColor: mision['color'] as Color,
                                 cardColor: cardColor, 
                                 textColor: primaryTextColor, 
                                 isDarkMode: _isDarkMode,
-                                isLocked: misionesBloqueadas, 
+                                isLocked: estaMisionBloqueada, 
                               ),
                             ),
                           );
@@ -390,8 +389,8 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
     if (widget.isLocked) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("¡Límite alcanzado! Reinicia tu viaje en tu Perfil. 🌟", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
-          backgroundColor: const Color(0xFFFF6B6B),
+          content: Text("¡Excelente! Conseguiste las 10 estrellas de ${widget.title}. 🌟", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
+          backgroundColor: const Color(0xFFFF9F43),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           duration: const Duration(seconds: 2),
@@ -421,6 +420,8 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
             Opacity(
               opacity: widget.isLocked ? 0.4 : 1.0, 
               child: Container(
+                width: double.infinity,  
+                height: double.infinity, 
                 decoration: BoxDecoration(
                   gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [widget.cardColor.withOpacity(widget.isDarkMode ? 0.8 : 1.0), widget.accentColor.withOpacity(widget.isDarkMode ? 0.2 : 0.1)]),
                   borderRadius: BorderRadius.circular(40), border: Border.all(color: widget.accentColor.withOpacity(0.5), width: 2),
@@ -451,7 +452,7 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
                   shape: BoxShape.circle,
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)]
                 ),
-                child: Icon(Icons.lock_rounded, color: widget.isDarkMode ? Colors.white : Colors.grey.shade800, size: 35),
+                child: const Icon(Icons.check_circle_rounded, color: Color(0xFFFFD93D), size: 38), 
               ),
           ],
         ),
