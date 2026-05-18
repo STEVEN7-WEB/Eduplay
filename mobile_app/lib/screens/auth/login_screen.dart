@@ -25,18 +25,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _isLoading = false;
   bool _isParentOrAdminMode = false;
 
-  // Controlador para las animaciones continuas (el logo flotante y el botón)
   late AnimationController _pulseController;
   late Animation<double> _floatAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Configuramos la animación de "respiración" o flotación
     _pulseController = AnimationController(
       vsync: this, 
       duration: const Duration(seconds: 2)
-    )..repeat(reverse: true); // Se repite infinitamente yendo y viniendo
+    )..repeat(reverse: true); 
 
     _floatAnimation = Tween<double>(begin: -8.0, end: 8.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine)
@@ -47,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   void dispose() {
     _identificadorController.dispose();
     _passController.dispose();
-    _pulseController.dispose(); // No olvides matar el controlador de animación
+    _pulseController.dispose(); 
     super.dispose();
   }
 
@@ -71,14 +69,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       backgroundColor: bgColor,
       body: Stack(
         children: [
-          // --- FONDOS CON LUCES DIFUMINADAS (ANIMADOS) ---
           AnimatedBuilder(
             animation: _pulseController,
             builder: (context, child) {
               return Stack(
                 children: [
                   Positioned(
-                    top: -100 + (_floatAnimation.value * 2), // El neón también se mueve un poco
+                    top: -100 + (_floatAnimation.value * 2), 
                     left: -100,
                     child: Container(
                       width: 350, height: 350,
@@ -107,7 +104,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           SafeArea(
             child: Column(
               children: [
-                // --- BOTÓN TEMA ---
                 Align(
                   alignment: Alignment.topRight,
                   child: Container(
@@ -124,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         transitionBuilder: (child, anim) => RotationTransition(turns: anim, child: child),
                         child: Icon(
                           isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded, 
-                          key: ValueKey(isDarkMode), // Clave para la animación
+                          key: ValueKey(isDarkMode), 
                           color: isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE), 
                           size: 22
                         ),
@@ -133,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ),
                 ),
 
-                // --- CONTENIDO PRINCIPAL ---
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -143,7 +138,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // --- LOGO ANIMADO (FLOTANDO) ---
                             AnimatedBuilder(
                               animation: _floatAnimation,
                               builder: (context, child) {
@@ -169,7 +163,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             ),
                             const SizedBox(height: 25),
                             
-                            // Textos de bienvenida
                             AnimatedSwitcher(
                               duration: const Duration(milliseconds: 300),
                               child: Text(
@@ -188,11 +181,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             ),
                             const SizedBox(height: 35),
                             
-                            // Caja de Login
                             _buildGlassLoginBox(isDarkMode, cardColor),
                             const SizedBox(height: 15),
                             
-                            // --- BOTONES INFERIORES ---
                             TextButton(
                               onPressed: () {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const RecoveryScreen()));
@@ -249,7 +240,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               _buildPasswordField(isDarkMode),
               const SizedBox(height: 30),
               
-              // --- BOTÓN ENTRAR ANIMADO ---
               AnimatedBuilder(
                 animation: _pulseController,
                 builder: (context, child) {
@@ -260,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF9D4EDD).withOpacity(0.4 + (_pulseController.value * 0.4)), // El brillo pulsa
+                          color: const Color(0xFF9D4EDD).withOpacity(0.4 + (_pulseController.value * 0.4)), 
                           blurRadius: 15 + (_pulseController.value * 10),
                           spreadRadius: 1,
                         )
@@ -269,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF9D4EDD),
-                        elevation: 0, // Quitamos la elevación por defecto para usar nuestra sombra
+                        elevation: 0, 
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                       ),
                       onPressed: _isLoading ? null : _login,

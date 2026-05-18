@@ -49,7 +49,7 @@ class NotificationService {
   }
 
   // --- NUEVO: Método para programar notificaciones repetitivas ---
-  static Future<void> programarNotificacionPeriodica() async {
+static Future<void> programarNotificacionPeriodica() async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'eduplay_canal_periodico', 
       'Recordatorios de Estudio', 
@@ -63,11 +63,11 @@ class NotificationService {
     const NotificationDetails detalles = NotificationDetails(android: androidDetails);
 
     await _notificationsPlugin.periodicallyShow(
-      1, // Un ID diferente al de la notificación instantánea
-      "¡Hora de aprender! 🚀",
-      "Entra a EduPlay 2.0 y descubre nuevas misiones divertidas.",
-      RepeatInterval.hourly, // Puedes cambiarlo a: .daily (diario), .weekly (semanal), etc.
-      detalles,
+      id: 1, 
+      title: "¡Hora de aprender! 🚀",
+      body: "Entra a EduPlay 2.0 y descubre nuevas misiones divertidas.",
+      repeatInterval: RepeatInterval.hourly, 
+      notificationDetails: detalles,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }

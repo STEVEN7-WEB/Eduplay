@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Importamos el servicio de base de datos
-import '../../services/neon_db_service.dart';
+import '../../services/neon_db/user_db_service.dart';
 
 class ChangeNameScreen extends StatefulWidget {
   final String currentName;
