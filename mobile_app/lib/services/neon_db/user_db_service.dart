@@ -94,8 +94,7 @@ class UserDbService {
       final connection = await DbCore.conectar();
       
       // ======================================================================
-      // NUEVO: SISTEMA AUTOMÁTICO DE LIMPIEZA DE DUPLICADOS EN SCORES
-      // Borra las filas repetidas de la misma materia dejando únicamente la de mayor puntaje (id más alto en empate)
+      // 🚀 LIMPIEZA DE MATERIAS DUPLICADAS: Deja solo la de mayor calificación
       // ======================================================================
       await connection.execute(
         Sql.named('''
@@ -139,7 +138,7 @@ class UserDbService {
         }
       }
 
-      // Mapeamos los puntajes individuales ya limpios para procesar los candados del Home
+      // Mapeamos los puntajes individuales ya limpios para el HomeScreen
       final puntajesMateriasResult = await connection.execute(
         Sql.named('SELECT subject, points FROM scores WHERE user_id = @id'),
         parameters: {'id': userId},
@@ -157,7 +156,7 @@ class UserDbService {
       return {
         'total_misiones': totalMisiones,
         'materia_top': materiaTop, 
-        'tabla_puntajes': mapaPuntajes, // Enviado con éxito al HomeScreen
+        'tabla_puntajes': mapaPuntajes, 
       };
     } catch (e) {
       print('Error al obtener resumen de actividad: $e');
@@ -201,6 +200,7 @@ class UserDbService {
         parameters: {'id': userId},
       );
 
+      // Inyecta el Logro ID 99 (Insignia de Prestigio)
       await connection.execute(
         Sql.named('INSERT INTO user_logros (user_id, logro_id) VALUES (@userId, 99) ON CONFLICT DO NOTHING'),
         parameters: {'userId': userId},
@@ -217,12 +217,10 @@ class UserDbService {
   static Future<bool> eliminarCuenta(int userId) async {
     try {
       final connection = await DbCore.conectar();
-      
       await connection.execute(
         Sql.named('DELETE FROM users WHERE id = @id'),
         parameters: {'id': userId},
       );
-      
       await connection.close();
       return true;
     } catch (e) {

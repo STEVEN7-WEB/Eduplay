@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -48,8 +49,8 @@ class NotificationService {
     );
   }
 
-  // --- NUEVO: Método para programar notificaciones repetitivas ---
-static Future<void> programarNotificacionPeriodica() async {
+  // --- ACTUALIZADO: Programación diaria con mensajes espaciales aleatorios ---
+  static Future<void> programarNotificacionPeriodica() async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'eduplay_canal_periodico', 
       'Recordatorios de Estudio', 
@@ -62,17 +63,41 @@ static Future<void> programarNotificacionPeriodica() async {
 
     const NotificationDetails detalles = NotificationDetails(android: androidDetails);
 
+    // Banco de frases interactivas y llamativas para motivar al estudiante
+    final List<Map<String, String>> frasesMotivacionales = [
+      {
+        'titulo': "¡Alerta en la cabina! 🛸",
+        'cuerpo': "Tus estrellas te extrañan en el espacio. ¡Entra a ganar más XP!"
+      },
+      {
+        'titulo': "¡Misión diaria disponible! 🚀",
+        'cuerpo': "El planeta de las Matemáticas necesita tu ayuda. ¡Vamos a jugar!"
+      },
+      {
+        'titulo': "¡Llamado al Comandante! 👨‍🚀",
+        'cuerpo': "Hay trofeos nuevos esperando en la Sala de Trofeos. ¿Podrás desbloquearlos hoy?"
+      },
+      {
+        'titulo': "¡Radar cósmico activo! 🛰️",
+        'cuerpo': "Se detectaron nuevos desafíos de Lógica esperando tu estrategia estelar."
+      }
+    ];
+
+    // Selección aleatoria del mensaje para evitar la monotonía diaria
+    final random = math.Random();
+    final fraseElegida = frasesMotivacionales[random.nextInt(frasesMotivacionales.length)];
+
     await _notificationsPlugin.periodicallyShow(
       id: 1, 
-      title: "¡Hora de aprender! 🚀",
-      body: "Entra a EduPlay 2.0 y descubre nuevas misiones divertidas.",
-      repeatInterval: RepeatInterval.hourly, 
+      title: fraseElegida['titulo'],
+      body: fraseElegida['cuerpo'],
+      repeatInterval: RepeatInterval.daily, // Cambiado de hourly a daily para una retención sana
       notificationDetails: detalles,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // --- NUEVO: Método para cancelar las notificaciones ---
+  // --- Método para cancelar las notificaciones ---
   static Future<void> cancelarTodasLasNotificaciones() async {
     await _notificationsPlugin.cancelAll();
   }

@@ -43,7 +43,7 @@ class HelpScreen extends StatelessWidget {
                   Text("Soporte D.A.E.A Studio", style: GoogleFonts.fredoka(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
                   const SizedBox(height: 5),
                   Text(
-                    "Si tienes problemas con EduPlay 2.0, ponte en contacto con nosotros en soporte@tecnm.mx",
+                    "Si tienes problemas con EduPlay 2.0, ponte en contacto con nosotros en daea.studio@gmail.com",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.nunito(fontSize: 14, color: isDark ? Colors.white70 : Colors.black54),
                   ),

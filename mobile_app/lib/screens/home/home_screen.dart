@@ -7,6 +7,7 @@ import '../../main.dart';
 import '../game/test_screen.dart';
 import '../auth/login_screen.dart';
 import '../profile/profile_settings_screen.dart';
+import 'achievements_screen.dart';
 import '../../services/neon_db/user_db_service.dart'; 
 import '../../services/neon_db/auth_db_service.dart';
 
@@ -20,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String _userName = 'Estudiante'; 
   String _userId = '';
+  int _userIdInt = 0; 
   String _userAvatar = 'assets/avatars/avatar1.png'; 
   bool _isDarkMode = true;
   
@@ -54,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     if (userIdInt != null) {
       _userId = userIdInt.toString();
+      _userIdInt = userIdInt;
       
       final perfilData = await UserDbService.obtenerPerfilUsuario(userIdInt);
       final resumen = await UserDbService.obtenerResumenActividad(userIdInt);
@@ -89,6 +92,182 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() => _isDarkMode = !_isDarkMode);
     themeNotifier.value = _isDarkMode ? ThemeMode.dark : ThemeMode.light;
     await prefs.setBool('isDarkMode', _isDarkMode);
+  }
+
+  void _mostrarModalMaterias() {
+    final modalBgColor = _isDarkMode ? const Color(0xFF222232) : Colors.white;
+    final textColor = _isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
+
+    final misionesLista = [
+      {'key': 'math', 'title': 'Matemáticas', 'emoji': '🔢'},
+      {'key': 'memory', 'title': 'Memoria', 'emoji': '🧠'},
+      {'key': 'logic', 'title': 'Lógica', 'emoji': '🧩'},
+      {'key': 'grammar', 'title': 'Gramática', 'emoji': '✍️'},
+      {'key': 'english', 'title': 'Inglés', 'emoji': '🗣️'},
+      {'key': 'geography', 'title': 'Geografía', 'emoji': '🌎'},
+      {'key': 'art', 'title': 'Arte', 'emoji': '🎨'},
+      {'key': 'science', 'title': 'Ciencia', 'emoji': '🔬'},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: modalBgColor.withOpacity(0.95),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30), side: const BorderSide(color: Color(0xFF9D4EDD), width: 1.5)),
+          title: Text("Bitácora de Materias 📚", textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: const Color(0xFF9D4EDD), fontSize: 24, fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: misionesLista.length,
+              itemBuilder: (context, index) {
+                final mat = misionesLista[index];
+                int estrellas = _puntajesPorMateria[mat['key']] ?? 0;
+                bool completada = estrellas >= 10;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Row(
+                    children: [
+                      Text(mat['emoji']!, style: const TextStyle(fontSize: 22)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(mat['title']!, style: GoogleFonts.nunito(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                      Text(
+                        "$estrellas / 10 🌟", 
+                        style: GoogleFonts.fredoka(color: completada ? const Color(0xFFFFD93D) : Colors.grey, fontSize: 15, fontWeight: FontWeight.bold)
+                      ),
+                      const SizedBox(width: 8),
+                      Text(completada ? "✅" : "🚀", style: const TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF9D4EDD), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+                onPressed: () => Navigator.pop(context),
+                child: Text("¡Entendido!", style: GoogleFonts.fredoka(color: Colors.white)),
+              ),
+            )
+          ],
+        );
+      }
+    );
+  }
+
+  // PANEL INTERACTIVO DE CABINA INTERNA "COMANDO"
+  void _mostrarPanelComando() {
+    final modalBgColor = _isDarkMode ? const Color(0xFF151522) : Colors.white;
+    final accentColor = const Color(0xFF4ECDC4);
+    final textColor = _isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
+    
+    String keyMateriaTop = _materiaFuerte.toLowerCase().trim();
+    int estrellasTop = _puntajesPorMateria[keyMateriaTop] ?? 0;
+    double porcentajeMateria = (estrellasTop / 10).clamp(0.0, 1.0);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: modalBgColor.withOpacity(0.95),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(40))),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(30),
+          height: MediaQuery.of(context).size.height * 0.55,
+          child: Column(
+            children: [
+              Container(width: 60, height: 5, decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10))),
+              const SizedBox(height: 20),
+              Text("CENTRO DE COMANDO 🛸", style: GoogleFonts.fredoka(fontSize: 24, fontWeight: FontWeight.bold, color: accentColor, letterSpacing: 1)),
+              const SizedBox(height: 25),
+              
+              _materiaFuerte.isEmpty
+                ? Expanded(
+                    child: Center(
+                      child: Text("Sistemas en espera. ¡Completa tu primer juego para activar los propulsores!", textAlign: TextAlign.center, style: GoogleFonts.nunito(color: Colors.grey, fontSize: 16)),
+                    ),
+                  )
+                : Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.radar_rounded, color: accentColor, size: 28),
+                            const SizedBox(width: 10),
+                            Text("Sector Inteligente:", style: GoogleFonts.nunito(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold)),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(color: accentColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                              child: Text("Estable", style: GoogleFonts.fredoka(color: accentColor, fontSize: 12)),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text("¡$_materiaFuerte dominado!", style: GoogleFonts.fredoka(fontSize: 22, color: textColor, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 30),
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Energía de este Sector:", style: GoogleFonts.nunito(color: textColor, fontWeight: FontWeight.bold)),
+                            Text("$estrellasTop / 10 Estrellas", style: GoogleFonts.fredoka(color: const Color(0xFFFFD93D), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        
+                        // Barra interactiva animada
+                        Stack(
+                          children: [
+                            Container(height: 20, width: double.infinity, decoration: BoxDecoration(color: _isDarkMode ? const Color(0xFF222232) : Colors.grey.shade300, borderRadius: BorderRadius.circular(15))),
+                            FractionallySizedBox(
+                              widthFactor: porcentajeMateria,
+                              child: Container(
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(colors: [Color(0xFF4ECDC4), Color(0xFF48CAE4)]),
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [BoxShadow(color: accentColor.withOpacity(0.5), blurRadius: 10)]
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        const Spacer(),
+                        
+                        Container(
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(color: _isDarkMode ? const Color(0xFF222232) : Colors.grey.shade100, borderRadius: BorderRadius.circular(20), border: Border.all(color: accentColor.withOpacity(0.2))),
+                          child: Row(
+                            children: [
+                              const Text("🤖", style: TextStyle(fontSize: 26)),
+                              const SizedBox(width: 15),
+                              Expanded(
+                                child: Text(
+                                  porcentajeMateria >= 1.0 
+                                      ? "¡Sector completado! Es hora de desplegar tu conocimiento en otros planetas de estudio."
+                                      : "Consejo del sistema: Juega un examen de $_materiaFuerte para recolectar las estrellas que te faltan.", 
+                                  style: GoogleFonts.nunito(fontSize: 13, color: _isDarkMode ? Colors.white70 : Colors.black87, fontWeight: FontWeight.w600)
+                                ),
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  )
+            ],
+          ),
+        );
+      }
+    );
   }
 
   @override
@@ -169,6 +348,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           ],
                         ),
                         const Spacer(),
+                        
+                        // NUEVO BOTÓN DE CERRAR SESIÓN
+                        _buildTopIcon(
+                          icon: Icons.logout_rounded,
+                          color: const Color(0xFFFF6B6B), // Un color rojizo para salir
+                          cardColor: cardColor,
+                          onTap: _cerrarSesion,
+                        ),
+                        const SizedBox(width: 12),
+                        
+                        // BOTÓN DE TEMA
                         _buildTopIcon(
                           icon: _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                           color: _isDarkMode ? const Color(0xFFFFD93D) : const Color(0xFF5E60CE),
@@ -176,6 +366,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           onTap: _toggleTheme,
                         ),
                         const SizedBox(width: 12),
+                        
                         AnimatedBuilder(
                           animation: _mainAnimController,
                           builder: (context, child) {
@@ -262,7 +453,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          decoration: BoxDecoration(color: cardColor.withOpacity(0.5), shape: BoxShape.circle, border: Border.all(color: color.withOpacity(0.5), width: 1.5)),
+          decoration: BoxDecoration(
+            color: cardColor.withOpacity(0.5), 
+            shape: BoxShape.circle, 
+            border: Border.all(color: color.withOpacity(0.5), width: 1.5)
+          ),
           child: IconButton(onPressed: onTap, icon: Icon(icon, color: color, size: 22)),
         ),
       ),
@@ -286,21 +481,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildDockAction(Icons.emoji_events_rounded, "Logros", const Color(0xFFFFD93D), () {
-                String msg = _misionesCompletadas == 0 ? "¡Empecemos la aventura hoy! Aún no tienes logros." : "¡Sigue así, $_userName! Has completado $_misionesCompletadas misiones.";
-                _mostrarModal("Tus Logros 🏆", msg, const Color(0xFFFFD93D));
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => AchievementsScreen(userId: _userIdInt))
+                ).then((_) => _cargarDatosDesdeBD());
               }),
-              _buildDockAction(Icons.trending_up_rounded, "Avance", const Color(0xFF4ECDC4), () {
-                String msg = _materiaFuerte.isEmpty ? "Aún no has empezado. ¡Juega un poco para descubrir tu materia más fuerte!" : "Tu materia más fuerte es $_materiaFuerte. ¡Tu cerebro se está haciendo poderoso!";
-                _mostrarModal("Tu Avance 📈", msg, const Color(0xFF4ECDC4));
+              _buildDockAction(Icons.library_books_rounded, "Materias", const Color(0xFF9D4EDD), () {
+                _mostrarModalMaterias();
               }),
-              _buildDockAction(Icons.stars_rounded, "Metas", const Color(0xFF9D4EDD), () {
-                List<String> metasDiarias = [
-                  "Lunes: Completa 1 misión de Matemáticas para calentar motores. 🔢", "Martes: Gana 3 estrellas en Inglés. 🗣️",
-                  "Miércoles: Explora el mundo en Geografía. 🌎", "Jueves: Pon a prueba tu Lógica hoy. 🧩",
-                  "Viernes: Conviértete en científico completando un examen. 🔬", "Sábado: Día de repasar Memoria. 🧠", "Domingo: ¡Rompe tu propio récord! 🚀"
-                ];
-                int diaActual = DateTime.now().weekday - 1; 
-                _mostrarModal("Nuevas Metas 🚀", metasDiarias[diaActual], const Color(0xFF9D4EDD));
+              // CAMBIO DE AVANCE POR "COMANDO 🛸" INTERACTIVO
+              _buildDockAction(Icons.rocket_launch_rounded, "Comando", const Color(0xFF4ECDC4), () {
+                _mostrarPanelComando();
               }),
             ],
           ),
@@ -314,98 +505,42 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       onTap: onTap, behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: color, size: 30), const SizedBox(height: 6), Text(label, style: GoogleFonts.nunito(color: color, fontSize: 13, fontWeight: FontWeight.bold))]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            Icon(icon, color: color, size: 30), 
+            const SizedBox(height: 6), 
+            Text(label, style: GoogleFonts.nunito(color: color, fontSize: 13, fontWeight: FontWeight.bold))
+          ]
+        ),
       ),
-    );
-  }
-
-  void _mostrarModal(String titulo, String mensaje, Color colorNeon) {
-    final modalBgColor = _isDarkMode ? const Color(0xFF222232) : Colors.white;
-    final modalTextColor = _isDarkMode ? Colors.white70 : Colors.black87;
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: modalBgColor.withOpacity(0.9), elevation: 20,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30), side: BorderSide(color: colorNeon.withOpacity(0.5), width: 2)),
-          title: Text(titulo, textAlign: TextAlign.center, style: GoogleFonts.fredoka(color: colorNeon, fontSize: 24, fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: colorNeon.withOpacity(0.15), shape: BoxShape.circle, boxShadow: [BoxShadow(color: colorNeon.withOpacity(0.2), blurRadius: 20)]), child: Icon(Icons.auto_awesome_rounded, size: 50, color: colorNeon)),
-              const SizedBox(height: 20),
-              Text(mensaje, textAlign: TextAlign.center, style: GoogleFonts.nunito(color: modalTextColor, fontSize: 18, fontWeight: FontWeight.w600)),
-            ],
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: colorNeon, foregroundColor: const Color(0xFF151522), padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-              onPressed: () => Navigator.pop(context),
-              child: Text("¡Genial!", style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, fontSize: 18)),
-            )
-          ],
-        );
-      }
     );
   }
 }
 
 class _BouncingActivityCard extends StatefulWidget {
-  final String subjectKey; 
-  final String title; 
-  final String emoji; 
-  final Color accentColor; 
-  final Color cardColor; 
-  final Color textColor; 
-  final bool isDarkMode;
-  final bool isLocked; 
-
-  const _BouncingActivityCard({
-    required this.subjectKey, 
-    required this.title, 
-    required this.emoji, 
-    required this.accentColor, 
-    required this.cardColor, 
-    required this.textColor, 
-    required this.isDarkMode,
-    required this.isLocked,
-  });
-
+  final String subjectKey; final String title; final String emoji; final Color accentColor; final Color cardColor; final Color textColor; final bool isDarkMode; final bool isLocked; 
+  const _BouncingActivityCard({required this.subjectKey, required this.title, required this.emoji, required this.accentColor, required this.cardColor, required this.textColor, required this.isDarkMode, required this.isLocked});
   @override
   State<_BouncingActivityCard> createState() => _BouncingActivityCardState();
 }
 
 class _BouncingActivityCardState extends State<_BouncingActivityCard> with SingleTickerProviderStateMixin {
   double _scale = 1.0;
-
-  void _onTapDown(TapDownDetails details) {
-    if (!widget.isLocked) setState(() => _scale = 0.90);
-  }
-
+  void _onTapDown(TapDownDetails details) { if (!widget.isLocked) setState(() => _scale = 0.90); }
   void _onTapUp(TapUpDetails details) {
     setState(() => _scale = 1.0);
-    
     if (widget.isLocked) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("¡Excelente! Conseguiste las 10 estrellas de ${widget.title}. 🌟", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
-          backgroundColor: const Color(0xFFFF9F43),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          duration: const Duration(seconds: 2),
-        )
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("¡Excelente! Conseguiste las 10 estrellas de ${widget.title}. 🌟", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: const Color(0xFFFF9F43), behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)), duration: const Duration(seconds: 2),
+      ));
       return;
     }
-
     Future.delayed(const Duration(milliseconds: 150), () {
-      if (mounted) { 
-        Navigator.push(context, MaterialPageRoute(builder: (context) => TestScreen(subject: widget.subjectKey))); 
-      }
+      if (mounted) { Navigator.push(context, MaterialPageRoute(builder: (context) => TestScreen(subject: widget.subjectKey))); }
     });
   }
-
   void _onTapCancel() => setState(() => _scale = 1.0);
 
   @override
@@ -420,8 +555,7 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
             Opacity(
               opacity: widget.isLocked ? 0.4 : 1.0, 
               child: Container(
-                width: double.infinity,  
-                height: double.infinity, 
+                width: double.infinity, height: double.infinity, 
                 decoration: BoxDecoration(
                   gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [widget.cardColor.withOpacity(widget.isDarkMode ? 0.8 : 1.0), widget.accentColor.withOpacity(widget.isDarkMode ? 0.2 : 0.1)]),
                   borderRadius: BorderRadius.circular(40), border: Border.all(color: widget.accentColor.withOpacity(0.5), width: 2),
@@ -447,11 +581,7 @@ class _BouncingActivityCardState extends State<_BouncingActivityCard> with Singl
             if (widget.isLocked)
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: widget.isDarkMode ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)]
-                ),
+                decoration: BoxDecoration(color: widget.isDarkMode ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.8), shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)]),
                 child: const Icon(Icons.check_circle_rounded, color: Color(0xFFFFD93D), size: 38), 
               ),
           ],

@@ -55,6 +55,7 @@ class GameDbService {
   static Future<void> verificarYDesbloquearLogros(int userId) async {
     try {
       final connection = await DbCore.conectar();
+      // Inserta logros basados en las estrellas actuales de forma permanente
       await connection.execute(
         Sql.named('''
           INSERT INTO user_logros (user_id, logro_id)
@@ -98,11 +99,13 @@ class GameDbService {
     try {
       final connection = await DbCore.conectar();
       
+      // Sumamos las estrellas al usuario
       await connection.execute(
         Sql.named('UPDATE users SET estrellas = estrellas + @estrellas WHERE id = @id'),
         parameters: {'estrellas': estrellasGanadas, 'id': userId},
       );
 
+      // Verificamos si ya existe la materia para evitar crear filas duplicadas desde el inicio
       final existingScore = await connection.execute(
         Sql.named('SELECT id FROM scores WHERE user_id = @user_id AND subject = @subject'),
         parameters: {'user_id': userId, 'subject': materia},
@@ -121,6 +124,8 @@ class GameDbService {
       }
       
       await connection.close();
+      
+      // Escanea si el nuevo puntaje desbloquea alguna medalla
       await verificarYDesbloquearLogros(userId);
       
       return true;
@@ -139,7 +144,7 @@ class GameDbService {
       final connection = await DbCore.conectar();
       
       await connection.execute(
-        Sql.named('INSERT INTO knn_results (user_id, rango, etiqueta, fecha) VALUES (@user_id, @rango, @etiqueta, CURRENT_TIMESTAMP)'),
+        Sql.named('INSERT INTO knn_results (user_id, rango, etiqueta, generado_en) VALUES (@user_id, @rango, @etiqueta, CURRENT_TIMESTAMP)'),
         parameters: {
           'user_id': userId,
           'rango': rango,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/login_screen.dart';
+import '../auth/admin_dashboard.dart'; // Importación de la vista del administrador
 import 'notifications_screen.dart';
 import 'help_screen.dart';
 import '../../services/neon_db/user_db_service.dart'; 
@@ -83,7 +84,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         _mostrarFeedbackVisual("Error de conexión 🔌 No se guardó.", const Color(0xFFFF6B6B));
       }
     } else {
-       setState(() => _isUpdatingAvatar = false);
+       setState(() => _isUpdatingAvatar = true);
     }
   }
 
@@ -149,16 +150,13 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
-  // --- NUEVA LÓGICA DE REINICIAR VIAJE CON RESTRICCIÓN DE 80 XP ---
   void _mostrarDialogoReiniciarViaje() {
-    // 1. Verificamos si tiene la XP necesaria (80 o más)
     if (_estrellas < 80) {
       int faltan = 80 - _estrellas;
       _mostrarFeedbackVisual("¡Aún te faltan $faltan XP para reiniciar tu viaje! 🚀", const Color(0xFFFF9F43));
       return; 
     }
 
-    // 2. Si tiene 80 o más, mostramos el diálogo de confirmación
     showDialog(
       context: context,
       builder: (context) {
@@ -358,6 +356,23 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             }),
 
             const SizedBox(height: 15),
+
+            // BOTÓN DE ADMIN CONDICIONAL (¡Corregido aquí!)
+            if (_role == 'admin') ...[
+              _buildSettingItem(
+                Icons.admin_panel_settings_rounded, 
+                "Panel de Administrador", 
+                "Gestiona los usuarios y el sistema", 
+                isDark, 
+                () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => const AdminDashboardScreen()) 
+                  );
+                }
+              ),
+              const SizedBox(height: 15),
+            ],
 
             GestureDetector(
               onTap: _mostrarDialogoReiniciarViaje,

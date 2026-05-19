@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/pregunta_model.dart';
 import '../../services/neon_db/game_db_service.dart';
-import '../profile/achievements_screen.dart'; 
+import '../home/achievements_screen.dart';
 
 class TestScreen extends StatefulWidget {
   final String subject;
