@@ -3,75 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduPlay 2.0 - Descargar</title>
+    <title>EduPlay 2.0 - Centro de Descargas</title>
     <style>
+        :root {
+            --bg-space: #070913;
+            --bg-card: rgba(16, 20, 38, 0.6);
+            --text-main: #ffffff;
+            --text-muted: #8fa0dd;
+            --neon-purple: #bd2bf1;
+            --neon-cyan: #00f0ff;
+            --neon-blue: #2b6bf1;
+            --neon-gold: #ffca28;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-space);
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            color: var(--text-main);
             margin: 0;
             padding: 0;
-            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
+
         header {
-            background-color: #4CAF50; /* Cambia al color de tu app */
-            color: white;
-            padding: 2rem 1rem;
+            text-align: center;
+            padding: 4rem 1rem 2rem 1rem;
+            position: relative;
         }
-        .container {
-            max-width: 600px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+
+        /* Efecto de brillo de fondo detrás del título */
+        header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            z-index: -1;
         }
-        .btn-download {
-            display: inline-block;
-            background-color: #ff5722; /* Color del botón */
-            color: white;
-            padding: 15px 30px;
+
+        header h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #ffffff 30%, var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        header p {
             font-size: 1.2rem;
+            color: var(--neon-cyan);
+            margin: 10px 0 0 0;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+
+        .container {
+            max-width: 550px;
+            width: 90%;
+            margin-bottom: 4rem;
+        }
+
+        .hero-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-card p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-top: 0;
+            margin-bottom: 2rem;
+        }
+
+        /* Botón estilo Comando Espacial */
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            color: white;
+            padding: 18px 38px;
+            font-size: 1.25rem;
             text-decoration: none;
-            border-radius: 25px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s, background-color 0.2s;
-            margin: 2rem 0;
+            border-radius: 50px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(189, 43, 241, 0.4), 
+                        0 0 40px rgba(43, 107, 241, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
+
         .btn-download:hover {
-            background-color: #e64a19;
-            transform: scale(1.05);
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(189, 43, 241, 0.7), 
+                        0 0 50px rgba(0, 240, 255, 0.4);
+            border-color: var(--neon-cyan);
         }
-        .features {
+
+        .btn-download:active {
+            transform: translateY(-1px);
+        }
+
+        /* Contenedor de Sectores / Materias */
+        .sectors-container {
+            margin-top: 2.5rem;
             text-align: left;
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .sectors-container h3 {
+            font-size: 1.3rem;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sectors-container h3::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.2), transparent);
+            margin-left: 10px;
+        }
+
+        .sector-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 16px;
+            border-radius: 14px;
+            margin-bottom: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .sector-row:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(0, 240, 255, 0.2);
+        }
+
+        .sector-icon {
+            font-size: 1.4rem;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sector-info {
+            flex-grow: 1;
+        }
+
+        .sector-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #ffffff;
+        }
+
+        .sector-tech {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .sector-status {
+            font-size: 0.9rem;
+            color: var(--neon-gold);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 2rem 1rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>EduPlay 2.1</h1>
-        <p>¡Aprender jugando nunca fue tan divertido!</p>
+        <h1>EDUPLAY 2.0</h1>
+        <p>Aprende • Juega • Transforma</p>
     </header>
 
     <div class="container">
-        <p>Descarga la aplicación oficial de manera directa y segura  para tu dispositivo Android desde el siguiente enlace:</p>
-        
-        <a href="EduPlay 2.0.apk" class="btn-download" download>
-            📥 Descargar APK para Android
-        </a>
+        <div class="hero-card">
+            <p>¡Misión iniciada, explorador! Descarga la plataforma oficial de manera directa y segura para tu dispositivo Android e inicia tu viaje espacial de aprendizaje.</p>
+            
+            <a href="EduPlay 2.0.apk" class="btn-download" download>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15V3M12 15L8 11M12 15L16 11M2 17C2 19.7614 4.23858 22 7 22H17C19.7614 22 22 19.7614 22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Instalar Misión (APK)
+            </a>
 
-        <div class="features">
-            <h3>¿Qué incluye esta versión?</h3>
-            <ul>
-                <li>Módulos educativos interactivos para niños.</li>
-                <li>Interfaz fluida y llamativa desarrollada en Flutter.</li>
-                <li>Sistema optimizado y listo para pruebas en tiempo real.</li>
-            </ul>
+            <div class="sectors-container">
+                <h3>🚀 Sectores de Aprendizaje</h3>
+                
+                <div class="sector-row">
+                    <div class="sector-icon">🔢</div>
+                    <div class="sector-info">
+                        <div class="sector-name">Matemáticas, Lógica y Memoria</div>
+                        <div class="sector-tech">Desafíos de agilidad mental y razonamiento</div>
+                    </div>
+                    <div class="sector-status">10/10 ⭐</div>
+                </div>
+
+                <div class="sector-row">
+                    <div class="sector-icon">🌍</div>
+                    <div class="sector-info">
+                        <div class="sector-name">Gramática, Inglés y Geografía</div>
+                        <div class="sector-tech">Exploración global y dominios del lenguaje</div>
+                    </div>
+                    <div class="sector-status">10/10 ⭐</div>
+                </div>
+
+                <div class="sector-row">
+                    <div class="sector-icon">🔬</div>
+                    <div class="sector-info">
+                        <div class="sector-name">Arte y Ciencia</div>
+                        <div class="sector-tech">Módulos interactivos de experimentación</div>
+                    </div>
+                    <div class="sector-status">10/10 ⭐</div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <footer>
+        Tecnología de Potencia: Flutter & Dart • Inteligencia Artificial KNN
+    </footer>
 
 </body>
 </html>
