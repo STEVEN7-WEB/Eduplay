@@ -61,10 +61,34 @@ class _ResultadosIAViewState extends State<ResultadosIAView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // --- ENCABEZADO CON NOMBRE Y GRADO ---
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("ID Alumno: ${res['user_id']}", style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF48CAE4))),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    res['nombre'] ?? 'Alumno Desconocido', 
+                                    style: GoogleFonts.fredoka(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF48CAE4)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.school, size: 14, color: widget.isDarkMode ? Colors.white70 : Colors.grey),
+                                      const SizedBox(width: 5),
+                                      Text("Grado: ${res['grado'] ?? 'N/A'}", style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: widget.isDarkMode ? Colors.white70 : Colors.grey[700])),
+                                      const SizedBox(width: 10),
+                                      Text("•  ID: ${res['user_id']}", style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(color: const Color(0xFF9D4EDD).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
@@ -72,7 +96,8 @@ class _ResultadosIAViewState extends State<ResultadosIAView> {
                             ),
                           ],
                         ),
-                        const Divider(height: 20),
+                        const Divider(height: 25),
+                        // --- RESULTADOS DEL DIAGNÓSTICO ---
                         Text("Diagnóstico: ${res['etiqueta']}", style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black87)),
                         const SizedBox(height: 5),
                         Text("Promedio General: ${res['promedio_general']}", style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey)),

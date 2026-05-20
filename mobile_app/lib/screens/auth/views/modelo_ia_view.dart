@@ -30,7 +30,7 @@ class _ModeloIAViewState extends State<ModeloIAView> {
   bool _isPredicting = false;
   bool _isSearching = false; 
   bool _canSave = false;
-  bool _isSaving = false; // Nuevo estado para el botón de guardar
+  bool _isSaving = false; 
 
   final Map<int, Color> _coloresNivel = {
     1: const Color(0xFFFF6B6B), 2: const Color(0xFFFFD93D),
@@ -38,6 +38,7 @@ class _ModeloIAViewState extends State<ModeloIAView> {
   };
 
   void _limpiarCampos() {
+    if (_isPredicting || _isSearching || _isSaving) return; 
     setState(() {
       _idController.clear();
       _mem.clear(); _mat.clear(); _gra.clear(); _ing.clear();
@@ -107,7 +108,7 @@ class _ModeloIAViewState extends State<ModeloIAView> {
           "geografia": _adaptarEscala(_geo.text), "arte": _adaptarEscala(_art.text),
           "ciencia": _adaptarEscala(_cie.text), "logica": _adaptarEscala(_log.text),
         })
-      );
+      ).timeout(const Duration(seconds: 15)); 
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -124,9 +125,13 @@ class _ModeloIAViewState extends State<ModeloIAView> {
           _colorResultado = _coloresNivel[_rangoObtenido] ?? Colors.grey;
           _canSave = true;
         });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("❌ Error en el servidor de IA"), backgroundColor: Colors.red));
+        setState(() => _resultadoIA = "Error del servidor");
       }
     } catch (e) {
-      setState(() => _resultadoIA = "Error de conexión");
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("❌ No se pudo conectar con el servidor"), backgroundColor: Colors.red));
+      setState(() => _resultadoIA = "Sin conexión");
     }
     setState(() => _isPredicting = false);
   }
@@ -135,7 +140,7 @@ class _ModeloIAViewState extends State<ModeloIAView> {
     final uId = int.tryParse(_idController.text);
     if (uId == null || _rangoObtenido == null) return;
 
-    setState(() => _isSaving = true); // Inicia el estado de carga
+    setState(() => _isSaving = true); 
 
     bool exito = await GameDbService.guardarResultadoKNN(
       userId: uId, 
@@ -150,11 +155,13 @@ class _ModeloIAViewState extends State<ModeloIAView> {
       backgroundColor: exito ? Colors.green : Colors.red,
     ));
 
-    setState(() => _isSaving = false); // Termina el estado de carga
+    setState(() => _isSaving = false); 
   }
 
   @override
   Widget build(BuildContext context) {
+    bool isUIBlocked = _isPredicting || _isSearching || _isSaving;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -165,8 +172,8 @@ class _ModeloIAViewState extends State<ModeloIAView> {
               const SizedBox(width: 10),
               _isSearching
                   ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)))
-                  : IconButton(onPressed: _buscarCalificaciones, icon: const Icon(Icons.search, color: Colors.blue, size: 28)),
-              IconButton(onPressed: _limpiarCampos, icon: const Icon(Icons.refresh, color: Colors.orange, size: 28)),
+                  : IconButton(onPressed: isUIBlocked ? null : _buscarCalificaciones, icon: Icon(Icons.search, color: isUIBlocked ? Colors.grey : Colors.blue, size: 28)),
+              IconButton(onPressed: isUIBlocked ? null : _limpiarCampos, icon: Icon(Icons.refresh, color: isUIBlocked ? Colors.grey : Colors.orange, size: 28)),
             ],
           ),
           const Divider(height: 30, thickness: 2),
@@ -176,7 +183,6 @@ class _ModeloIAViewState extends State<ModeloIAView> {
             crossAxisCount: 2, shrinkWrap: true, crossAxisSpacing: 10, mainAxisSpacing: 10,
             childAspectRatio: 2.2, physics: const NeverScrollableScrollPhysics(),
             children: [
-              // Todos estos campos ahora tienen isReadOnly: true por defecto según la función modificada
               _buildInput("Memoria", _mem, Icons.psychology), _buildInput("Mate", _mat, Icons.calculate),
               _buildInput("Gramática", _gra, Icons.spellcheck), _buildInput("Inglés", _ing, Icons.translate),
               _buildInput("Geo", _geo, Icons.public), _buildInput("Arte", _art, Icons.palette),
@@ -189,7 +195,7 @@ class _ModeloIAViewState extends State<ModeloIAView> {
               backgroundColor: const Color(0xFF48CAE4), minimumSize: const Size(double.infinity, 55),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
-            onPressed: _isPredicting ? null : _analizarRendimiento,
+            onPressed: isUIBlocked ? null : _analizarRendimiento,
             icon: _isPredicting ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.auto_awesome, color: Colors.white),
             label: Text("DIAGNOSTICAR CON IA", style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
@@ -199,9 +205,12 @@ class _ModeloIAViewState extends State<ModeloIAView> {
             duration: const Duration(milliseconds: 500),
             width: double.infinity, padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _canSave ? _colorResultado.withOpacity(0.1) : (widget.isDarkMode ? Colors.white10 : Colors.grey.shade100),
+              color: widget.isDarkMode ? const Color(0xFF1E1E2C) : Colors.white,
               borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: _canSave ? _colorResultado : Colors.transparent, width: 2)
+              boxShadow: [
+                BoxShadow(color: _canSave ? _colorResultado.withOpacity(0.3) : Colors.black12, blurRadius: 15, offset: const Offset(0, 5))
+              ],
+              border: Border.all(color: _canSave ? _colorResultado.withOpacity(0.5) : Colors.transparent, width: 2)
             ),
             child: Column(
               children: [
@@ -212,17 +221,20 @@ class _ModeloIAViewState extends State<ModeloIAView> {
                 if (_canSave) ...[
                   const SizedBox(height: 10),
                   Text("Promedio General: ${_promedioObtenido?.toStringAsFixed(1) ?? '0.0'}", style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black87)),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 15),
                   Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: _colorResultado.withOpacity(0.2), borderRadius: BorderRadius.circular(15)),
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(color: _colorResultado.withOpacity(0.15), borderRadius: BorderRadius.circular(15)),
                     child: Text(_recomendacion, textAlign: TextAlign.center, style: GoogleFonts.nunito(fontStyle: FontStyle.italic, color: widget.isDarkMode ? Colors.white : Colors.black87)),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
                   const Divider(),
-                  Text("Top 3 Niveles Probables:", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 10),
-                  _buildTopProbabilidadesWidget(), // Llamada a la nueva función de visualización
+                  Text("Desglose de Probabilidades:", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 15),
+                  // Aquí iteramos sobre el diccionario, lo ordenamos de mayor a menor probabilidad y lo mapeamos a las barras
+                  ...(_probabilidades.entries.toList()..sort((a, b) => (b.value as num).compareTo(a.value as num)))
+                      .map((e) => _buildBarraProbabilidad(e.key, (e.value as num).toDouble())),
                 ]
               ],
             ),
@@ -243,51 +255,41 @@ class _ModeloIAViewState extends State<ModeloIAView> {
     );
   }
 
-  // Nueva función para mostrar un Top 3 limpio de las probabilidades de la IA
-  Widget _buildTopProbabilidadesWidget() {
-    if (_probabilidades.isEmpty) return const SizedBox();
-
-    // Ordenar el diccionario de probabilidades de mayor a menor y tomar el Top 3
-    var sortedEntries = _probabilidades.entries.toList()
-      ..sort((a, b) => (b.value as num).compareTo(a.value as num));
-    var top3 = sortedEntries.take(3).toList();
-
-    return Column(
-      children: top3.map((e) {
-        double valor = (e.value as num).toDouble();
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-          decoration: BoxDecoration(
-            color: widget.isDarkMode ? Colors.black12 : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+  // Diseño pulido y moderno de las barras de progreso
+  Widget _buildBarraProbabilidad(String etiqueta, double valor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 95, 
+            child: Text(etiqueta, style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w700, color: widget.isDarkMode ? Colors.white70 : Colors.black87))
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(e.key, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: widget.isDarkMode ? Colors.white70 : Colors.black87)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _colorResultado.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text("${valor.toStringAsFixed(1)}%", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _colorResultado)),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: valor / 100, 
+                minHeight: 12,
+                backgroundColor: widget.isDarkMode ? Colors.white10 : Colors.grey.shade200, 
+                valueColor: AlwaysStoppedAnimation<Color>(_colorResultado),
               ),
-            ],
+            ),
           ),
-        );
-      }).toList(),
+          SizedBox(
+            width: 60, 
+            child: Text("${valor.toStringAsFixed(1)}%", textAlign: TextAlign.right, style: GoogleFonts.fredoka(fontSize: 13, fontWeight: FontWeight.w600, color: widget.isDarkMode ? Colors.white : Colors.black54))
+          ),
+        ],
+      ),
     );
   }
 
-  // Modificación en el TextField: Se agregó el parámetro readOnly (por defecto true para los de calificación)
   Widget _buildInput(String label, TextEditingController controller, IconData icon, {bool isId = false, bool isReadOnly = true}) {
     return TextField(
       controller: controller, 
       keyboardType: TextInputType.number,
-      readOnly: isReadOnly, // Controla si el usuario puede escribir
+      readOnly: isReadOnly, 
       inputFormatters: [LengthLimitingTextInputFormatter(isId ? 4 : 2)], 
       style: TextStyle(
         color: isReadOnly ? Colors.grey : (widget.isDarkMode ? Colors.white : Colors.black), 
@@ -297,7 +299,6 @@ class _ModeloIAViewState extends State<ModeloIAView> {
         prefixIcon: Icon(icon, size: 20, color: isId ? const Color(0xFF48CAE4) : Colors.grey),
         labelText: label, labelStyle: GoogleFonts.nunito(fontSize: 14, color: Colors.grey),
         filled: true, 
-        // Si es de solo lectura, le damos un fondo un poco más oscuro para que se note
         fillColor: isId ? const Color(0xFF48CAE4).withOpacity(0.05) : (widget.isDarkMode ? Colors.white10 : Colors.grey.shade200),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: isReadOnly ? Colors.transparent : const Color(0xFF48CAE4), width: 1.5)),
