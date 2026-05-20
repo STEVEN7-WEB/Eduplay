@@ -135,20 +135,69 @@ class GameDbService {
     }
   }
 
+  // --- NUEVA FUNCIÓN: Obtiene y agrupa las calificaciones de la tabla 'scores' ---
+  static Future<Map<String, dynamic>?> obtenerCalificacionesUsuario(int userId) async {
+    try {
+      final connection = await DbCore.conectar();
+      
+      final result = await connection.execute(
+        Sql.named('SELECT subject, points FROM scores WHERE user_id = @id'),
+        parameters: {'id': userId},
+      );
+      await connection.close();
+
+      if (result.isNotEmpty) {
+        Map<String, dynamic> calificaciones = {};
+        
+        // Convertimos las filas separadas en un solo mapa adaptado a la vista
+        for (final row in result) {
+          String subjectStr = row[0].toString().toLowerCase();
+          int points = row[1] as int;
+          
+          if (subjectStr.contains('memoria')) calificaciones['memoria'] = points;
+          else if (subjectStr.contains('mate')) calificaciones['matematicas'] = points;
+          else if (subjectStr.contains('gram')) calificaciones['gramatica'] = points;
+          else if (subjectStr.contains('ing')) calificaciones['ingles'] = points;
+          else if (subjectStr.contains('geo')) calificaciones['geografia'] = points;
+          else if (subjectStr.contains('arte')) calificaciones['arte'] = points;
+          else if (subjectStr.contains('cie')) calificaciones['ciencia'] = points;
+          else if (subjectStr.contains('log') || subjectStr.contains('lóg')) calificaciones['logica'] = points;
+          else calificaciones[subjectStr] = points;
+        }
+        return calificaciones;
+      }
+      return null;
+    } catch (e) {
+      print('Error obteniendo calificaciones: $e');
+      return null;
+    }
+  }
+
+  // --- FUNCIÓN ACTUALIZADA: Ahora guarda el promedio y la recomendación ---
   static Future<bool> guardarResultadoKNN({
     required int userId,
     required int rango,
     required String etiqueta,
+    required double promedioGeneral, 
+    required String recomendacion,   
   }) async {
     try {
       final connection = await DbCore.conectar();
       
+      // Se agregaron los nuevos campos al INSERT INTO basándose en la estructura de tu BD
       await connection.execute(
-        Sql.named('INSERT INTO knn_results (user_id, rango, etiqueta, generado_en) VALUES (@user_id, @rango, @etiqueta, CURRENT_TIMESTAMP)'),
+        Sql.named('''
+          INSERT INTO knn_results 
+          (user_id, rango, etiqueta, promedio_general, recomendacion, generado_en) 
+          VALUES 
+          (@user_id, @rango, @etiqueta, @promedio_general, @recomendacion, CURRENT_TIMESTAMP)
+        '''),
         parameters: {
           'user_id': userId,
           'rango': rango,
           'etiqueta': etiqueta,
+          'promedio_general': promedioGeneral,
+          'recomendacion': recomendacion,
         },
       );
       
@@ -157,6 +206,37 @@ class GameDbService {
     } catch (e) {
       print('Error al guardar resultado KNN: $e');
       return false;
+    }
+  }
+
+  // --- NUEVA FUNCIÓN: Extrae todos los resultados KNN para el panel de admin ---
+  static Future<List<Map<String, dynamic>>> obtenerTodosResultadosKNN() async {
+    try {
+      final connection = await DbCore.conectar();
+      
+      // Extraemos la información ordenando desde el diagnóstico más reciente al más viejo
+      final result = await connection.execute(
+        Sql.named('''
+          SELECT user_id, rango, etiqueta, promedio_general, recomendacion, generado_en 
+          FROM knn_results 
+          ORDER BY generado_en DESC
+        ''')
+      );
+      
+      await connection.close();
+
+      return result.map((row) => {
+        'user_id': row[0] as int,
+        'rango': row[1] as int,
+        'etiqueta': row[2].toString(),
+        'promedio_general': row[3],
+        'recomendacion': row[4].toString(),
+        'fecha': row[5],
+      }).toList();
+      
+    } catch (e) {
+      print('Error al obtener el historial KNN: $e');
+      return [];
     }
   }
 }

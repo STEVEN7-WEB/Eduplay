@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
-import '../../services/neon_db/admin_db_service.dart';
 import '../../services/neon_db/auth_db_service.dart';
-// Importa las nuevas vistas
+
+// Importa las vistas
 import 'views/usuarios_view.dart';
 import 'views/preguntas_view.dart';
 import 'views/modelo_ia_view.dart';
+import 'views/resultados_ia_view.dart'; // <-- Nuestra nueva vista
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -19,7 +20,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _currentIndex = 0;
 
   void _cerrarSesion() async {
-    // Aquí está la magia: Usar AuthDbService en lugar de AdminDbService
     await AuthDbService.cerrarSesion();
     if (mounted) {
       Navigator.pushAndRemoveUntil(
@@ -34,10 +34,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDarkMode ? const Color(0xFF151522) : const Color(0xFFF4F6F9);
 
+    // Agregamos la nueva pantalla a la lista
     final List<Widget> pantallas = [
       UsuariosView(isDarkMode: isDarkMode),
       PreguntasView(isDarkMode: isDarkMode),
       ModeloIAView(isDarkMode: isDarkMode),
+      ResultadosIAView(isDarkMode: isDarkMode), // <-- Nueva pestaña en la posición 3
     ];
 
     return Scaffold(
@@ -60,12 +62,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: isDarkMode ? const Color(0xFF222232) : Colors.white,
         selectedItemColor: const Color(0xFF48CAE4),
         unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed, // Asegura que se vean los 4 íconos
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.people_alt_rounded), label: "Usuarios"),
           BottomNavigationBarItem(icon: Icon(Icons.library_books_rounded), label: "Preguntas"),
           BottomNavigationBarItem(icon: Icon(Icons.psychology_rounded), label: "Modelo IA"),
+          BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: "Resultados"), // <-- Nuevo botón
         ],
       ),
     );

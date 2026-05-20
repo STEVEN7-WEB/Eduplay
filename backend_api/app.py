@@ -9,14 +9,16 @@ import numpy as np
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 
-# Buscamos 'modelo_ia' dentro de 'backend_api'
-MODEL_PATH = os.path.join(BASE_DIR, 'modelo_ia', 'knn_eduplay_model.pkl')
+# IMPORTANTE: Asegúrate de que estos dos archivos existan en esta ruta.
+# Si los archivos .pkl se guardaron en la raíz de backend_api, usa estas rutas:
+MODEL_PATH = os.path.join(BASE_DIR, 'modelo_knn.pkl')
+SCALER_PATH = os.path.join(BASE_DIR, 'scaler_eduplay.pkl')
 
 print(f"🔍 Buscando modelo en: {MODEL_PATH}")
-if os.path.exists(MODEL_PATH):
-    print("✅ ¡Archivo encontrado!")
+if os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH):
+    print("✅ ¡Archivos del modelo y scaler encontrados!")
 else:
-    print("❌ El archivo NO está en esa ruta. Revisa el nombre.")
+    print("❌ ADVERTENCIA: Faltan archivos .pkl en la ruta. Revisa los nombres y ubicación.")
 
 FRONT_STATIC = os.path.join(BASE_DIR, 'frontend_web', 'static')
 FRONT_TEMPLATES = os.path.join(BASE_DIR, 'frontend_web', 'templates')
@@ -37,45 +39,51 @@ app.register_blueprint(usuarios_bp, url_prefix='/api')
 app.register_blueprint(actividades_bp, url_prefix='/api')
 app.register_blueprint(rutas_juego, url_prefix='/api/juegos')
 
-# --- CARGA DEL MODELO IA ---
+# --- CARGA DEL MODELO IA Y SCALER ---
 try:
     modelo_knn = joblib.load(MODEL_PATH)
-    print("✅ Cerebro IA cargado y listo.")
+    scaler = joblib.load(SCALER_PATH)
+    print("✅ Cerebro IA y Traductor (Scaler) cargados y listos.")
 except Exception as e:
-    print(f"⚠️ Error al cargar el modelo KNN: {e}")
+    print(f"⚠️ Error al cargar la IA: {e}")
     modelo_knn = None
+    scaler = None
 
-# --- RUTA DE PREDICCIÓN ACTUALIZADA ---
+# --- RUTA DE PREDICCIÓN ACTUALIZADA Y CALIBRADA ---
 @app.route('/api/predict', methods=['POST'])
 def predict_knn():
-    if modelo_knn is None:
-        return jsonify({'error': 'Modelo no cargado en el servidor'}), 500
+    if modelo_knn is None or scaler is None:
+        return jsonify({'error': 'Modelo o Scaler no cargados en el servidor'}), 500
         
     try:
         data = request.json
         
-        # 1. Extraer SOLAMENTE las 8 calificaciones
+        # 1. Extraer SOLAMENTE las 8 calificaciones enviadas por Flutter
         features = [
-            int(data.get('memoria', 0)),
-            int(data.get('matematicas', 0)),
-            int(data.get('gramatica', 0)),
-            int(data.get('ingles', 0)),
-            int(data.get('geografia', 0)),
-            int(data.get('arte', 0)),
-            int(data.get('ciencia', 0)),
-            int(data.get('logica', 0))
+            float(data.get('memoria', 0)),
+            float(data.get('matematicas', 0)),
+            float(data.get('gramatica', 0)),
+            float(data.get('ingles', 0)),
+            float(data.get('geografia', 0)),
+            float(data.get('arte', 0)),
+            float(data.get('ciencia', 0)),
+            float(data.get('logica', 0))
         ]
         
+        # Convertimos la lista a un arreglo de numpy para scikit-learn
         input_data = np.array(features).reshape(1, -1)
         
-        # 2. Hacer las predicciones y obtener probabilidades
-        prediccion_num = int(modelo_knn.predict(input_data)[0])
-        probabilidades = modelo_knn.predict_proba(input_data)[0]
+        # 2. ESCALAMOS LOS DATOS (¡El paso crucial para la precisión!)
+        features_scaled = scaler.transform(input_data)
         
-        # 3. Calcular el promedio
+        # 3. Hacer las predicciones y obtener probabilidades con los datos escalados
+        prediccion_num = int(modelo_knn.predict(features_scaled)[0])
+        probabilidades = modelo_knn.predict_proba(features_scaled)[0]
+        
+        # 4. Calcular el promedio original
         promedio = sum(features) / len(features)
         
-        # 4. Mapeo de datos (Etiquetas, Emojis y Recomendaciones)
+        # 5. Mapeo de datos (Etiquetas, Emojis y Recomendaciones)
         etiquetas = {1: "Crítico", 2: "En Desarrollo", 3: "Básico", 4: "Competente", 5: "Excelente"}
         emojis = {1: "🔴", 2: "🟠", 3: "🟡", 4: "🟢", 5: "🏆"}
         consejos = {
@@ -86,11 +94,11 @@ def predict_knn():
             5: 'Desempeño sobresaliente. ¡Listo para nuevos desafíos avanzados!'
         }
         
-        # 5. Formatear las probabilidades
+        # 6. Formatear las probabilidades para que encajen con los nombres
         clases = modelo_knn.classes_
-        prob_dict = {etiquetas[c]: round(p * 100, 2) for c, p in zip(clases, probabilidades)}
+        prob_dict = {etiquetas[c]: round(float(p) * 100, 2) for c, p in zip(clases, probabilidades)}
         
-        # 6. Retornar TODO al Dashboard
+        # 7. Retornar TODO a Flutter
         return jsonify({
             'rango': prediccion_num,
             'etiqueta': etiquetas.get(prediccion_num, "Desconocido"),
