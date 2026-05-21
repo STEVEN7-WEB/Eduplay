@@ -52,6 +52,7 @@ header {
     width: 170px;
     height: 170px; /* Obliga a que sea cuadrada */
     object-fit: cover; /* Evita que se estire o deforme */
+    border-radius: 10%; /* La convierte en un círculo perfecto */
     margin-bottom: 15px; /* Da un poco de espacio hacia el título */
     border: 2px solid rgba(255, 255, 255, 0.15); /* Borde sutil */
     filter: drop-shadow(0 0 20px rgba(189, 43, 241, 0.6)); /* Brillo exterior */
