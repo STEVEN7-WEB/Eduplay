@@ -31,7 +31,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     });
 
     if (email.isNotEmpty) {
-      // Usamos el correo para traer SOLO a los hijos de este papá/mamá
       final estudiantesDb = await UserDbService.obtenerEstudiantesDelPadre(email);
       
       if (mounted) {
@@ -57,7 +56,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     }
   }
 
-  // --- MODAL PARA VER EL PROGRESO DEL NIÑO ---
+  // --- MODAL PARA VER EL PROGRESO Y RESULTADO KNN DEL NIÑO ---
   void _mostrarDetallesDelNino(int studentId, String nombre, String avatarPath) async {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
@@ -72,7 +71,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             
-            // Extrae estadísticas específicas de este niño desde DB
+            // Extrae estadísticas y resultados KNN específicos de este niño desde DB
             Future<Map<String, dynamic>?> fetchStats() async {
               return await UserDbService.obtenerResumenActividad(studentId);
             }
@@ -81,17 +80,24 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               future: fetchStats(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SizedBox(
-                    height: 300,
-                    child: Center(child: CircularProgressIndicator(color: const Color(0xFF48CAE4))),
+                  return const SizedBox(
+                    height: 350,
+                    child: Center(child: CircularProgressIndicator(color: Color(0xFF48CAE4))),
                   );
                 }
 
-                final stats = snapshot.data;
-                final misiones = stats?['total_misiones'] ?? 0;
-                final materiaTop = (stats?['materia_top'] == null || stats!['materia_top'].isEmpty) 
-                                    ? "Aún por descubrir" 
+                final stats = snapshot.data ?? {};
+                
+                // Mapeo de datos básicos
+                final misiones = stats['total_misiones'] ?? 0;
+                final materiaTop = (stats['materia_top'] == null || stats['materia_top'].toString().isEmpty) 
+                                    ? "Por descubrir" 
                                     : stats['materia_top'];
+                
+                // --- DATOS DEL KNN DESDE LA DB ---
+                final resultadoKnn = stats['knn_resultado'] ?? "Analizando datos..."; 
+                final promedioKnn = stats['knn_promedio'] ?? "N/A"; 
+                final recomendacionKnn = stats['knn_recomendacion'] ?? "Juega más misiones para evaluar."; 
 
                 return Container(
                   padding: const EdgeInsets.all(30),
@@ -110,12 +116,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       ),
                       const SizedBox(height: 15),
                       Text(
-                        "Progreso de $nombre", 
+                        "Expediente de $nombre", 
                         textAlign: TextAlign.center,
                         style: GoogleFonts.fredoka(fontSize: 24, fontWeight: FontWeight.bold, color: textColor)
                       ),
                       const SizedBox(height: 25),
                       
+                      // Fila 1: Estadísticas Básicas
                       Row(
                         children: [
                           Expanded(child: _buildStatCard("Exámenes", misiones.toString(), Icons.rocket_launch_rounded, const Color(0xFF9D4EDD), isDarkMode)),
@@ -123,12 +130,69 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           Expanded(child: _buildStatCard("Materia Top", materiaTop, Icons.star_rounded, const Color(0xFFFFD93D), isDarkMode)),
                         ],
                       ),
+                      const SizedBox(height: 15),
+
+                      // Tarjeta Especial: RESULTADO DE INTELIGENCIA ARTIFICIAL (KNN)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00F0FF).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.4), width: 1.5),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.psychology_rounded, color: Color(0xFF00F0FF), size: 28),
+                                const SizedBox(width: 10),
+                                Text(
+                                  "Análisis de IA (KNN)", 
+                                  style: GoogleFonts.fredoka(color: textColor, fontSize: 18, fontWeight: FontWeight.bold)
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              "Nivel de Aprendizaje Detectado:", 
+                              style: GoogleFonts.nunito(color: isDarkMode ? Colors.white70 : Colors.black54, fontSize: 13)
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              resultadoKnn.toString(), 
+                              style: GoogleFonts.fredoka(color: const Color(0xFF00F0FF), fontSize: 22, fontWeight: FontWeight.bold), 
+                              textAlign: TextAlign.center
+                            ),
+                            const SizedBox(height: 12),
+                            // Recomendación de la DB
+                            Text(
+                              recomendacionKnn.toString(),
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.nunito(color: isDarkMode ? Colors.white : Colors.black87, fontSize: 14, fontStyle: FontStyle.italic),
+                            ),
+                            const SizedBox(height: 15),
+                            // Fila de datos extra del KNN
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.analytics_outlined, color: Colors.grey, size: 16),
+                                const SizedBox(width: 5),
+                                Text("Promedio general: $promedioKnn", style: GoogleFonts.nunito(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
+                              ],
+                            )
+                          ],
+                        )
+                      ),
+                      
                       const SizedBox(height: 30),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF48CAE4),
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                          elevation: 0,
                         ),
                         onPressed: () => Navigator.pop(context),
                         child: Text("¡Entendido!", style: GoogleFonts.fredoka(color: const Color(0xFF151522), fontSize: 18, fontWeight: FontWeight.bold)),

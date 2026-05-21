@@ -138,7 +138,6 @@ class UserDbService {
         }
       }
 
-      // Mapeamos los puntajes individuales ya limpios para el HomeScreen
       final puntajesMateriasResult = await connection.execute(
         Sql.named('SELECT subject, points FROM scores WHERE user_id = @id'),
         parameters: {'id': userId},
@@ -151,12 +150,40 @@ class UserDbService {
         mapaPuntajes[materiaKey] = puntos;
       }
 
+      // ======================================================================
+      // 🧠 CONSULTA A LA INTELIGENCIA ARTIFICIAL (KNN)
+      // ======================================================================
+      final knnResultQuery = await connection.execute(
+        Sql.named('''
+          SELECT etiqueta, promedio_general, recomendacion 
+          FROM knn_results 
+          WHERE user_id = @id 
+          ORDER BY generado_en DESC 
+          LIMIT 1
+        '''),
+        parameters: {'id': userId},
+      );
+
+      String knnEtiqueta = "Aún sin analizar";
+      String knnPromedio = "N/A";
+      String knnRecomendacion = "Juega más misiones para que la IA detecte tu nivel.";
+
+      if (knnResultQuery.isNotEmpty) {
+        final row = knnResultQuery.first;
+        knnEtiqueta = row[0] != null ? row[0].toString() : "Aún sin analizar";
+        knnPromedio = row[1] != null ? "${row[1]} pts" : "N/A";
+        knnRecomendacion = row[2] != null ? row[2].toString() : "Sigue jugando para mejorar.";
+      }
+
       await connection.close();
 
       return {
         'total_misiones': totalMisiones,
         'materia_top': materiaTop, 
         'tabla_puntajes': mapaPuntajes, 
+        'knn_resultado': knnEtiqueta,
+        'knn_promedio': knnPromedio,
+        'knn_recomendacion': knnRecomendacion,
       };
     } catch (e) {
       print('Error al obtener resumen de actividad: $e');
@@ -200,7 +227,6 @@ class UserDbService {
         parameters: {'id': userId},
       );
 
-      // Inyecta el Logro ID 99 (Insignia de Prestigio)
       await connection.execute(
         Sql.named('INSERT INTO user_logros (user_id, logro_id) VALUES (@userId, 99) ON CONFLICT DO NOTHING'),
         parameters: {'userId': userId},
@@ -226,6 +252,54 @@ class UserDbService {
     } catch (e) {
       print('Error al eliminar cuenta desde perfil: $e');
       return false;
+    }
+  }
+
+  // ======================================================================
+  // 👨‍🏫 OBTENER TODOS LOS ALUMNOS PARA EL PANEL DE MAESTRO
+  // ======================================================================
+  static Future<List<Map<String, dynamic>>> obtenerTodosLosEstudiantesParaMaestro() async {
+    try {
+      final connection = await DbCore.conectar();
+      
+      final result = await connection.execute(
+        Sql.named('''
+          SELECT 
+            u.id, 
+            u.name, 
+            u.grade, 
+            u.avatar, 
+            u.estrellas,
+            (SELECT subject FROM scores WHERE user_id = u.id GROUP BY subject ORDER BY SUM(points) DESC LIMIT 1) as materia_top,
+            (SELECT etiqueta FROM knn_results WHERE user_id = u.id ORDER BY generado_en DESC LIMIT 1) as knn_etiqueta,
+            (SELECT promedio_general FROM knn_results WHERE user_id = u.id ORDER BY generado_en DESC LIMIT 1) as knn_promedio
+          FROM users u
+          ORDER BY u.grade ASC, u.name ASC
+        ''')
+      );
+      
+      await connection.close();
+
+      return result.map((row) {
+        String materia = row[5] != null ? row[5].toString() : 'Ninguna';
+        if(materia.isNotEmpty && materia != 'Ninguna'){
+          materia = materia[0].toUpperCase() + materia.substring(1).toLowerCase();
+        }
+
+        return {
+          'id': row[0] as int,
+          'name': row[1].toString(),
+          'grade': row[2] as int,
+          'avatar': row[3] != null ? row[3].toString() : 'assets/avatars/avatar1.png',
+          'estrellas': row[4] as int,
+          'materia_top': materia,
+          'knn_etiqueta': row[6] != null ? row[6].toString() : 'Sin evaluar',
+          'knn_promedio': row[7] != null ? row[7].toString() : 'N/A',
+        };
+      }).toList();
+    } catch (e) {
+      print('Error al obtener lista para el maestro: $e');
+      return [];
     }
   }
 }
