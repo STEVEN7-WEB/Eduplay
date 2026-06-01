@@ -14,9 +14,7 @@ class AuthDbService {
     int grado,
     String avatar,
   ) async {
-
     try {
-
       final connection = await DbCore.conectar();
 
       // Verificar nombre duplicado
@@ -32,8 +30,7 @@ class AuthDbService {
         return 'duplicate_name';
       }
 
-      final String passwordHasheado =
-          DbCore.hp(password);
+      final String passwordHasheado = DbCore.hp(password);
 
       // Crear usuario
       await connection.execute(
@@ -70,20 +67,9 @@ class AuthDbService {
       await connection.close();
 
       // Login automático
-      return await loginPorNombre(
-        nombre,
-        password,
-      );
-
+      return await loginPorNombre(nombre, password);
     } catch (e) {
-
-      if (
-        e.toString().contains('users_email_key') ||
-        e.toString().contains('23505')
-      ) {
-        return 'duplicate_email';
-      }
-
+      // Se eliminó la validación que atrapaba el error de correo duplicado
       print("Error registrando usuario: $e");
       return false;
     }
@@ -92,18 +78,10 @@ class AuthDbService {
   // =========================================================
   // 👦 LOGIN POR NOMBRE (ALUMNOS)
   // =========================================================
-  static Future<bool> loginPorNombre(
-    String nombre,
-    String pin,
-  ) async {
-
+  static Future<bool> loginPorNombre(String nombre, String pin) async {
     try {
-
-      final connection =
-          await DbCore.conectar();
-
-      final result =
-          await connection.execute(
+      final connection = await DbCore.conectar();
+      final result = await connection.execute(
         Sql.named('''
           SELECT
             id,
@@ -123,88 +101,35 @@ class AuthDbService {
       await connection.close();
 
       if (result.isNotEmpty) {
-
-        final String pinHasheadoIntento =
-            DbCore.hp(pin);
+        final String pinHasheadoIntento = DbCore.hp(pin);
 
         for (final row in result) {
+          final dbPassword = row[3].toString();
 
-          final dbPassword =
-              row[3].toString();
+          if (dbPassword == pinHasheadoIntento) {
+            final int userId = row[0] as int;
+            final int grado = row[1] != null ? row[1] as int : 1;
+            final String userName = row[2].toString();
+            final String userAvatar = row[4] != null ? row[4].toString() : 'assets/avatars/avatar1.png';
+            
+            // Aquí respetamos el rol que traiga (normalmente 'student')
+            final String userRole = row[5] != null ? row[5].toString() : 'student';
 
-          if (dbPassword ==
-              pinHasheadoIntento) {
-
-            final int userId =
-                row[0] as int;
-
-            final int grado =
-                row[1] != null
-                    ? row[1] as int
-                    : 1;
-
-            final String userName =
-                row[2].toString();
-
-            final String userAvatar =
-                row[4] != null
-                    ? row[4].toString()
-                    : 'assets/avatars/avatar1.png';
-
-            // 🚀 ROL REAL
-            final String userRole =
-                row[5] != null
-                    ? row[5].toString()
-                    : 'student';
-
-            final prefs =
-                await SharedPreferences
-                    .getInstance();
-
-            await prefs.setBool(
-              'sesion_iniciada',
-              true,
-            );
-
-            await prefs.setInt(
-              'id_usuario',
-              userId,
-            );
-
-            await prefs.setInt(
-              'grado_usuario',
-              grado,
-            );
-
-            await prefs.setString(
-              'userName',
-              userName,
-            );
-
-            await prefs.setString(
-              'userAvatar',
-              userAvatar,
-            );
-
-            // 🚀 IMPORTANTE
-            await prefs.setString(
-              'userRole',
-              userRole,
-            );
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('sesion_iniciada', true);
+            await prefs.setInt('id_usuario', userId);
+            await prefs.setInt('grado_usuario', grado);
+            await prefs.setString('userName', userName);
+            await prefs.setString('userAvatar', userAvatar);
+            await prefs.setString('userRole', userRole);
 
             return true;
           }
         }
       }
-
       return false;
-
     } catch (e) {
-
-      print(
-        'Error en loginPorNombre: $e',
-      );
-
+      print('Error en loginPorNombre: $e');
       return false;
     }
   }
@@ -212,18 +137,10 @@ class AuthDbService {
   // =========================================================
   // 👨‍🏫 LOGIN POR CORREO
   // =========================================================
-  static Future<bool> loginPorCorreo(
-    String email,
-    String password,
-  ) async {
-
+  static Future<bool> loginPorCorreo(String email, String password) async {
     try {
-
-      final connection =
-          await DbCore.conectar();
-
-      final result =
-          await connection.execute(
+      final connection = await DbCore.conectar();
+      final result = await connection.execute(
         Sql.named('''
           SELECT
             id,
@@ -243,92 +160,39 @@ class AuthDbService {
       await connection.close();
 
       if (result.isNotEmpty) {
-
-        final String passHasheadoIntento =
-            DbCore.hp(password);
+        final String passHasheadoIntento = DbCore.hp(password);
 
         for (final row in result) {
+          final dbPassword = row[3].toString();
 
-          final dbPassword =
-              row[3].toString();
+          if (dbPassword == passHasheadoIntento) {
+            final int userId = row[0] as int;
+            final int grado = row[1] != null ? row[1] as int : 1;
+            final String userName = row[2].toString();
+            final String userAvatar = row[4] != null ? row[4].toString() : 'assets/avatars/avatar1.png';
+            
+            // 🚀 MODIFICACIÓN CLAVE:
+            String dbRole = row[5] != null ? row[5].toString() : 'student';
+            if (dbRole == 'student') {
+              dbRole = 'parent';
+            }
 
-          if (dbPassword ==
-              passHasheadoIntento) {
-
-            final int userId =
-                row[0] as int;
-
-            final int grado =
-                row[1] != null
-                    ? row[1] as int
-                    : 1;
-
-            final String userName =
-                row[2].toString();
-
-            final String userAvatar =
-                row[4] != null
-                    ? row[4].toString()
-                    : 'assets/avatars/avatar1.png';
-
-            final String dbRole =
-                row[5] != null
-                    ? row[5].toString()
-                    : 'student';
-
-            final prefs =
-                await SharedPreferences
-                    .getInstance();
-
-            await prefs.setBool(
-              'sesion_iniciada',
-              true,
-            );
-
-            await prefs.setInt(
-              'id_usuario',
-              userId,
-            );
-
-            await prefs.setInt(
-              'grado_usuario',
-              grado,
-            );
-
-            await prefs.setString(
-              'userName',
-              userName,
-            );
-
-            await prefs.setString(
-              'userAvatar',
-              userAvatar,
-            );
-
-            await prefs.setString(
-              'parentEmail',
-              email.toLowerCase(),
-            );
-
-            // 🚀 IMPORTANTE
-            await prefs.setString(
-              'userRole',
-              dbRole,
-            );
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('sesion_iniciada', true);
+            await prefs.setInt('id_usuario', userId);
+            await prefs.setInt('grado_usuario', grado);
+            await prefs.setString('userName', userName);
+            await prefs.setString('userAvatar', userAvatar);
+            await prefs.setString('parentEmail', email.toLowerCase());
+            await prefs.setString('userRole', dbRole);
 
             return true;
           }
         }
       }
-
       return false;
-
     } catch (e) {
-
-      print(
-        'Error en loginPorCorreo: $e',
-      );
-
+      print('Error en loginPorCorreo: $e');
       return false;
     }
   }
@@ -337,29 +201,17 @@ class AuthDbService {
   // 🚪 CERRAR SESIÓN
   // =========================================================
   static Future<void> cerrarSesion() async {
-
-    final prefs =
-        await SharedPreferences
-            .getInstance();
-
+    final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
 
   // =========================================================
   // 📧 OBTENER CORREO
   // =========================================================
-  static Future<String?>
-      obtenerCorreoDeUsuario(
-    String identificador,
-  ) async {
-
+  static Future<String?> obtenerCorreoDeUsuario(String identificador) async {
     try {
-
-      final connection =
-          await DbCore.conectar();
-
-      bool esCorreo =
-          identificador.contains('@');
+      final connection = await DbCore.conectar();
+      bool esCorreo = identificador.contains('@');
 
       String query = esCorreo
           ? """
@@ -376,8 +228,7 @@ class AuthDbService {
             LIMIT 1
           """;
 
-      final result =
-          await connection.execute(
+      final result = await connection.execute(
         Sql.named(query),
         parameters: {
           'id': identificador,
@@ -387,18 +238,11 @@ class AuthDbService {
       await connection.close();
 
       if (result.isNotEmpty) {
-        return result.first[0]
-            .toString();
+        return result.first[0].toString();
       }
-
       return null;
-
     } catch (e) {
-
-      print(
-        "Error obteniendo correo: $e",
-      );
-
+      print("Error obteniendo correo: $e");
       return null;
     }
   }
@@ -406,22 +250,11 @@ class AuthDbService {
   // =========================================================
   // 🔐 ACTUALIZAR PASSWORD
   // =========================================================
-  static Future<bool>
-      actualizarPassword(
-    String identificador,
-    String nuevaPassword,
-  ) async {
-
+  static Future<bool> actualizarPassword(String identificador, String nuevaPassword) async {
     try {
-
-      final connection =
-          await DbCore.conectar();
-
-      final passHasheado =
-          DbCore.hp(nuevaPassword);
-
-      bool esCorreo =
-          identificador.contains('@');
+      final connection = await DbCore.conectar();
+      final passHasheado = DbCore.hp(nuevaPassword);
+      bool esCorreo = identificador.contains('@');
 
       String query = esCorreo
           ? """
@@ -445,15 +278,9 @@ class AuthDbService {
       );
 
       await connection.close();
-
       return true;
-
     } catch (e) {
-
-      print(
-        "Error actualizando password: $e",
-      );
-
+      print("Error actualizando password: $e");
       return false;
     }
   }

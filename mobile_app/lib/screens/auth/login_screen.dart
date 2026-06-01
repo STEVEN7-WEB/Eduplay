@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,14 +23,11 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _identificadorController =
       TextEditingController();
-
-  final TextEditingController _passController =
-      TextEditingController();
+  final TextEditingController _passController = TextEditingController();
 
   bool _isLoading = false;
   bool _isParentOrAdminMode = false;
@@ -69,51 +65,30 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _toggleTheme() async {
     final prefs = await SharedPreferences.getInstance();
-
-    final isDarkMode =
-        Theme.of(context).brightness == Brightness.dark;
-
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final newMode = !isDarkMode;
 
-    themeNotifier.value =
-        newMode ? ThemeMode.dark : ThemeMode.light;
-
+    themeNotifier.value = newMode ? ThemeMode.dark : ThemeMode.light;
     await prefs.setBool('isDarkMode', newMode);
   }
 
   @override
   Widget build(BuildContext context) {
-
-    final isDarkMode =
-        Theme.of(context).brightness == Brightness.dark;
-
-    final bgColor = isDarkMode
-        ? const Color(0xFF0D0D1A)
-        : const Color(0xFFF4F6F9);
-
-    final textColor = isDarkMode
-        ? Colors.white
-        : const Color(0xFF1E1E2E);
-
-    final subtitleColor = isDarkMode
-        ? const Color(0xFF48CAE4)
-        : const Color(0xFF0096C7);
-
-    final cardColor = isDarkMode
-        ? const Color(0xFF222232)
-        : Colors.white;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode ? const Color(0xFF0D0D1A) : const Color(0xFFF4F6F9);
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF1E1E2E);
+    final subtitleColor = isDarkMode ? const Color(0xFF48CAE4) : const Color(0xFF0096C7);
+    final cardColor = isDarkMode ? const Color(0xFF222232) : Colors.white;
 
     return Scaffold(
       backgroundColor: bgColor,
       body: Stack(
         children: [
-
           AnimatedBuilder(
             animation: _pulseController,
             builder: (context, child) {
               return Stack(
                 children: [
-
                   Positioned(
                     top: -100 + (_floatAnimation.value * 2),
                     left: -100,
@@ -125,16 +100,13 @@ class _LoginScreenState extends State<LoginScreen>
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFF9D4EDD)
-                                .withOpacity(
-                                  isDarkMode ? 0.3 : 0.15,
-                                ),
+                                .withOpacity(isDarkMode ? 0.3 : 0.15),
                             blurRadius: 150,
                           )
                         ],
                       ),
                     ),
                   ),
-
                   Positioned(
                     bottom: -100 - (_floatAnimation.value * 2),
                     right: -50,
@@ -146,9 +118,7 @@ class _LoginScreenState extends State<LoginScreen>
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFF48CAE4)
-                                .withOpacity(
-                                  isDarkMode ? 0.25 : 0.15,
-                                ),
+                                .withOpacity(isDarkMode ? 0.25 : 0.15),
                             blurRadius: 150,
                           )
                         ],
@@ -159,40 +129,29 @@ class _LoginScreenState extends State<LoginScreen>
               );
             },
           ),
-
           SafeArea(
             child: Column(
               children: [
-
                 Align(
                   alignment: Alignment.topRight,
                   child: Container(
-                    margin: const EdgeInsets.only(
-                      right: 20,
-                      top: 10,
-                    ),
+                    margin: const EdgeInsets.only(right: 20, top: 10),
                     decoration: BoxDecoration(
                       color: cardColor.withOpacity(0.8),
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isDarkMode
-                            ? const Color(0xFFFFD93D)
-                                .withOpacity(0.5)
-                            : const Color(0xFF5E60CE)
-                                .withOpacity(0.5),
+                            ? const Color(0xFFFFD93D).withOpacity(0.5)
+                            : const Color(0xFF5E60CE).withOpacity(0.5),
                         width: 1.5,
                       ),
                     ),
                     child: IconButton(
                       onPressed: _toggleTheme,
                       icon: AnimatedSwitcher(
-                        duration:
-                            const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 300),
                         transitionBuilder: (child, anim) =>
-                            RotationTransition(
-                          turns: anim,
-                          child: child,
-                        ),
+                            RotationTransition(turns: anim, child: child),
                         child: Icon(
                           isDarkMode
                               ? Icons.light_mode_rounded
@@ -207,28 +166,20 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                 ),
-
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-
                             AnimatedBuilder(
                               animation: _floatAnimation,
                               builder: (context, child) {
                                 return Transform.translate(
-                                  offset: Offset(
-                                    0,
-                                    _floatAnimation.value,
-                                  ),
+                                  offset: Offset(0, _floatAnimation.value),
                                   child: Container(
                                     height: 130,
                                     width: 130,
@@ -236,16 +187,14 @@ class _LoginScreenState extends State<LoginScreen>
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color:
-                                              const Color(0xFF9D4EDD)
-                                                  .withOpacity(0.4),
+                                          color: const Color(0xFF9D4EDD)
+                                              .withOpacity(0.4),
                                           blurRadius: 25,
                                           spreadRadius: 2,
                                         )
                                       ],
                                       border: Border.all(
-                                        color:
-                                            const Color(0xFF9D4EDD),
+                                        color: const Color(0xFF9D4EDD),
                                         width: 3,
                                       ),
                                     ),
@@ -253,15 +202,9 @@ class _LoginScreenState extends State<LoginScreen>
                                       child: Image.asset(
                                         'assets/images/app_icon.png',
                                         fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (
-                                              context,
-                                              error,
-                                              stackTrace,
-                                            ) =>
-                                                const Icon(
-                                          Icons
-                                              .rocket_launch_rounded,
+                                        errorBuilder: (context, error, stack) =>
+                                            const Icon(
+                                          Icons.rocket_launch_rounded,
                                           size: 60,
                                           color: Colors.white,
                                         ),
@@ -271,19 +214,14 @@ class _LoginScreenState extends State<LoginScreen>
                                 );
                               },
                             ),
-
                             const SizedBox(height: 25),
-
                             AnimatedSwitcher(
-                              duration:
-                                  const Duration(milliseconds: 300),
+                              duration: const Duration(milliseconds: 300),
                               child: Text(
                                 _isParentOrAdminMode
                                     ? "¡ACCESO ESPECIAL!"
                                     : "¡HOLA!",
-                                key: ValueKey(
-                                  _isParentOrAdminMode,
-                                ),
+                                key: ValueKey(_isParentOrAdminMode),
                                 style: GoogleFonts.fredoka(
                                   color: textColor,
                                   fontSize: 36,
@@ -292,17 +230,13 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                             ),
-
                             AnimatedSwitcher(
-                              duration:
-                                  const Duration(milliseconds: 300),
+                              duration: const Duration(milliseconds: 300),
                               child: Text(
                                 _isParentOrAdminMode
                                     ? "Ingresa al panel de control"
                                     : "¡Listo para otra misión!",
-                                key: ValueKey(
-                                  _isParentOrAdminMode,
-                                ),
+                                key: ValueKey(_isParentOrAdminMode),
                                 style: GoogleFonts.nunito(
                                   color: subtitleColor,
                                   fontSize: 18,
@@ -310,16 +244,9 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 35),
-
-                            _buildGlassLoginBox(
-                              isDarkMode,
-                              cardColor,
-                            ),
-
+                            _buildGlassLoginBox(isDarkMode, cardColor),
                             const SizedBox(height: 15),
-
                             TextButton(
                               onPressed: () {
                                 Navigator.push(
@@ -341,7 +268,6 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                             ),
-
                             TextButton(
                               onPressed: () {
                                 Navigator.push(
@@ -377,60 +303,40 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildGlassLoginBox(
-    bool isDarkMode,
-    Color baseCardColor,
-  ) {
+  Widget _buildGlassLoginBox(bool isDarkMode, Color baseCardColor) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(35),
       child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: 15,
-          sigmaY: 15,
-        ),
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
           padding: const EdgeInsets.all(25),
           decoration: BoxDecoration(
-            color: baseCardColor.withOpacity(
-              isDarkMode ? 0.6 : 0.8,
-            ),
+            color: baseCardColor.withOpacity(isDarkMode ? 0.6 : 0.8),
             borderRadius: BorderRadius.circular(35),
             border: Border.all(
-              color: Colors.white.withOpacity(
-                isDarkMode ? 0.1 : 0.5,
-              ),
+              color: Colors.white.withOpacity(isDarkMode ? 0.1 : 0.5),
               width: 1.5,
             ),
           ),
           child: Column(
             children: [
-
               _buildIdentificadorField(isDarkMode),
-
               const SizedBox(height: 15),
-
               _buildPasswordField(isDarkMode),
-
               const SizedBox(height: 30),
-
               SizedBox(
                 width: double.infinity,
                 height: 60,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFF9D4EDD),
+                    backgroundColor: const Color(0xFF9D4EDD),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  onPressed:
-                      _isLoading ? null : _login,
+                  onPressed: _isLoading ? null : _login,
                   child: _isLoading
-                      ? const CircularProgressIndicator(
-                          color: Colors.white,
-                        )
+                      ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
                           "ENTRAR 🚀",
                           style: GoogleFonts.fredoka(
@@ -449,169 +355,109 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildIdentificadorField(bool isDarkMode) {
-
     return TextFormField(
       controller: _identificadorController,
       keyboardType: TextInputType.emailAddress,
-
       onChanged: (value) {
         setState(() {
-          _isParentOrAdminMode =
-              value.contains('@');
+          _isParentOrAdminMode = value.contains('@');
         });
       },
-
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return '¡Falta este dato!';
         }
         return null;
       },
-
       decoration: InputDecoration(
-        prefixIcon: const Icon(
-          Icons.person_outline_rounded,
-        ),
+        prefixIcon: const Icon(Icons.person_outline_rounded),
         hintText: "Usuario o Correo",
         filled: true,
         border: OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );
   }
 
   Widget _buildPasswordField(bool isDarkMode) {
-
     return TextFormField(
       controller: _passController,
       obscureText: true,
-
       keyboardType: _isParentOrAdminMode
           ? TextInputType.text
           : TextInputType.number,
-
-      inputFormatters:
-          _isParentOrAdminMode
-              ? []
-              : [
-                  FilteringTextInputFormatter
-                      .digitsOnly,
-                  LengthLimitingTextInputFormatter(4),
-                ],
-
+      inputFormatters: _isParentOrAdminMode
+          ? []
+          : [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(4),
+            ],
       validator: (value) {
-
         if (value == null || value.trim().isEmpty) {
           return '¡Falta este dato!';
         }
-
-        if (!_isParentOrAdminMode &&
-            value.length < 4) {
+        if (!_isParentOrAdminMode && value.length < 4) {
           return 'El PIN necesita 4 números';
         }
-
         return null;
       },
-
       decoration: InputDecoration(
         prefixIcon: const Icon(Icons.lock_rounded),
-        hintText: _isParentOrAdminMode
-            ? "Contraseña"
-            : "PIN Secreto",
+        hintText: _isParentOrAdminMode ? "Contraseña o NIP" : "PIN Secreto",
         filled: true,
         border: OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );
   }
 
   void _login() async {
-
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() => _isLoading = true);
 
+    String identificador = _identificadorController.text.trim();
+    String password = _passController.text.trim();
     bool exito;
 
     if (_isParentOrAdminMode) {
-
-      exito =
-          await AuthDbService.loginPorCorreo(
-        _identificadorController.text.trim(),
-        _passController.text.trim(),
-      );
-
+      exito = await AuthDbService.loginPorCorreo(identificador, password);
     } else {
-
-      exito =
-          await AuthDbService.loginPorNombre(
-        _identificadorController.text.trim(),
-        _passController.text.trim(),
-      );
+      exito = await AuthDbService.loginPorNombre(identificador, password);
     }
 
     if (!mounted) return;
-
     setState(() => _isLoading = false);
 
     if (exito) {
+      final prefs = await SharedPreferences.getInstance();
+      final userRole = prefs.getString('userRole') ?? 'student';
 
-      final prefs =
-          await SharedPreferences.getInstance();
+      Widget nextScreen;
 
-      final userRole =
-          prefs.getString('userRole') ??
-              'student';
-
-      if (userRole == 'admin') {
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                const AdminDashboardScreen(),
-          ),
-        );
-
-      } else if (userRole == 'parent') {
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                const ParentDashboardScreen(),
-          ),
-        );
-
-      } else if (userRole == 'teacher') {
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                const TeacherDashboardScreen(),
-          ),
-        );
-
-      } else {
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                const HomeScreen(),
-          ),
-        );
+      switch (userRole) {
+        case 'admin':
+          nextScreen = const AdminDashboardScreen();
+          break;
+        case 'parent':
+          nextScreen = const ParentDashboardScreen();
+          break;
+        case 'teacher':
+          nextScreen = const TeacherDashboardScreen();
+          break;
+        default:
+          nextScreen = const HomeScreen();
       }
 
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => nextScreen),
+      );
     } else {
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -621,8 +467,7 @@ class _LoginScreenState extends State<LoginScreen>
               color: Colors.white,
             ),
           ),
-          backgroundColor:
-              const Color(0xFFFF6B6B),
+          backgroundColor: const Color(0xFFFF6B6B),
         ),
       );
     }
